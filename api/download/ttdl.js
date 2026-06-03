@@ -1,14 +1,8 @@
-/**
- * NAMA SCRAPE  :: SSSTIK SCRAPER
- * [•] PEMBUAT      :: DEFAN (dipastebin.web.id)
- * [•] BASIS        :: ssstik.io
- */
 
 const axios = require('axios');
 const express = require('express');
 const router = express.Router();
 
-// Fungsi untuk membuat token acak tt
 function generateTT() {
   const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
   let result = "";
@@ -18,7 +12,6 @@ function generateTT() {
   return result;
 }
 
-// Fungsi untuk ekstraksi data HTML menggunakan RegEx
 function extractData(html) {
   const data = {};
 
