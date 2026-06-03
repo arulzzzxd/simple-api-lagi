@@ -1,34 +1,47 @@
 const express = require('express');
 const router = express.Router();
-const axios = require('axios'); // Menggunakan axios agar lebih stabil dan seragam
+const axios = require('axios');
 const cheerio = require('cheerio');
 
 // ======================================================
-// CORE DOWNLOADER FUNCTION (FIXED SYNTAX & REGEX)
+// CORE DOWNLOADER FUNCTION (ROBUST & ANTI-PATAH)
 // ======================================================
 async function xnxxdl2(url) {
     try {
-        const response = await axios.get(url);
+        // Tambahkan User-Agent agar tidak diblokir oleh sistem proteksi situs
+        const response = await axios.get(url, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            }
+        });
         const $ = cheerio.load(response.data);
 
-        const title = $('meta[property="og:title"]').attr('content');
-        const duration = $('meta[property="og:duration"]').attr('content');
-        const image = $('meta[property="og:image"]').attr('content');
-        const videoType = $('meta[property="og:video:type"]').attr('content');
-        const videoWidth = $('meta[property="og:video:width"]').attr('content');
-        const videoHeight = $('meta[property="og:video:height"]').attr('content');
-        const info = $('span.metadata').text();
-        const videoScript = $('#video-player-bg > script:nth-child(6)').html() || '';
+        const title = $('meta[property="og:title"]').attr('content') || '';
+        const duration = $('meta[property="og:duration"]').attr('content') || '';
+        const image = $('meta[property="og:image"]').attr('content') || '';
+        const videoType = $('meta[property="og:video:type"]').attr('content') || '';
+        const videoWidth = $('meta[property="og:video:width"]').attr('content') || '';
+        const videoHeight = $('meta[property="og:video:height"]').attr('content') || '';
+        const info = $('span.metadata').text().trim() || '';
+        
+        // JALUR AMAN: Cari ke semua tag script yang mengandung variabel video player
+        let videoScript = '';
+        $('script').each((index, element) => {
+            const scriptContent = $(element).html();
+            if (scriptContent && scriptContent.includes('html5player.setVideoUrlLow')) {
+                videoScript = scriptContent;
+            }
+        });
 
-        // PERBAIKAN: Menggunakan regex literal dan meletakkan ( || [] ) di luar agar aman dari crash null
+        // Ekstraksi menggunakan regex yang lebih fleksibel
         const files = {
-            low: (videoScript.match(/html5player\.setVideoUrlLow\('([^']+)'\)/) || [])[1] || '',
-            high: (videoScript.match(/html5player\.setVideoUrlHigh\('([^']+)'\)/) || [])[1] || '',
-            HLS: (videoScript.match(/html5player\.setVideoHLS\('([^']+)'\)/) || [])[1] || '',
-            thumb: (videoScript.match(/html5player\.setThumbUrl\('([^']+)'\)/) || [])[1] || '',
-            thumb69: (videoScript.match(/html5player\.setThumbUrl169\('([^']+)'\)/) || [])[1] || '',
-            thumbSlide: (videoScript.match(/html5player\.setThumbSlide\('([^']+)'\)/) || [])[1] || '',
-            thumbSlideBig: (videoScript.match(/html5player\.setThumbSlideBig\('([^']+)'\)/) || [])[1] || '',
+            low: (videoScript.match(/html5player\.setVideoUrlLow\(\s*'([^']+)'\s*\)/) || [])[1] || '',
+            high: (videoScript.match(/html5player\.setVideoUrlHigh\(\s*'([^']+)'\s*\)/) || [])[1] || '',
+            HLS: (videoScript.match(/html5player\.setVideoHLS\(\s*'([^']+)'\s*\)/) || [])[1] || '',
+            thumb: (videoScript.match(/html5player\.setThumbUrl\(\s*'([^']+)'\s*\)/) || [])[1] || '',
+            thumb69: (videoScript.match(/html5player\.setThumbUrl169\(\s*'([^']+)'\s*\)/) || [])[1] || '',
+            thumbSlide: (videoScript.match(/html5player\.setThumbSlide\(\s*'([^']+)'\s*\)/) || [])[1] || '',
+            thumbSlideBig: (videoScript.match(/html5player\.setThumbSlideBig\(\s*'([^']+)'\s*\)/) || [])[1] || '',
         };
 
         return {
