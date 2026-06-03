@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@google/genai": "^0.13.0",
+    "@vreden/youtube_scraper": "^1.2.9",
     "axios": "^1.10.0",
     "cheerio": "github:iyayn-ajah/cheerio",
     "crypto": "^1.0.1",
@@ -19,9 +20,11 @@
     "formdata-node": "^6.0.3",
     "jsdom": "^20.0.0",
     "mime-types": "^2.1.35",
+    "music-metadata": "^11.12.3",
     "node-fetch": "^2.6.9",
     "path": "^0.12.7",
     "querystring": "^0.2.1",
-    "uuid": "^13.0.0"
+    "uuid": "^13.0.0",
+    "yt-search": "^2.13.1"
   }
 }
