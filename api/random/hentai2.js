@@ -9,20 +9,22 @@ const axios = require('axios');
 */
 
 // ======================================================
-// CORE SCRAPER FUNCTION (RULE34VIDEO - LIMIT OTO 10)
+// CORE SCRAPER FUNCTION (RULE34VIDEO SCRAPER)
 // ======================================================
-async function scrapeRule34Video(query) {
+async function scrapeRule34Video(query, limit = 10) {
     const BASE = 'https://rule34video.com';
     const UA = 'Mozilla/5.0 (Linux; Android 10; M2006C3MG Build/QP1A.190711.020; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/148.0.7778.178 Mobile Safari/537.36';
-    const LIMIT = 10; // Otomatis dikunci ke 10
 
     try {
+        // Request halaman pencarian menggunakan axios
         const response = await axios.get(`${BASE}/search/${encodeURIComponent(query)}/`, {
             headers: { 'User-Agent': UA }
         });
         
         const html = response.data;
         const videos = [];
+        
+        // Memotong html berdasarkan block list video item
         const blocks = html.split(/<a\s+class="th"/gi).slice(1);
 
         for (const block of blocks) {
@@ -55,8 +57,8 @@ async function scrapeRule34Video(query) {
             });
         }
 
-        // Selalu potong maksimal 10 data video
-        return videos.slice(0, LIMIT);
+        // Kembalikan data sesuai limit yang diminta
+        return videos.slice(0, limit);
 
     } catch (error) {
         throw error;
@@ -67,18 +69,20 @@ async function scrapeRule34Video(query) {
 // ENDPOINT GET UTAMA
 // ======================================================
 router.get('/', async (req, res) => {
-    const query = req.query.query || req.query.q;
+    const query = req.query.query;
+    const limit = parseInt(req.query.limit) || 10; // Default limit 10 jika kosong
 
-    // Hanya memeriksa parameter query saja
-    if (!query) {
-        return res.status(400).json({
-            status: false,
-            message: "Parameter 'query' wajib diisi! Contoh: ?query=Hutao"
-        });
-    }
+
+  if (!query) {
+    return res.status(400).json({
+      status: false,
+      message:
+        "Parameter 'query' wajib diisi! Contoh: ?query=Hutao&limit=5"
+    });
+  }
 
     try {
-        const result = await scrapeRule34Video(query);
+        const result = await scrapeRule34Video(query, limit);
 
         if (!result.length) {
             return res.status(404).json({
@@ -92,11 +96,11 @@ router.get('/', async (req, res) => {
             creator: 'Arulzxd',
             result: {
                 query,
-                total: result.length, // Nilainya akan otomatis maksimal 10
+                total: result.length,
                 videos: result
             },
             metadata: {
-                source: 'Rule34Video Scraper (Auto Limit 10)',
+                source: 'Rule34Video Scraper',
                 timestamp: new Date().toISOString()
             }
         });
