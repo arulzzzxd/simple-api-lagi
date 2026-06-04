@@ -247,6 +247,27 @@ function copyText(text, type = 'path') {
     });
 }
 
+// FUNGSI BARU: Untuk menyalin teks/JSON hasil response
+function copyResponseData(catIdx, epIdx) {
+    const responseContent = document.getElementById(`response-content-${catIdx}-${epIdx}`);
+    const preElement = responseContent.querySelector('pre');
+    
+    // Jika respon berupa media preview, arahkan user memakai tombol bawaan media
+    if (!preElement && responseContent.querySelector('.media-preview')) {
+        showToast('Gunakan tombol "Copy URL" di bawah media', true);
+        return;
+    }
+    
+    const textToCopy = preElement ? preElement.textContent : responseContent.innerText;
+    
+    if (!textToCopy || textToCopy.trim() === "" || responseContent.querySelector('.spinner')) {
+        showToast('Tidak ada data response yang bisa disalin', true);
+        return;
+    }
+    
+    copyText(textToCopy, 'Response data');
+}
+
 function toggleCategory(index) {
     const content = document.getElementById(`cat-${index}`);
     const icon = document.getElementById(`cat-icon-${index}`);
@@ -323,7 +344,6 @@ function createMediaPreview(url, contentType, originalUrl = '') {
             previewHtml = `<div class="media-preview"><iframe src="${url}" class="media-iframe" frameborder="0"></iframe></div>`;
     }
     
-    // Generate tombol aksinya di sini
     const isLightMode = body.classList.contains('light-mode');
     const btnClass = isLightMode 
         ? 'px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5' 
@@ -614,7 +634,12 @@ function loadApis() {
                     </div>
                     
                     <div id="response-${catIdx}-${epIdx}" class="hidden mt-4">
-                        <h4 class="font-bold text-sm ${isLightMode ? 'text-gray-700' : 'text-gray-300'} mb-2">📄 Response</h4>
+                        <div class="flex items-center justify-between mb-2">
+                            <h4 class="font-bold text-sm ${isLightMode ? 'text-gray-700' : 'text-gray-300'}">📄 Response</h4>
+                            <button onclick="copyResponseData(${catIdx}, ${epIdx})" class="px-2 py-1 ${isLightMode ? 'bg-gray-200 hover:bg-gray-300' : 'bg-gray-800 hover:bg-gray-700'} rounded text-[10px] transition-colors">
+                                Copy Response
+                            </button>
+                        </div>
                         <div class="${isLightMode ? 'bg-gray-200 border-gray-300' : 'bg-gray-900/50 border-gray-700'} border px-4 py-3 rounded-lg max-h-96 overflow-auto" id="response-content-${catIdx}-${epIdx}"></div>
                     </div>`;
             } else {
@@ -684,7 +709,7 @@ function performSearch() {
     if (hasVisibleItems) {
         noResults.classList.add('hidden');
     } else {
-        noResults.classList.remove('hidden');
+        noResults.remove('hidden');
     }
 }
 
