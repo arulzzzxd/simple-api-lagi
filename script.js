@@ -703,19 +703,26 @@ async function loadLinkBio() {
         const socialContainer = document.getElementById('socialContainer');
         const isLightMode = body.classList.contains('light-mode');
         
+        // Bersihkan kontainer terlebih dahulu sebelum merender ulang
+        const loadingEl = document.getElementById('socialLoading');
+        const errorEl = document.getElementById('socialError');
+        socialContainer.innerHTML = '';
+        socialContainer.appendChild(loadingEl);
+        socialContainer.appendChild(errorEl);
+
         socialData.link_bio.forEach(social => {
             const socialElement = document.createElement('a');
             socialElement.href = social.url;
             socialElement.target = '_blank';
-            socialElement.className = 'social-badge';
+            socialElement.className = 'social-badge w-full'; // Full width agar rapi ke bawah
             
             const innerDiv = document.createElement('div');
-            innerDiv.className = 'px-4 py-2 rounded-lg text-sm transition-colors';
+            innerDiv.className = 'px-4 py-2 rounded-lg text-xs font-medium transition-colors text-center border light-mode:border-gray-200 border-slate-800/60';
             
             if (isLightMode) {
                 innerDiv.classList.add('bg-gray-100', 'text-gray-800', 'hover:bg-gray-200');
             } else {
-                innerDiv.classList.add('bg-gray-800', 'text-gray-300', 'hover:bg-gray-700');
+                innerDiv.classList.add('bg-gray-800/50', 'text-gray-300', 'hover:bg-gray-700');
             }
             
             innerDiv.textContent = social.name;
@@ -874,7 +881,25 @@ document.addEventListener('DOMContentLoaded', function() {
     initTheme();
     initBatteryDetection();
     loadLinkBio();
-    initMultiMusicPlayer(); // <-- Memanggil pemutar playlist musik saat DOM siap
+    initMultiMusicPlayer();
+    
+    // === LOGIKA TOGGLE MENU LINKBIO ===
+    const bioMenuBtn = document.getElementById('bioMenuBtn');
+    const bioDropdown = document.getElementById('bioDropdown');
+
+    if (bioMenuBtn && bioDropdown) {
+        bioMenuBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Mencegah langsung tertutup saat klik pertama
+            bioDropdown.classList.toggle('hidden');
+        });
+
+        // Menutup dropdown otomatis jika mengklik area lain di luar menu
+        document.addEventListener('click', (e) => {
+            if (!bioDropdown.contains(event.target) && !bioMenuBtn.contains(event.target)) {
+                bioDropdown.classList.add('hidden');
+            }
+        });
+    }
     
     fetch('/api/apilist')
         .then(res => {

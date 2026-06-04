@@ -154,18 +154,35 @@ app.get('/', (req, res) => {
         </div>
     </div>
 
+    <!-- BUTTON MENU LINKBIO KIRI ATAS -->
+    <div class="fixed top-4 left-4 z-50">
+        <button id="bioMenuBtn" class="theme-toggle-btn flex items-center justify-center w-10 h-10 rounded-xl border border-slate-800 light-mode:border-gray-300 bg-[#0e1629] light-mode:bg-gray-100 text-gray-400 light-mode:text-gray-600 hover:text-white light-mode:hover:text-gray-900 transition-all active:scale-95" aria-label="Open Link Bio">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+            </svg>
+        </button>
+        
+        <!-- Dropdown Menu / Pop-up Content -->
+        <div id="bioDropdown" class="hidden absolute top-12 left-0 w-64 p-4 rounded-xl shadow-2xl border border-slate-800/80 light-mode:border-gray-300 bg-[#090e1a] light-mode:bg-white transition-all duration-300 z-50">
+            <h3 class="text-xs font-bold tracking-wider uppercase mb-3 gray-gradient-text">Link Bio</h3>
+            <div id="socialContainer" class="flex flex-col gap-2">
+                <div id="socialLoading" class="text-center py-2 w-full">
+                    <p class="text-xs text-gray-500">Loading...</p>
+                </div>
+                <div id="socialError" class="text-center py-2 w-full hidden">
+                    <p class="text-[10px] text-red-400">Link bio tidak tersedia.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BUTTON THEME TOGGLE KANAN ATAS -->
     <button id="themeToggle" class="theme-toggle-btn fixed top-4 right-4 z-50" aria-label="Toggle theme">
-
         <svg id="theme-toggle-dark-icon" class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-
             <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
-
         </svg>
-
         <svg id="theme-toggle-light-icon" class="w-6 h-6 hidden" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-
             <path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path>
-
         </svg>
     </button>
     <div class="max-w-5xl mx-auto px-4 py-8">
@@ -275,21 +292,6 @@ app.get('/', (req, res) => {
         </div>
 
         <div id="apiList" class="space-y-4"></div>
-
-        <section id="social" class="mt-12 pt-8 border-t border-gray-700 light-mode:border-gray-300">
-            <div id="socialContainer" class="flex flex-wrap justify-center gap-3">
-                <div id="socialLoading" class="text-center py-4 w-full">
-                    <div class="spinner mx-auto"></div>
-                    <p class="text-sm mt-3 text-gray-500">Loading link bio...</p>
-                </div>
-                <div id="socialError" class="text-center py-4 w-full hidden">
-                    <div class="text-4xl mb-2">⚠️</div>
-                    <h3 class="text-sm font-bold mb-1">Link bio not available</h3>
-                    <p class="text-xs">Please create <code>linkbio.json</code> file first</p>
-                    <p class="text-xs mt-2 text-gray-500">Required format: {"link_bio": [{"name": "...", "url": "..."}]}</p>
-                </div>
-            </div>
-        </section>
 
         <footer id="siteFooter" class="mt-12 pt-6 border-t border-gray-700 light-mode:border-gray-300 text-center text-xs">
             ${footer}
