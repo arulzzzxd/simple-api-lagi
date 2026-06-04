@@ -67,7 +67,7 @@ async function scrapeRule34Video(query) {
 // ENDPOINT GET UTAMA
 // ======================================================
 router.get('/', async (req, res) => {
-    const query = req.query.query;
+    const query = req.query.query || req.query.q;
 
     // Hanya memeriksa parameter query saja
     if (!query) {
@@ -105,43 +105,6 @@ router.get('/', async (req, res) => {
         return res.status(500).json({
             status: false,
             message: 'Gagal mengambil data dari Rule34Video',
-            error: error.message || error,
-            timestamp: new Date().toISOString()
-        });
-    }
-});
-
-module.exports = router;// ENDPOINT GET UTAMA (BERJALAN OTOMATIS)
-// ======================================================
-router.get('/', async (req, res) => {
-    try {
-        // Langsung panggil fungsi tanpa parameter input apa pun
-        const result = await scrapeRule34VideoLatest();
-
-        if (!result.length) {
-            return res.status(404).json({
-                status: false,
-                message: 'Tidak ada video terbaru yang ditemukan di halaman utama.'
-            });
-        }
-
-        return res.status(200).json({
-            status: true,
-            creator: 'Arulzxd',
-            result: {
-                total: result.length, // Nilainya otomatis pas 10
-                videos: result
-            },
-            metadata: {
-                source: 'Rule34Video',
-                timestamp: new Date().toISOString()
-            }
-        });
-
-    } catch (error) {
-        return res.status(500).json({
-            status: false,
-            message: 'Gagal mengambil feed data terbaru dari Rule34Video',
             error: error.message || error,
             timestamp: new Date().toISOString()
         });
