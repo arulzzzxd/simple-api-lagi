@@ -302,7 +302,7 @@ function getContentType(url, contentType) {
     return 'unknown';
 }
 
-function createMediaPreview(url, contentType) {
+function createMediaPreview(url, contentType, originalUrl = '') {
     const type = getContentType(url, contentType);
     let previewHtml = '';
     
@@ -323,7 +323,26 @@ function createMediaPreview(url, contentType) {
             previewHtml = `<div class="media-preview"><iframe src="${url}" class="media-iframe" frameborder="0"></iframe></div>`;
     }
     
-    return previewHtml;
+    // Generate tombol aksinya di sini
+    const isLightMode = body.classList.contains('light-mode');
+    const btnClass = isLightMode 
+        ? 'px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5' 
+        : 'px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-white rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5';
+    
+    const copyUrl = originalUrl || url;
+    
+    const actionButtons = `
+        <div class="flex gap-2 mt-3 justify-start">
+            <button type="button" onclick="copyText('${copyUrl}', 'Media URL')" class="${btnClass}">
+                <span>📋</span> Copy URL
+            </button>
+            <a href="${url}" download="downloaded_media" class="${btnClass}">
+                <span>📥</span> Download File
+            </a>
+        </div>
+    `;
+    
+    return `<div class="w-full">${previewHtml}${actionButtons}</div>`;
 }
 
 async function executeRequest(e, catIdx, epIdx, method, path) {
@@ -390,24 +409,24 @@ async function executeRequest(e, catIdx, epIdx, method, path) {
         } else if (contentType?.startsWith("image/")) {
             const blob = await response.blob();
             const imageUrl = URL.createObjectURL(blob);
-            responseContent.innerHTML = createMediaPreview(imageUrl, contentType);
+            responseContent.innerHTML = createMediaPreview(imageUrl, contentType, fullPath);
         } else if (contentType?.startsWith("video/")) {
             const blob = await response.blob();
             const videoUrl = URL.createObjectURL(blob);
-            responseContent.innerHTML = createMediaPreview(videoUrl, contentType);
+            responseContent.innerHTML = createMediaPreview(videoUrl, contentType, fullPath);
         } else if (contentType?.startsWith("audio/")) {
             const blob = await response.blob();
             const audioUrl = URL.createObjectURL(blob);
-            responseContent.innerHTML = createMediaPreview(audioUrl, contentType);
+            responseContent.innerHTML = createMediaPreview(audioUrl, contentType, fullPath);
         } else if (contentType?.includes("application/pdf")) {
             const blob = await response.blob();
             const pdfUrl = URL.createObjectURL(blob);
-            responseContent.innerHTML = createMediaPreview(pdfUrl, contentType);
+            responseContent.innerHTML = createMediaPreview(pdfUrl, contentType, fullPath);
         } else {
             const text = await response.text();
             
             if (isMediaFile(text)) {
-                responseContent.innerHTML = createMediaPreview(text, contentType);
+                responseContent.innerHTML = createMediaPreview(text, contentType, text);
             } else {
                 responseContent.innerHTML = `<pre class="code-font text-sm overflow-auto">${text}</pre>`;
             }
