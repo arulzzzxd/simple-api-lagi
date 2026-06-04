@@ -154,17 +154,18 @@ app.get('/', (req, res) => {
         </div>
     </div>
 
-    <!-- BUTTON MENU LINKBIO KIRI ATAS -->
+    <!-- TOMBOL & DROPDOWN LINK BIO (KIRI ATAS) -->
     <div class="fixed top-4 left-4 z-50">
-        <button id="bioMenuBtn" class="theme-toggle-btn flex items-center justify-center w-10 h-10 rounded-xl border border-slate-800 light-mode:border-gray-300 bg-[#0e1629] light-mode:bg-gray-100 text-gray-400 light-mode:text-gray-600 hover:text-white light-mode:hover:text-gray-900 transition-all active:scale-95" aria-label="Open Link Bio">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <button id="bioMenuBtn" class="flex items-center justify-center w-10 h-10 rounded-xl border border-slate-800 bg-[#0e1629] text-gray-400 hover:text-white transition-all active:scale-95 shadow-lg focus:outline-none" aria-label="Open Link Bio">
+            <!-- Icon Link Chain / Rantai -->
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
             </svg>
         </button>
         
-        <!-- Dropdown Menu / Pop-up Content -->
-        <div id="bioDropdown" class="hidden absolute top-12 left-0 w-64 p-4 rounded-xl shadow-2xl border border-slate-800/80 light-mode:border-gray-300 bg-[#090e1a] light-mode:bg-white transition-all duration-300 z-50">
-            <h3 class="text-xs font-bold tracking-wider uppercase mb-3 gray-gradient-text">Link Bio</h3>
+        <!-- Dropdown Menu Tampilan Link Bio -->
+        <div id="bioDropdown" class="hidden absolute top-12 left-0 w-64 p-4 rounded-xl shadow-2xl border border-slate-800 bg-[#090e1a] transition-all duration-300 z-50">
+            <h3 class="text-xs font-bold tracking-wider uppercase mb-3 text-gray-400">Link Bio</h3>
             <div id="socialContainer" class="flex flex-col gap-2">
                 <div id="socialLoading" class="text-center py-2 w-full">
                     <p class="text-xs text-gray-500">Loading...</p>
