@@ -17,6 +17,28 @@ const headertitle = "REST EH PI AY";
 const headerdescription = "Kumpulan API Endpoint yang mungkin berguna.";
 const footer = "© SHIKAKU IYAYN AJAH";
 
+// === KONFIGURASI PLAYLIST BANYAK MUSIK ===
+const playlist = [
+  {
+    title: "PAMIT KERJO",
+    artist: "NDX. AKA",
+    cover: "https://raw.githubusercontent.com/upload-file-lab/fileupload7/main/uploads/1764494355026.jpeg",
+    url: "https://files.catbox.moe/gfuwnv.mp3"
+  },
+  {
+    title: "TANPO HUBUNGAN",
+    artist: "LA TASYA",
+    cover: "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=300&auto=format&fit=crop",
+    url: "https://files.catbox.moe/xd5oq3.mp3"
+  },
+  {
+    title: "DJ CIDRO 2",
+    artist: "TIDAK DIKETAHUI",
+    cover: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=300&auto=format&fit=crop",
+    url: "https://files.catbox.moe/u30w9k.mp3"
+  }
+];
+
 const router = express.Router();
 const apiPath = path.join(__dirname, 'api');
 const endpointDirs = fs.readdirSync(apiPath).filter(f => fs.statSync(path.join(apiPath, f)).isDirectory());
@@ -182,6 +204,49 @@ app.get('/', (req, res) => {
             </div>
             
             <div class="mt-6 h-1 w-32 mx-auto bg-gradient-to-r from-gray-500 via-gray-400 to-gray-500 rounded-full"></div>
+
+            <div class="mt-8 max-w-2xl mx-auto bg-[#090e1a] light-mode:bg-white border border-slate-800/80 light-mode:border-gray-300 rounded-2xl p-4 shadow-2xl relative overflow-hidden transition-all duration-300">
+                <audio id="audioElement"></audio>
+                
+                <div class="flex items-center justify-between gap-4">
+                    <div class="flex items-center gap-4 flex-1 min-w-0">
+                        <div class="relative w-16 h-16 rounded-xl overflow-hidden bg-black flex-shrink-0 border border-slate-800 light-mode:border-gray-200">
+                            <img id="musicCoverImg" src="" alt="Cover" class="w-full h-full object-cover transition-transform duration-500">
+                        </div>
+                        
+                        <div class="flex-1 min-w-0">
+                            <h3 id="musicTitle" class="text-white light-mode:text-gray-800 font-bold text-sm tracking-wider uppercase truncate m-0">Loading...</h3>
+                            <p id="musicArtist" class="text-gray-400 light-mode:text-gray-600 text-xs font-semibold tracking-wide truncate mt-0.5">-</p>
+                            
+                            <div class="flex items-center gap-2 mt-2">
+                                <span id="currentTime" class="text-[10px] text-gray-500 code-font w-7 text-left">0:00</span>
+                                <div id="progressContainer" class="flex-1 h-1 bg-slate-800 light-mode:bg-gray-200 rounded-full relative cursor-pointer group">
+                                    <div id="progressBar" class="h-full bg-blue-600 rounded-full w-0 transition-all duration-300"></div>
+                                </div>
+                                <span id="totalDuration" class="text-[10px] text-gray-500 code-font w-7 text-right">0:00</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center gap-1.5 flex-shrink-0">
+                        <button id="prevBtn" class="w-9 h-9 flex items-center justify-center bg-[#0e1629] light-mode:bg-gray-100 hover:bg-[#15223e] light-mode:hover:bg-gray-200 border border-slate-800 light-mode:border-gray-300 rounded-xl text-gray-400 light-mode:text-gray-600 hover:text-white light-mode:hover:text-gray-900 transition-all active:scale-95">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+                        </button>
+                        <button id="playBtn" class="w-10 h-10 flex items-center justify-center bg-[#0e1629] light-mode:bg-gray-100 hover:bg-[#15223e] light-mode:hover:bg-gray-200 border border-slate-800 light-mode:border-gray-300 rounded-xl text-gray-400 light-mode:text-gray-600 hover:text-white light-mode:hover:text-gray-900 transition-all active:scale-95">
+                            <svg id="playIcon" class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                        </button>
+                        <button id="nextBtn" class="w-9 h-9 flex items-center justify-center bg-[#0e1629] light-mode:bg-gray-100 hover:bg-[#15223e] light-mode:hover:bg-gray-200 border border-slate-800 light-mode:border-gray-300 rounded-xl text-gray-400 light-mode:text-gray-600 hover:text-white light-mode:hover:text-gray-900 transition-all active:scale-95">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M16 6h2v12h-2zm-10.5 12l8.5-6-8.5-6z"/></svg>
+                        </button>
+                        <button id="playlistToggleBtn" class="w-9 h-9 flex items-center justify-center bg-[#0e1629] light-mode:bg-gray-100 hover:bg-[#15223e] light-mode:hover:bg-gray-200 border border-slate-800 light-mode:border-gray-300 rounded-xl text-gray-400 light-mode:text-gray-600 hover:text-white light-mode:hover:text-gray-900 transition-all active:scale-95">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="playlistPanel" class="hidden mt-4 pt-4 border-t border-slate-800/60 light-mode:border-gray-200 max-h-40 overflow-y-auto space-y-1">
+                </div>
+            </div>
         </header>
 
         <div class="mb-8">
@@ -225,6 +290,9 @@ app.get('/', (req, res) => {
             ${footer}
         </footer>
     </div>
+<script>
+    window.musicPlaylist = ${JSON.stringify(playlist)};
+</script>
 <script src="script.js"></script>
 </body>
 </html>

@@ -247,27 +247,6 @@ function copyText(text, type = 'path') {
     });
 }
 
-// FUNGSI BARU: Untuk menyalin teks/JSON hasil response
-function copyResponseData(catIdx, epIdx) {
-    const responseContent = document.getElementById(`response-content-${catIdx}-${epIdx}`);
-    const preElement = responseContent.querySelector('pre');
-    
-    // Jika respon berupa media preview, arahkan user memakai tombol bawaan media
-    if (!preElement && responseContent.querySelector('.media-preview')) {
-        showToast('Gunakan tombol "Copy URL" di bawah media', true);
-        return;
-    }
-    
-    const textToCopy = preElement ? preElement.textContent : responseContent.innerText;
-    
-    if (!textToCopy || textToCopy.trim() === "" || responseContent.querySelector('.spinner')) {
-        showToast('Tidak ada data response yang bisa disalin', true);
-        return;
-    }
-    
-    copyText(textToCopy, 'Response data');
-}
-
 function toggleCategory(index) {
     const content = document.getElementById(`cat-${index}`);
     const icon = document.getElementById(`cat-icon-${index}`);
@@ -634,12 +613,7 @@ function loadApis() {
                     </div>
                     
                     <div id="response-${catIdx}-${epIdx}" class="hidden mt-4">
-                        <div class="flex items-center justify-between mb-2">
-                            <h4 class="font-bold text-sm ${isLightMode ? 'text-gray-700' : 'text-gray-300'}">📄 Response</h4>
-                            <button onclick="copyResponseData(${catIdx}, ${epIdx})" class="px-2 py-1 ${isLightMode ? 'bg-gray-200 hover:bg-gray-300' : 'bg-gray-800 hover:bg-gray-700'} rounded text-[10px] transition-colors">
-                                Copy Response
-                            </button>
-                        </div>
+                        <h4 class="font-bold text-sm ${isLightMode ? 'text-gray-700' : 'text-gray-300'} mb-2">📄 Response</h4>
                         <div class="${isLightMode ? 'bg-gray-200 border-gray-300' : 'bg-gray-900/50 border-gray-700'} border px-4 py-3 rounded-lg max-h-96 overflow-auto" id="response-content-${catIdx}-${epIdx}"></div>
                     </div>`;
             } else {
@@ -709,7 +683,7 @@ function performSearch() {
     if (hasVisibleItems) {
         noResults.classList.add('hidden');
     } else {
-        noResults.remove('hidden');
+        noResults.classList.remove('hidden');
     }
 }
 
@@ -756,10 +730,151 @@ async function loadLinkBio() {
     }
 }
 
+// === MULTI TRACK MUSIC PLAYER CORE FUNCTION ===
+function initMultiMusicPlayer() {
+    const playlist = window.musicPlaylist || [];
+    if (!playlist.length) return;
+
+    let currentTrackIdx = 0;
+
+    const audio = document.getElementById('audioElement');
+    const playBtn = document.getElementById('playBtn');
+    const playIcon = document.getElementById('playIcon');
+    const progressBar = document.getElementById('progressBar');
+    const progressContainer = document.getElementById('progressContainer');
+    const currentTimeEl = document.getElementById('currentTime');
+    const totalDurationEl = document.getElementById('totalDuration');
+    const coverImg = document.getElementById('musicCoverImg');
+    const titleEl = document.getElementById('musicTitle');
+    const artistEl = document.getElementById('musicArtist');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const playlistToggleBtn = document.getElementById('playlistToggleBtn');
+    const playlistPanel = document.getElementById('playlistPanel');
+
+    if (!audio || !playBtn) return;
+
+    function formatTime(secs) {
+        if (isNaN(secs)) return "0:00";
+        const mins = Math.floor(secs / 60);
+        const remainingSecs = Math.floor(secs % 60);
+        return `${mins}:${remainingSecs < 10 ? '0' : ''}${remainingSecs}`;
+    }
+
+    function loadTrack(index) {
+        currentTrackIdx = index;
+        const track = playlist[index];
+        audio.src = track.url;
+        titleEl.textContent = track.title;
+        artistEl.textContent = track.artist;
+        coverImg.src = track.cover;
+        progressBar.style.width = '0%';
+        currentTimeEl.textContent = '0:00';
+        
+        renderPlaylistItems();
+    }
+
+    function renderPlaylistItems() {
+        playlistPanel.innerHTML = '';
+        playlist.forEach((track, idx) => {
+            const isActive = idx === currentTrackIdx;
+            const itemBtn = document.createElement('button');
+            
+            itemBtn.className = `w-full text-left px-3 py-2 text-xs rounded-xl flex items-center justify-between transition-all ${
+                isActive 
+                ? 'bg-blue-600/10 border border-blue-500/30 text-blue-500 font-bold' 
+                : 'hover:bg-slate-800/40 light-mode:hover:bg-gray-100 text-gray-400 light-mode:text-gray-600'
+            }`;
+            
+            itemBtn.innerHTML = `
+                <div class="flex items-center gap-2 truncate">
+                    <span class="opacity-50 text-[10px] code-font">${String(idx + 1).padStart(2, '0')}</span>
+                    <span class="truncate">${track.title} <span class="opacity-60 font-normal">- ${track.artist}</span></span>
+                </div>
+                ${isActive ? '<span class="text-[9px] tracking-wider text-blue-500 bg-blue-500/10 px-1.5 py-0.5 rounded animate-pulse font-bold">PLAYING</span>' : ''}
+            `;
+            
+            itemBtn.addEventListener('click', () => {
+                loadTrack(idx);
+                audio.play().catch(e => console.log("Playback blocked:", e));
+            });
+            playlistPanel.appendChild(itemBtn);
+        });
+    }
+
+    playBtn.addEventListener('click', () => {
+        if (audio.paused) {
+            audio.play().catch(err => console.log("Playback error:", err));
+        } else {
+            audio.pause();
+        }
+    });
+
+    audio.addEventListener('play', () => {
+        playIcon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+        coverImg.classList.add('scale-105', 'rotate-3');
+        showToast(`Playing: ${playlist[currentTrackIdx].title}`);
+    });
+
+    audio.addEventListener('pause', () => {
+        playIcon.innerHTML = '<path d="M8 5v14l11-7z"/>';
+        coverImg.classList.remove('scale-105', 'rotate-3');
+    });
+
+    audio.addEventListener('timeupdate', () => {
+        if (audio.duration) {
+            const progress = (audio.currentTime / audio.duration) * 100;
+            progressBar.style.width = `${progress}%`;
+            currentTimeEl.textContent = formatTime(audio.currentTime);
+        }
+    });
+
+    audio.addEventListener('loadedmetadata', () => {
+        totalDurationEl.textContent = formatTime(audio.duration);
+    });
+
+    progressContainer.addEventListener('click', (e) => {
+        const width = progressContainer.clientWidth;
+        const clickX = e.offsetX;
+        const duration = audio.duration;
+        if (duration) {
+            audio.currentTime = (clickX / width) * duration;
+        }
+    });
+
+    prevBtn.addEventListener('click', () => {
+        let prevIdx = currentTrackIdx - 1;
+        if (prevIdx < 0) prevIdx = playlist.length - 1;
+        loadTrack(prevIdx);
+        audio.play().catch(e => console.log(e));
+    });
+
+    nextBtn.addEventListener('click', () => {
+        let nextIdx = currentTrackIdx + 1;
+        if (nextIdx >= playlist.length) nextIdx = 0;
+        loadTrack(nextIdx);
+        audio.play().catch(e => console.log(e));
+    });
+
+    audio.addEventListener('ended', () => {
+        let nextIdx = currentTrackIdx + 1;
+        if (nextIdx >= playlist.length) nextIdx = 0;
+        loadTrack(nextIdx);
+        audio.play().catch(e => console.log(e));
+    });
+
+    playlistToggleBtn.addEventListener('click', () => {
+        playlistPanel.classList.toggle('hidden');
+    });
+
+    loadTrack(0);
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     initTheme();
     initBatteryDetection();
     loadLinkBio();
+    initMultiMusicPlayer(); // <-- Memanggil pemutar playlist musik saat DOM siap
     
     fetch('/api/apilist')
         .then(res => {
