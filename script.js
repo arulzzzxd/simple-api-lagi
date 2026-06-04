@@ -61,24 +61,6 @@ function updateSocialBadges() {
     });
 }
 
-// === LOGIKA TOGGLE MENU LINKBIO ===
-const bioMenuBtn = document.getElementById('bioMenuBtn');
-const bioDropdown = document.getElementById('bioDropdown');
-
-if (bioMenuBtn && bioDropdown) {
-    bioMenuBtn.addEventListener('click', (e) => {
-        e.stopPropagation(); // Mencegah dropdown langsung tertutup saat tombol diklik
-        bioDropdown.classList.toggle('hidden');
-    });
-
-    // Menutup dropdown otomatis jika pengguna mengklik area di luar menu dropdown atau tombol
-    document.addEventListener('click', (e) => {
-        if (!bioDropdown.contains(e.target) && !bioMenuBtn.contains(e.target)) {
-            bioDropdown.classList.add('hidden');
-        }
-    });
-}
-
 function initBatteryDetection() {
     const batteryLevelElement = document.getElementById('batteryLevel');
     const batteryPercentageElement = document.getElementById('batteryPercentage');
@@ -902,22 +884,22 @@ document.addEventListener('DOMContentLoaded', function() {
     initMultiMusicPlayer();
     
     // === LOGIKA TOGGLE MENU LINKBIO ===
-    const bioMenuBtn = document.getElementById('bioMenuBtn');
-    const bioDropdown = document.getElementById('bioDropdown');
+const bioMenuBtn = document.getElementById('bioMenuBtn');
+const bioDropdown = document.getElementById('bioDropdown');
 
-    if (bioMenuBtn && bioDropdown) {
-        bioMenuBtn.addEventListener('click', (e) => {
-            e.stopPropagation(); // Mencegah langsung tertutup saat klik pertama
-            bioDropdown.classList.toggle('hidden');
-        });
+if (bioMenuBtn && bioDropdown) {
+    bioMenuBtn.addEventListener('click', (e) => {
+        e.stopPropagation(); // Mencegah dropdown langsung tertutup saat tombol diklik
+        bioDropdown.classList.toggle('hidden');
+    });
 
-        // Menutup dropdown otomatis jika mengklik area lain di luar menu
-        document.addEventListener('click', (e) => {
-            if (!bioDropdown.contains(event.target) && !bioMenuBtn.contains(event.target)) {
-                bioDropdown.classList.add('hidden');
-            }
-        });
-    }
+    // Menutup dropdown otomatis jika pengguna mengklik area di luar menu dropdown atau tombol
+    document.addEventListener('click', (e) => {
+        if (!bioDropdown.contains(e.target) && !bioMenuBtn.contains(e.target)) {
+            bioDropdown.classList.add('hidden');
+        }
+    });
+}
     
     fetch('/api/apilist')
         .then(res => {
