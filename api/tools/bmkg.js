@@ -1,56 +1,41 @@
+const axios = require('axios');
 const express = require('express');
 const router = express.Router();
-const axios = require('axios');
-const cheerio = require('cheerio');
 
 // ======================================================
-// CORE SCRAPER FUNCTION (BMKG GEMPA DIRASAKAN)
+// CORE BMKG GEMPA FUNCTION
 // ======================================================
-async function getGempaDirasakan() {
-    try {
-        const response = await axios.get('https://www.bmkg.go.id/gempabumi/gempabumi-dirasakan.bmkg', {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-            }
-        });
-        const $ = cheerio.load(response.data);
+async function getGempaBMKG() {
+    const endpoint = "https://data.bmkg.go.id/DataMKG/TEWS/autogempa.json";
+    const baseUrl = "https://data.bmkg.go.id/DataMKG/TEWS/";
 
-        // Langsung tembak baris pertama (tr) dari tbody tabel gempa dirasakan
-        const targetRow = $('table.table-hover.table-striped tbody tr').first();
-        
-        if (!targetRow.length) {
-            throw new Error('Gagal menemukan data tabel gempa di situs BMKG');
-        }
+    const { data } = await axios.get(endpoint, {
+        headers: {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/137.0.0.0 Safari/537.36",
+            "Accept": "application/json"
+        },
+        timeout: 15000
+    });
 
-        const td = targetRow.find('td');
-        const kapan = $(td[1]).text().trim();
-        const letak = $(td[2]).text().trim();
-        const magnitudo = $(td[3]).text().trim();
-        const kedalaman = $(td[4]).text().replace(/\t/g, '').replace(/I/g, '').trim();
-        const wilayah = $(td[5]).text().replace(/\t/g, '').replace(/I/g, '').replace('-', '').replace(/\r/g, '').split('\n')[0].trim();
-        
-        const lintang = letak.split(' ')[0] || '';
-        const bujur = letak.split(' ')[2] || '';
-        
-        // Ambil link gambar peta/map penunjuk lokasi gempa
-        let mapImg = $('div.row > div > img').attr('src') || '';
-        if (mapImg && !mapImg.startsWith('http')) {
-            // Otomatis ubah URL relatif menjadi URL absolut BMKG agar gambar bisa dibuka
-            mapImg = `https://www.bmkg.go.id/${mapImg.replace(/^\//, '')}`;
-        }
+    const gempa = data?.Infogempa?.gempa;
 
-        return {
-            waktu: kapan,
-            lintang,
-            bujur,
-            magnitudo,
-            kedalaman,
-            wilayah,
-            map: mapImg
-        };
-    } catch (error) {
-        throw error;
+    if (!gempa) {
+        throw new Error("Data gempa tidak ditemukan");
     }
+
+    return {
+        tanggal: gempa.Tanggal,
+        jam: gempa.Jam,
+        coordinates: gempa.Coordinates,
+        lintang: gempa.Lintang,
+        bujur: gempa.Bujur,
+        magnitude: parseFloat(gempa.Magnitude),
+        kedalaman: gempa.Kedalaman,
+        wilayah: gempa.Wilayah,
+        potensi: gempa.Potensi,
+        dirasakan: gempa.Dirasakan,
+        shakemap: gempa.Shakemap ? baseUrl + gempa.Shakemap : null
+    };
 }
 
 // ======================================================
@@ -58,14 +43,14 @@ async function getGempaDirasakan() {
 // ======================================================
 router.get('/', async (req, res) => {
     try {
-        const result = await getGempaDirasakan();
+        const result = await getGempaBMKG();
 
         return res.status(200).json({
             status: true,
             creator: 'Arulzxd',
             result,
             metadata: {
-                source: 'BMKG Info Gempa',
+                source: 'BMKG',
                 timestamp: new Date().toISOString()
             }
         });
@@ -73,8 +58,8 @@ router.get('/', async (req, res) => {
     } catch (error) {
         return res.status(500).json({
             status: false,
-            message: 'Gagal mengambil data gempa dari BMKG',
-            error: error.message || error,
+            message: 'Gagal mengambil data gempa BMKG',
+            error: error.message,
             timestamp: new Date().toISOString()
         });
     }
