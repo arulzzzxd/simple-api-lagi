@@ -145,7 +145,6 @@ app.get('/', (req, res) => {
     <link rel="stylesheet" href="styles.css" />
     
     <style>
-        /* Ketika body memiliki class .light-mode, paksa perubahan warna komponen musik */
         .light-mode .music-player-card {
             background-color: #ffffff !important;
             border-color: #cbd5e1 !important;
@@ -172,6 +171,23 @@ app.get('/', (req, res) => {
         .light-mode .music-playlist-border {
             border-color: #e2e8f0 !important;
         }
+        
+        /* Brutalist Toggle Language Switcher */
+        .lang-btn {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: bold;
+            padding: 2px 8px;
+            border: 2px solid #000000;
+            background-color: #1a1a1a;
+            color: #ffffff;
+            transition: all 0.15s ease;
+        }
+        .lang-btn.active {
+            background-color: #eab308;
+            color: #000000;
+            box-shadow: 2px 2px 0px #000000;
+        }
     </style>
 </head>
 <body class="min-h-screen antialiased">
@@ -184,18 +200,56 @@ app.get('/', (req, res) => {
         </div>
     </div>
 
-    <div class="fixed top-4 left-4 z-50">
-        <button id="bioMenuBtn" class="flex items-center justify-center w-10 h-10 rounded-xl border border-slate-800 bg-[#0e1629] text-gray-400 hover:text-white transition-all active:scale-95 shadow-lg focus:outline-none" aria-label="Open Link Bio">
+    <div class="fixed top-6 left-6 z-50">
+        <button id="bioMenuBtn" class="flex items-center justify-center w-12 h-12 rounded-2xl bg-[#0f141c] text-slate-400 hover:text-white border border-slate-800/40 shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all active:scale-95 focus:outline-none" aria-label="Open Navigation Menu">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
             </svg>
         </button>
-        
-        <div id="bioDropdown" class="hidden absolute top-12 left-0 w-64 p-4 rounded-xl shadow-2xl border border-slate-800 bg-[#090e1a] transition-all duration-300 z-50">
-            <h3 class="text-xs font-bold tracking-wider uppercase mb-3 text-gray-400">Link Bio</h3>
+    </div>
+
+    <div class="fixed top-6 right-6 z-50">
+        <button id="themeToggle" class="flex items-center justify-center w-12 h-12 rounded-full bg-white text-black shadow-[0_4px_20px_rgba(0,0,0,0.15)] transition-all active:scale-95 focus:outline-none border border-slate-100" aria-label="Toggle theme">
+            <svg id="theme-toggle-dark-icon" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
+            </svg>
+            <svg id="theme-toggle-light-icon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                <path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path>
+            </svg>
+        </button>
+    </div>
+
+    <div id="bioDropdown" class="fixed top-0 right-0 h-full w-72 bg-[#0a0f18] border-l-2 border-[#161f30] transform translate-x-full transition-transform duration-300 ease-in-out z-50 shadow-[-10px_0_30px_rgba(0,0,0,0.5)] flex flex-col p-6 font-['Space_Grotesk']">
+        <div class="flex items-center justify-between mb-8">
+            <div class="flex gap-0 border border-black p-0.5 bg-[#111]">
+                <button id="lang-id" class="lang-btn active" onclick="setLanguage('id')">ID</button>
+                <button id="lang-en" class="lang-btn" onclick="setLanguage('en')">EN</button>
+            </div>
+            <button id="closeMenuBtn" class="text-white hover:text-red-400 transition-colors p-1 border border-slate-800 rounded bg-[#111622]">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+
+        <nav class="flex flex-col gap-5 text-sm font-bold tracking-wider uppercase text-gray-300">
+            <a href="#api" class="hover:text-yellow-400 transition-colors flex items-center gap-2">HOME</a>
+            <a href="#apiList" class="hover:text-yellow-400 transition-colors flex items-center gap-2">DOCUMENTATION</a>
+            <a href="#" class="hover:text-yellow-400 transition-colors flex items-center gap-2">FILE UPLOADER</a>
+            <a href="#" class="hover:text-yellow-400 transition-colors flex items-center gap-2">PASTEBIN</a>
+            
+            <hr class="border-slate-800 my-2">
+            
+            <a href="#" class="hover:text-yellow-400 transition-colors flex items-center gap-2 text-xs opacity-80">BUG REPORT</a>
+            <a href="#" class="hover:text-yellow-400 transition-colors flex items-center gap-2 text-xs opacity-80">PRIVACY POLICY</a>
+            <a href="#" class="hover:text-yellow-400 transition-colors flex items-center gap-2 text-xs opacity-80">TERMS OF SERVICE</a>
+        </nav>
+
+        <div class="mt-8 flex-1 overflow-y-auto">
+            <h3 class="text-[10px] font-bold tracking-widest uppercase mb-3 text-slate-500 code-font">DYNAMIC LINK BIO</h3>
             <div id="socialContainer" class="flex flex-col gap-2">
                 <div id="socialLoading" class="text-center py-2 w-full">
-                    <p class="text-xs text-gray-500">Loading...</p>
+                    <p class="text-xs text-slate-600">Loading...</p>
                 </div>
                 <div id="socialError" class="text-center py-2 w-full hidden">
                     <p class="text-[10px] text-red-400">Link bio tidak tersedia.</p>
@@ -204,14 +258,7 @@ app.get('/', (req, res) => {
         </div>
     </div>
 
-    <button id="themeToggle" class="theme-toggle-btn fixed top-4 right-4 z-50" aria-label="Toggle theme">
-        <svg id="theme-toggle-dark-icon" class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-            <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
-        </svg>
-        <svg id="theme-toggle-light-icon" class="w-6 h-6 hidden" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-            <path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path>
-        </svg>
-    </button>
+    <div id="menuOverlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-40 transition-opacity duration-300"></div>
 
     <div class="max-w-5xl mx-auto px-4 py-8">
         <header id="api" class="mb-12">
@@ -224,7 +271,7 @@ app.get('/', (req, res) => {
             <div class="mt-8 flex flex-wrap justify-center items-center gap-4 md:gap-8">
                 <div class="stats-card flex items-center gap-3 px-4 py-3 rounded-lg">
                     <div class="flex flex-col items-center">
-                        <span class="text-xs font-medium stats-text-secondary">Your Battery</span>
+                        <span id="stat-battery-title" class="text-xs font-medium stats-text-secondary">Baterai Anda</span>
                         <div class="flex items-center gap-2 mt-1">
                             <div id="batteryContainer" class="battery-container">
                                 <div id="batteryLevel" class="battery-level bg-green-500" style="width: 0%"></div>
@@ -232,7 +279,7 @@ app.get('/', (req, res) => {
                             </div>
                             <div class="flex flex-col items-start">
                                 <span id="batteryPercentage" class="text-sm font-bold">0%</span>
-                                <span id="batteryStatus" class="battery-status-text stats-text-secondary">Detecting...</span>
+                                <span id="batteryStatus" class="battery-status-text stats-text-secondary">Mendeteksi...</span>
                             </div>
                         </div>
                     </div>
@@ -240,14 +287,14 @@ app.get('/', (req, res) => {
                 
                 <div class="stats-card flex items-center gap-3 px-4 py-3 rounded-lg">
                     <div class="flex flex-col items-center">
-                        <span class="text-xs font-medium stats-text-secondary">Total Endpoints</span>
+                        <span id="stat-endpoints-title" class="text-xs font-medium stats-text-secondary">Total Endpoint</span>
                         <span id="totalEndpoints" class="text-lg font-bold">0</span>
                     </div>
                 </div>
                 
                 <div class="stats-card flex items-center gap-3 px-4 py-3 rounded-lg">
                     <div class="flex flex-col items-center">
-                        <span class="text-xs font-medium stats-text-secondary">Total Categories</span>
+                        <span id="stat-categories-title" class="text-xs font-medium stats-text-secondary">Total Kategori</span>
                         <span id="totalCategories" class="text-lg font-bold">0</span>
                     </div>
                 </div>
@@ -304,7 +351,7 @@ app.get('/', (req, res) => {
                 <input 
                     type="text" 
                     id="searchInput" 
-                    placeholder="Search endpoints by name, path, or category..."
+                    placeholder="Cari endpoint berdasarkan nama, path, atau kategori..."
                     class="search-input w-full px-4 py-3 text-sm rounded-lg focus:outline-none focus:border-blue-500 transition-all code-font"
                 >
                 <svg class="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -315,8 +362,8 @@ app.get('/', (req, res) => {
 
         <div id="noResults" class="text-center py-12 hidden">
             <div class="text-4xl mb-2">🔍</div>
-            <h3 class="text-sm font-bold mb-1">No endpoints found</h3>
-            <p class="text-xs">Try a different search term</p>
+            <h3 id="no-results-title" class="text-sm font-bold mb-1">Endpoint tidak ditemukan</h3>
+            <p id="no-results-desc" class="text-xs">Coba gunakan kata kunci lain</p>
         </div>
 
         <div id="apiList" class="space-y-4"></div>
