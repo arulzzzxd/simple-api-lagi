@@ -134,9 +134,10 @@ app.get('/styles.css', (req, res) => {
 
 app.get('/', (req, res) => {
     res.send(`<!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="notranslate" translate="no">
 <head>
     <meta charset="UTF-8" />
+    <meta name="google" content="notranslate" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>${title}</title>
     <link id="faviconLink" rel="icon" type="image/x-icon" href="${favicon}">
@@ -216,11 +217,11 @@ app.get('/', (req, res) => {
             </div>
             
             <div class="flex items-center gap-2">
-                <button id="themeToggle" class="flex items-center justify-center w-8 h-8 rounded-lg bg-white text-black transition-all active:scale-95 focus:outline-none border border-slate-200" aria-label="Toggle theme">
-                    <svg id="theme-toggle-dark-icon" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <button id="themeToggle" class="flex items-center justify-center w-8 h-8 rounded-lg transition-all active:scale-95 focus:outline-none border" aria-label="Toggle theme">
+                    <svg id="theme-toggle-dark-icon" class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
                     </svg>
-                    <svg id="theme-toggle-light-icon" class="w-4 h-4 hidden" fill="currentColor" viewBox="0 0 20 20">
+                    <svg id="theme-toggle-light-icon" class="w-4 h-4 text-black hidden" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path>
                     </svg>
                 </button>
@@ -373,7 +374,7 @@ app.get('/', (req, res) => {
             ${footer}
         </footer>
     </div>
-<script>
+<script class="notranslate" translate="no">
     window.musicPlaylist = ${JSON.stringify(playlist)};
 </script>
 <script src="script.js"></script>
