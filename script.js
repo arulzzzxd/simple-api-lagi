@@ -70,12 +70,14 @@ function initTheme() {
         body.classList.add('light-mode');
         themeToggleDarkIcon?.classList.add('hidden');
         themeToggleLightIcon?.classList.remove('hidden');
-        themeToggleBtn.className = "flex items-center justify-center w-8 h-8 rounded-lg bg-slate-900 text-white transition-all active:scale-95 focus:outline-none border border-slate-800";
+        // MODE TERANG: Background putih, matahari gelap/hitam
+        themeToggleBtn.className = "flex items-center justify-center w-8 h-8 rounded-lg bg-white text-black transition-all active:scale-95 focus:outline-none border border-slate-200 shadow-sm";
     } else {
         body.classList.remove('light-mode');
         themeToggleDarkIcon?.classList.remove('hidden');
         themeToggleLightIcon?.classList.add('hidden');
-        themeToggleBtn.className = "flex items-center justify-center w-8 h-8 rounded-lg bg-white text-black transition-all active:scale-95 focus:outline-none border border-slate-200";
+        // MODE GELAP: Background gelap, bulan putih
+        themeToggleBtn.className = "flex items-center justify-center w-8 h-8 rounded-lg bg-slate-900 text-white transition-all active:scale-95 focus:outline-none border border-slate-800";
     }
     
     updateSocialBadges();
@@ -89,13 +91,15 @@ function toggleTheme() {
         body.classList.remove('light-mode');
         themeToggleDarkIcon?.classList.remove('hidden');
         themeToggleLightIcon?.classList.add('hidden');
-        themeToggleBtn.className = "flex items-center justify-center w-8 h-8 rounded-lg bg-white text-black transition-all active:scale-95 focus:outline-none border border-slate-200";
+        // BERUBAH KE MODE GELAP: Background gelap, bulan putih
+        themeToggleBtn.className = "flex items-center justify-center w-8 h-8 rounded-lg bg-slate-900 text-white transition-all active:scale-95 focus:outline-none border border-slate-800";
         currentTheme = 'dark';
     } else {
         body.classList.add('light-mode');
         themeToggleDarkIcon?.classList.add('hidden');
         themeToggleLightIcon?.classList.remove('hidden');
-        themeToggleBtn.className = "flex items-center justify-center w-8 h-8 rounded-lg bg-slate-900 text-white transition-all active:scale-95 focus:outline-none border border-slate-800";
+        // BERUBAH KE MODE TERANG: Background putih, matahari gelap/hitam
+        themeToggleBtn.className = "flex items-center justify-center w-8 h-8 rounded-lg bg-white text-black transition-all active:scale-95 focus:outline-none border border-slate-200 shadow-sm";
         currentTheme = 'light';
     }
     
@@ -328,7 +332,6 @@ function toggleCategory(index) {
     icon.style.transform = content.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(180deg)';
 }
 
-// Menutup menu drawer samping kanan
 function closeSidebarMenu() {
     const bioDropdown = document.getElementById('bioDropdown');
     const menuOverlay = document.getElementById('menuOverlay');
@@ -800,7 +803,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initMultiMusicPlayer();
     setLanguage(savedLang);
     
-    // === INTEGRASI DRAWER MENU SLIDE-OUT (Sesuai Gambar 2) ===
+    // Integrasi Drawer Menu
     const bioMenuBtn = document.getElementById('bioMenuBtn');
     const bioDropdown = document.getElementById('bioDropdown');
     const closeMenuBtn = document.getElementById('closeMenuBtn');
@@ -821,20 +824,16 @@ document.addEventListener('DOMContentLoaded', function() {
         bioDropdown.addEventListener('click', (e) => { e.stopPropagation(); });
     }
     
-    // === LOGIKA AGAR SEMUA TOMBOL MENU BERFUNGSI SAAT DIKLIK ===
+    // Smooth scrolling link navigasi menu
     document.querySelectorAll('.menu-link').forEach(anchor => {
         anchor.addEventListener('click', function(e) {
             const href = this.getAttribute('href');
             
-            // Jika link mengarah ke internal anchor hash (contoh: #api atau #apiList)
             if (href.startsWith('#') && href !== '#') {
                 e.preventDefault();
                 const targetElement = document.querySelector(href);
                 if (targetElement) {
-                    // Tutup menu samping dulu supaya tidak menghalangi pandangan
                     closeSidebarMenu();
-                    
-                    // Lakukan smooth scroll ke target element
                     setTimeout(() => {
                         window.scrollTo({
                             top: targetElement.offsetTop - 20,
@@ -843,10 +842,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     }, 300);
                 }
             } else if (href === '#') {
-                // Mencegah reload halaman jika link kosong placeholder '#'
                 e.preventDefault();
             }
-            // Jika ada link url eksternal murni, biarkan berjalan normal bawaan browser
         });
     });
     
