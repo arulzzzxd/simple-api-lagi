@@ -154,16 +154,13 @@ app.get('/', (req, res) => {
         </div>
     </div>
 
-    <!-- TOMBOL & DROPDOWN LINK BIO (KIRI ATAS) -->
     <div class="fixed top-4 left-4 z-50">
         <button id="bioMenuBtn" class="flex items-center justify-center w-10 h-10 rounded-xl border border-slate-800 bg-[#0e1629] text-gray-400 hover:text-white transition-all active:scale-95 shadow-lg focus:outline-none" aria-label="Open Link Bio">
-            <!-- Icon Link Chain / Rantai -->
             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
             </svg>
         </button>
         
-        <!-- Dropdown Menu Tampilan Link Bio -->
         <div id="bioDropdown" class="hidden absolute top-12 left-0 w-64 p-4 rounded-xl shadow-2xl border border-slate-800 bg-[#090e1a] transition-all duration-300 z-50">
             <h3 class="text-xs font-bold tracking-wider uppercase mb-3 text-gray-400">Link Bio</h3>
             <div id="socialContainer" class="flex flex-col gap-2">
@@ -177,7 +174,6 @@ app.get('/', (req, res) => {
         </div>
     </div>
 
-    <!-- BUTTON THEME TOGGLE KANAN ATAS -->
     <button id="themeToggle" class="theme-toggle-btn fixed top-4 right-4 z-50" aria-label="Toggle theme">
         <svg id="theme-toggle-dark-icon" class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
             <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
@@ -242,11 +238,11 @@ app.get('/', (req, res) => {
                             <p id="musicArtist" class="text-gray-400 light-mode:text-gray-600 text-xs font-semibold tracking-wide truncate mt-0.5">-</p>
                             
                             <div class="flex items-center gap-2 mt-2">
-                                <span id="currentTime" class="text-[10px] text-gray-500 code-font w-7 text-left">0:00</span>
+                                <span id="currentTime" class="text-[10px] text-gray-500 light-mode:text-gray-400 code-font w-7 text-left">0:00</span>
                                 <div id="progressContainer" class="flex-1 h-1 bg-slate-800 light-mode:bg-gray-200 rounded-full relative cursor-pointer group">
                                     <div id="progressBar" class="h-full bg-blue-600 rounded-full w-0 transition-all duration-300"></div>
                                 </div>
-                                <span id="totalDuration" class="text-[10px] text-gray-500 code-font w-7 text-right">0:00</span>
+                                <span id="totalDuration" class="text-[10px] text-gray-500 light-mode:text-gray-400 code-font w-7 text-right">0:00</span>
                             </div>
                         </div>
                     </div>
