@@ -2,43 +2,100 @@ const BASE_URL = window.location.origin;
 let isRequestInProgress = false;
 let apiData = null;
 let currentTheme = 'dark';
+let currentLang = 'id';
 let allApiElements = [];
 let totalEndpoints = 0;
 let totalCategories = 0;
 let batteryMonitor = null;
 
 const themeToggleBtn = document.getElementById('themeToggle');
-const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
-const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
 const body = document.body;
+
+// Penampung teks multibahasa
+const i18n = {
+    id: {
+        searchPlaceholder: "Cari endpoint berdasarkan nama, path, atau kategori...",
+        noResultsTitle: "Endpoint tidak ditemukan",
+        noResultsDesc: "Coba gunakan kata kunci lain",
+        batteryTitle: "Baterai Anda",
+        endpointsTitle: "Total Endpoint",
+        categoriesTitle: "Total Kategori",
+        batteryDetecting: "Mendeteksi...",
+        batteryCharging: "Mengisi Daya",
+        batteryFull: "Penuh",
+        batteryDischarging: "Menguras Daya",
+        batteryLeft: "tersisa",
+        endpointsCount: "endpoints",
+        btnExecute: "Eksekusi",
+        btnClear: "Bersihkan",
+        toastMediaCopy: "Media URL disalin ke papan klip!",
+        toastMediaFail: "Gagal menyalin URL",
+        endpointNotAvailable: "⚠️ Endpoint ini tidak tersedia untuk pengujian",
+        toastRequestWait: "Harap tunggu permintaan saat ini selesai",
+        toastRequestSuccess: "Permintaan berhasil diselesaikan!",
+        toastRequestFailed: "Permintaan gagal!"
+    },
+    en: {
+        searchPlaceholder: "Search endpoints by name, path, or category...",
+        noResultsTitle: "No endpoints found",
+        noResultsDesc: "Try a different search term",
+        batteryTitle: "Your Battery",
+        endpointsTitle: "Total Endpoints",
+        categoriesTitle: "Total Categories",
+        batteryDetecting: "Detecting...",
+        batteryCharging: "Charging",
+        batteryFull: "Fully charged",
+        batteryDischarging: "Discharging",
+        batteryLeft: "left",
+        endpointsCount: "endpoints",
+        btnExecute: "Execute",
+        btnClear: "Clear",
+        toastMediaCopy: "Media URL copied to clipboard!",
+        toastMediaFail: "Failed to copy URL",
+        endpointNotAvailable: "⚠️ This endpoint is not available for testing",
+        toastRequestWait: "Please wait for current request",
+        toastRequestSuccess: "Request completed successfully!",
+        toastRequestFailed: "Request failed!"
+    }
+};
 
 function initTheme() {
     const savedTheme = localStorage.getItem('theme') || 'dark';
     currentTheme = savedTheme;
     
+    const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
+    const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
+    
     if (savedTheme === 'light') {
         body.classList.add('light-mode');
-        themeToggleDarkIcon.classList.add('hidden');
-        themeToggleLightIcon.classList.remove('hidden');
+        themeToggleDarkIcon?.classList.add('hidden');
+        themeToggleLightIcon?.classList.remove('hidden');
+        themeToggleBtn.className = "flex items-center justify-center w-12 h-12 rounded-full bg-slate-900 text-white shadow-[0_4px_20px_rgba(0,0,0,0.15)] transition-all active:scale-95 focus:outline-none border border-slate-800";
     } else {
         body.classList.remove('light-mode');
-        themeToggleDarkIcon.classList.remove('hidden');
-        themeToggleLightIcon.classList.add('hidden');
+        themeToggleDarkIcon?.classList.remove('hidden');
+        themeToggleLightIcon?.classList.add('hidden');
+        themeToggleBtn.className = "flex items-center justify-center w-12 h-12 rounded-full bg-white text-black shadow-[0_4px_20px_rgba(0,0,0,0.15)] transition-all active:scale-95 focus:outline-none border border-slate-100";
     }
     
     updateSocialBadges();
 }
 
 function toggleTheme() {
+    const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
+    const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
+    
     if (body.classList.contains('light-mode')) {
         body.classList.remove('light-mode');
-        themeToggleDarkIcon.classList.remove('hidden');
-        themeToggleLightIcon.classList.add('hidden');
+        themeToggleDarkIcon?.classList.remove('hidden');
+        themeToggleLightIcon?.classList.add('hidden');
+        themeToggleBtn.className = "flex items-center justify-center w-12 h-12 rounded-full bg-white text-black shadow-[0_4px_20px_rgba(0,0,0,0.15)] transition-all active:scale-95 focus:outline-none border border-slate-100";
         currentTheme = 'dark';
     } else {
         body.classList.add('light-mode');
-        themeToggleDarkIcon.classList.add('hidden');
-        themeToggleLightIcon.classList.remove('hidden');
+        themeToggleDarkIcon?.classList.add('hidden');
+        themeToggleLightIcon?.classList.remove('hidden');
+        themeToggleBtn.className = "flex items-center justify-center w-12 h-12 rounded-full bg-slate-900 text-white shadow-[0_4px_20px_rgba(0,0,0,0.15)] transition-all active:scale-95 focus:outline-none border border-slate-800";
         currentTheme = 'light';
     }
     
@@ -47,16 +104,39 @@ function toggleTheme() {
     if (apiData) loadApis();
 }
 
+function setLanguage(lang) {
+    currentLang = lang;
+    localStorage.setItem('lang', lang);
+    
+    document.getElementById('lang-id').classList.toggle('active', lang === 'id');
+    document.getElementById('lang-en').classList.toggle('active', lang === 'en');
+    
+    // Perbarui teks statis halaman luar
+    document.getElementById('searchInput').placeholder = i18n[lang].searchPlaceholder;
+    document.getElementById('no-results-title').textContent = i18n[lang].noResultsTitle;
+    document.getElementById('no-results-desc').textContent = i18n[lang].noResultsDesc;
+    document.getElementById('stat-battery-title').textContent = i18n[lang].batteryTitle;
+    document.getElementById('stat-endpoints-title').textContent = i18n[lang].endpointsTitle;
+    document.getElementById('stat-categories-title').textContent = i18n[lang].categoriesTitle;
+    
+    if (batteryMonitor) {
+        // Trigger perubahan info baterai agar bahasanya ikut ter-update
+        window.dispatchEvent(new Event('batteryupdate-hook'));
+    }
+    
+    if (apiData) loadApis();
+}
+
 function updateSocialBadges() {
     const isLightMode = body.classList.contains('light-mode');
     const socialBadges = document.querySelectorAll('.social-badge > div');
     
     socialBadges.forEach(badge => {
-        badge.className = 'px-4 py-2 rounded-lg text-sm transition-colors';
+        badge.className = 'px-4 py-2 rounded-lg text-xs font-medium transition-colors text-center border light-mode:border-gray-200 border-slate-800/60';
         if (isLightMode) {
             badge.classList.add('bg-gray-100', 'text-gray-800', 'hover:bg-gray-200');
         } else {
-            badge.classList.add('bg-gray-800', 'text-gray-300', 'hover:bg-gray-700');
+            badge.classList.add('bg-gray-800/50', 'text-gray-300', 'hover:bg-gray-700');
         }
     });
 }
@@ -88,27 +168,27 @@ function initBatteryDetection() {
                 
                 if (isCharging) {
                     batteryContainer.classList.add('charging');
-                    batteryStatusElement.textContent = 'Charging';
+                    batteryStatusElement.textContent = i18n[currentLang].batteryCharging;
                     batteryLevelElement.classList.add('battery-charging');
                 } else {
                     batteryContainer.classList.remove('charging');
                     batteryLevelElement.classList.remove('battery-charging');
                     
                     if (battery.dischargingTime === Infinity) {
-                        batteryStatusElement.textContent = 'Fully charged';
+                        batteryStatusElement.textContent = i18n[currentLang].batteryFull;
                     } else {
-                        batteryStatusElement.textContent = 'Discharging';
+                        batteryStatusElement.textContent = i18n[currentLang].batteryDischarging;
                     }
                 }
                 
                 if (isCharging && battery.chargingTime !== Infinity) {
                     const hours = Math.floor(battery.chargingTime / 3600);
                     const minutes = Math.floor((battery.chargingTime % 3600) / 60);
-                    batteryStatusElement.textContent = `Charging (${hours}h ${minutes}m)`;
+                    batteryStatusElement.textContent = `${i18n[currentLang].batteryCharging} (${hours}h ${minutes}m)`;
                 } else if (!isCharging && battery.dischargingTime !== Infinity) {
                     const hours = Math.floor(battery.dischargingTime / 3600);
                     const minutes = Math.floor((battery.dischargingTime % 3600) / 60);
-                    batteryStatusElement.textContent = `${hours}h ${minutes}m left`;
+                    batteryStatusElement.textContent = `${hours}h ${minutes}m ${i18n[currentLang].batteryLeft}`;
                 }
             }
             
@@ -117,6 +197,7 @@ function initBatteryDetection() {
             battery.addEventListener('chargingchange', updateBatteryInfo);
             battery.addEventListener('chargingtimechange', updateBatteryInfo);
             battery.addEventListener('dischargingtimechange', updateBatteryInfo);
+            window.addEventListener('batteryupdate-hook', updateBatteryInfo);
             batteryMonitor = battery;
             
         }).catch(function(error) {
@@ -125,7 +206,6 @@ function initBatteryDetection() {
             fallbackBattery();
         });
     } else {
-        console.log("Battery Status API not supported");
         batteryStatusElement.textContent = 'API Not Supported';
         fallbackBattery();
     }
@@ -155,9 +235,9 @@ function initBatteryDetection() {
                     localStorage.setItem('simulatedCharging', 'false');
                     batteryContainer.classList.remove('charging');
                     batteryLevelElement.classList.remove('battery-charging');
-                    batteryStatusElement.textContent = 'Fully charged';
+                    batteryStatusElement.textContent = i18n[currentLang].batteryFull;
                 } else {
-                    batteryStatusElement.textContent = 'Charging';
+                    batteryStatusElement.textContent = i18n[currentLang].batteryCharging;
                 }
             } else {
                 const drainRate = 0.1;
@@ -168,16 +248,16 @@ function initBatteryDetection() {
                     localStorage.setItem('simulatedCharging', 'true');
                     batteryContainer.classList.add('charging');
                     batteryLevelElement.classList.add('battery-charging');
-                    batteryStatusElement.textContent = 'Charging';
+                    batteryStatusElement.textContent = i18n[currentLang].batteryCharging;
                 } else {
                     const minutesLeft = Math.round((newLevel - 5) / drainRate);
                     const hours = Math.floor(minutesLeft / 60);
                     const minutes = minutesLeft % 60;
                     
                     if (hours > 0) {
-                        batteryStatusElement.textContent = `${hours}h ${minutes}m left`;
+                        batteryStatusElement.textContent = `${hours}h ${minutes}m ${i18n[currentLang].batteryLeft}`;
                     } else {
-                        batteryStatusElement.textContent = `${minutes}m left`;
+                        batteryStatusElement.textContent = `${minutes}m ${i18n[currentLang].batteryLeft}`;
                     }
                 }
             }
@@ -199,6 +279,7 @@ function initBatteryDetection() {
         
         simulateBattery();
         setInterval(simulateBattery, 10000);
+        window.addEventListener('batteryupdate-hook', simulateBattery);
     }
 }
 
@@ -213,13 +294,11 @@ function cleanupBatteryMonitor() {
 }
 
 function updateTotalEndpoints() {
-    const totalEndpointsElement = document.getElementById('totalEndpoints');
-    totalEndpointsElement.textContent = totalEndpoints;
+    document.getElementById('totalEndpoints').textContent = totalEndpoints;
 }
 
 function updateTotalCategories() {
-    const totalCategoriesElement = document.getElementById('totalCategories');
-    totalCategoriesElement.textContent = totalCategories;
+    document.getElementById('totalCategories').textContent = totalCategories;
 }
 
 function showToast(message, isError = false) {
@@ -254,6 +333,14 @@ function toggleCategory(index) {
     icon.style.transform = content.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(180deg)';
 }
 
+// Menutup menu laci samping kiri
+function closeSidebarMenu() {
+    const bioDropdown = document.getElementById('bioDropdown');
+    const menuOverlay = document.getElementById('menuOverlay');
+    if (bioDropdown) bioDropdown.style.transform = 'translateX(100%)';
+    if (menuOverlay) menuOverlay.classList.add('hidden');
+}
+
 function toggleEndpoint(catIdx, epIdx) {
     const content = document.getElementById(`ep-${catIdx}-${epIdx}`);
     const icon = document.getElementById(`ep-icon-${catIdx}-${epIdx}`);
@@ -268,7 +355,6 @@ function isMediaFile(url) {
         '.mp3', '.wav', '.ogg', '.m4a', '.flac',
         '.pdf', '.doc', '.docx', '.ppt', '.pptx', '.xls', '.xlsx'
     ];
-    
     return mediaExtensions.some(ext => 
         url.toLowerCase().includes(ext) || 
         url.toLowerCase().startsWith('data:image/') ||
@@ -284,7 +370,6 @@ function getContentType(url, contentType) {
         if (contentType.includes('audio/')) return 'audio';
         if (contentType.includes('application/pdf')) return 'pdf';
     }
-    
     if (url.includes('.jpg') || url.includes('.jpeg') || url.includes('.png') || 
         url.includes('.gif') || url.includes('.webp') || url.includes('.svg')) {
         return 'image';
@@ -298,7 +383,6 @@ function getContentType(url, contentType) {
         return 'audio';
     }
     if (url.includes('.pdf')) return 'pdf';
-    
     return 'unknown';
 }
 
@@ -340,7 +424,6 @@ function createMediaPreview(url, contentType, originalUrl = '') {
             </a>
         </div>
     `;
-    
     return `<div class="w-full">${previewHtml}${actionButtons}</div>`;
 }
 
@@ -348,7 +431,7 @@ async function executeRequest(e, catIdx, epIdx, method, path) {
     e.preventDefault();
     
     if (isRequestInProgress) {
-        showToast('Please wait for current request', true);
+        showToast(i18n[currentLang].toastRequestWait, true);
         return;
     }
 
@@ -423,22 +506,18 @@ async function executeRequest(e, catIdx, epIdx, method, path) {
             responseContent.innerHTML = createMediaPreview(pdfUrl, contentType, fullPath);
         } else {
             const text = await response.text();
-            
             if (isMediaFile(text)) {
                 responseContent.innerHTML = createMediaPreview(text, contentType, text);
             } else {
                 responseContent.innerHTML = `<pre class="code-font text-sm overflow-auto">${text}</pre>`;
             }
         }
-        
-        showToast('Request completed successfully!');
-        
+        showToast(i18n[currentLang].toastRequestSuccess);
     } catch (error) {
         clearTimeout(timeoutId);
         const errorMsg = error.name === 'AbortError' ? 'Request timeout (30s)' : error.message;
         responseContent.innerHTML = `<pre class="text-red-400 code-font text-sm">Error: ${errorMsg}</pre>`;
-        showToast('Request failed!', true);
-        
+        showToast(i18n[currentLang].toastRequestFailed, true);
     } finally {
         isRequestInProgress = false;
         executeBtn.disabled = false;
@@ -448,12 +527,9 @@ async function executeRequest(e, catIdx, epIdx, method, path) {
 }
 
 function clearResponse(catIdx, epIdx) {
-    const responseDiv = document.getElementById(`response-${catIdx}-${epIdx}`);
-    const curlSection = document.getElementById(`curl-section-${catIdx}-${epIdx}`);
-    const urlSection = document.getElementById(`url-section-${catIdx}-${epIdx}`);
-    responseDiv.classList.add('hidden');
-    curlSection.classList.add('hidden');
-    urlSection.classList.add('hidden');
+    document.getElementById(`response-${catIdx}-${epIdx}`).classList.add('hidden');
+    document.getElementById(`curl-section-${catIdx}-${epIdx}`).classList.add('hidden');
+    document.getElementById(`url-section-${catIdx}-${epIdx}`).classList.add('hidden');
 }
 
 function loadApis() {
@@ -464,13 +540,9 @@ function loadApis() {
     }
     
     const isLightMode = body.classList.contains('light-mode');
-    
     totalEndpoints = 0;
     totalCategories = apiData.categories.length;
-    
-    apiData.categories.forEach(category => {
-        totalEndpoints += category.items.length;
-    });
+    apiData.categories.forEach(category => { totalEndpoints += category.items.length; });
     
     updateTotalEndpoints();
     updateTotalCategories();
@@ -485,14 +557,13 @@ function loadApis() {
                         <span class="text-lg">📁</span>
                         <div class="text-left">
                             <h3 class="font-bold text-sm gray-gradient-text">${category.name}</h3>
-                            <p class="text-xs ${isLightMode ? 'text-gray-600' : 'text-gray-400'}">${category.items.length} endpoints</p>
+                            <p class="text-xs ${isLightMode ? 'text-gray-600' : 'text-gray-400'}">${category.items.length} ${i18n[currentLang].endpointsCount}</p>
                         </div>
                     </div>
                     <svg id="cat-icon-${catIdx}" class="w-4 h-4 ${isLightMode ? 'text-gray-600' : 'text-gray-400'} transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                     </svg>
                 </button>
-                
                 <div id="cat-${catIdx}" class="hidden">`;
         
         category.items.forEach((item, epIdx) => {
@@ -500,18 +571,11 @@ function loadApis() {
             const pathParts = item.path.split('?');
             const path = pathParts[0];
             const queryParams = new URLSearchParams(pathParts[1] || '');
-
-            let statusClass = 'status-ready';
-            if (item.status === 'update') statusClass = 'status-update';
-            if (item.status === 'error') statusClass = 'status-error';
+            let statusClass = item.status === 'update' ? 'status-update' : (item.status === 'error' ? 'status-error' : 'status-ready');
 
             html += `
             <div class="api-item border-t ${isLightMode ? 'border-gray-300' : 'border-gray-700'}" 
-                data-method="${method}"
-                data-path="${path}"
-                data-alias="${item.name.toLowerCase()}"
-                data-description="${item.desc.toLowerCase()}"
-                data-category="${category.name.toLowerCase()}">
+                data-method="${method}" data-path="${path}" data-alias="${item.name.toLowerCase()}" data-description="${item.desc.toLowerCase()}" data-category="${category.name.toLowerCase()}">
                 <button onclick="toggleEndpoint(${catIdx}, ${epIdx})" class="w-full px-4 py-2.5 flex items-center justify-between ${isLightMode ? 'hover:bg-gray-100' : 'hover:bg-gray-800'} transition-colors">
                     <div class="flex items-center gap-3 flex-1 min-w-0">
                         <span class="${isLightMode ? 'bg-gray-200 text-gray-800' : 'bg-gray-700 text-white'} px-2 py-0.5 rounded text-[10px] flex-shrink-0">${method}</span>
@@ -527,20 +591,14 @@ function loadApis() {
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                     </svg>
                 </button>
-                
                 <div id="ep-${catIdx}-${epIdx}" class="hidden ${isLightMode ? 'bg-gray-100' : 'bg-gray-800/30'} px-4 py-3 border-t ${isLightMode ? 'border-gray-300' : 'border-gray-700'}">
                     <p class="${isLightMode ? 'text-gray-700' : 'text-gray-300'} mb-3 text-xs">${item.desc}</p>
-                    
                     <div class="mb-3">
                         <div class="flex items-center justify-between mb-1.5">
                             <h4 class="font-bold text-xs ${isLightMode ? 'text-gray-700' : 'text-gray-300'}">🔗 Endpoint</h4>
                             <div class="flex gap-2">
-                                <button onclick="copyText('${path}', 'Path')" class="px-2 py-1 ${isLightMode ? 'bg-gray-200 hover:bg-gray-300' : 'bg-gray-800 hover:bg-gray-700'} rounded text-[10px] transition-colors">
-                                    Copy Path
-                                </button>
-                                <button onclick="copyText('${BASE_URL}${path}', 'URL')" class="px-2 py-1 ${isLightMode ? 'bg-gray-200 hover:bg-gray-300' : 'bg-gray-800 hover:bg-gray-700'} rounded text-[10px] transition-colors">
-                                    Copy Full URL
-                                </button>
+                                <button onclick="copyText('${path}', 'Path')" class="px-2 py-1 ${isLightMode ? 'bg-gray-200 hover:bg-gray-300' : 'bg-gray-800 hover:bg-gray-700'} rounded text-[10px] transition-colors">Copy Path</button>
+                                <button onclick="copyText('${BASE_URL}${path}', 'URL')" class="px-2 py-1 ${isLightMode ? 'bg-gray-200 hover:bg-gray-300' : 'bg-gray-800 hover:bg-gray-700'} rounded text-[10px] transition-colors">Copy Full URL</button>
                             </div>
                         </div>
                         <div class="${isLightMode ? 'bg-gray-200 border-gray-300' : 'bg-gray-900/50 border-gray-700'} border px-3 py-2 rounded-lg">
@@ -554,7 +612,6 @@ function loadApis() {
                         <h4 class="font-bold text-sm ${isLightMode ? 'text-gray-700' : 'text-gray-300'} mb-3">⚡ Try it out</h4>
                         <form id="form-${catIdx}-${epIdx}" onsubmit="executeRequest(event, ${catIdx}, ${epIdx}, '${method}', '${path}')">
                             <div class="space-y-3 mb-4">`;
-                
                 if (item.params) {
                     Object.keys(item.params).forEach(paramName => {
                         const isRequired = !queryParams.has(paramName) || queryParams.get(paramName) === '';
@@ -563,71 +620,25 @@ function loadApis() {
                                 <label class="block text-sm font-medium ${isLightMode ? 'text-gray-700' : 'text-gray-300'} mb-2">
                                     ${paramName} ${isRequired ? '<span class="text-red-500">*</span>' : ''}
                                 </label>
-                                <input 
-                                    type="text" 
-                                    name="${paramName}" 
-                                    class="search-input w-full px-4 py-2 rounded-lg focus:outline-none focus:border-blue-500 code-font text-sm" 
-                                    placeholder="${item.params[paramName]}" 
-                                    ${isRequired ? 'required' : ''}
-                                >
+                                <input type="text" name="${paramName}" class="search-input w-full px-4 py-2 rounded-lg focus:outline-none focus:border-blue-500 code-font text-sm" placeholder="${item.params[paramName]}" ${isRequired ? 'required' : ''}>
                             </div>`;
                     });
                 }
-                
                 html += `
                             </div>
                             <div class="flex gap-3 flex-wrap">
-                                <button type="submit" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-sm transition-all flex items-center justify-center">
-                                    Execute
-                                    <span class="local-spinner ml-2"></span>
-                                </button>
-                                <button type="button" onclick="clearResponse(${catIdx}, ${epIdx})" class="px-6 py-2 ${isLightMode ? 'bg-gray-300 hover:bg-gray-400 border-gray-400' : 'bg-gray-700 hover:bg-gray-600 border-gray-600'} border rounded-lg font-semibold text-sm transition-colors">
-                                    Clear
-                                </button>
+                                <button type="submit" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-sm transition-all flex items-center justify-center">${i18n[currentLang].btnExecute}<span class="local-spinner ml-2"></span></button>
+                                <button type="button" onclick="clearResponse(${catIdx}, ${epIdx})" class="px-6 py-2 ${isLightMode ? 'bg-gray-300 hover:bg-gray-400 border-gray-400' : 'bg-gray-700 hover:bg-gray-600 border-gray-600'} border rounded-lg font-semibold text-sm transition-colors">${i18n[currentLang].btnClear}</button>
                             </div>
                         </form>
-                    </div>
-                    
-                    <div id="url-section-${catIdx}-${epIdx}" class="hidden mt-4">
-                        <div class="flex items-center justify-between mb-1.5">
-                            <h4 class="font-bold text-xs ${isLightMode ? 'text-gray-700' : 'text-gray-300'}">🌐 URL Request</h4>
-                            <button onclick="copyText(document.getElementById('url-command-${catIdx}-${epIdx}').textContent, 'URL')" class="px-2 py-1 ${isLightMode ? 'bg-gray-200 hover:bg-gray-300' : 'bg-gray-800 hover:bg-gray-700'} rounded text-[10px] transition-colors">
-                                Copy URL
-                            </button>
-                        </div>
-                        <div class="${isLightMode ? 'bg-gray-200 border-gray-300' : 'bg-gray-900/50 border-gray-700'} border px-3 py-2 rounded-lg">
-                            <code id="url-command-${catIdx}-${epIdx}" class="code-font text-xs ${isLightMode ? 'text-gray-700' : 'text-gray-300'} break-all"></code>
-                        </div>
-                    </div>
-                    
-                    <div id="curl-section-${catIdx}-${epIdx}" class="hidden mt-4">
-                        <div class="flex items-center justify-between mb-1.5">
-                            <h4 class="font-bold text-xs ${isLightMode ? 'text-gray-700' : 'text-gray-300'}">📟 cURL Command</h4>
-                            <button onclick="copyText(document.getElementById('curl-command-${catIdx}-${epIdx}').textContent, 'cURL')" class="px-2 py-1 ${isLightMode ? 'bg-gray-200 hover:bg-gray-300' : 'bg-gray-800 hover:bg-gray-700'} rounded text-[10px] transition-colors">
-                                Copy cURL
-                            </button>
-                        </div>
-                        <div class="${isLightMode ? 'bg-gray-200 border-gray-300' : 'bg-gray-900/50 border-gray-700'} border px-3 py-2 rounded-lg">
-                            <code id="curl-command-${catIdx}-${epIdx}" class="code-font text-xs ${isLightMode ? 'text-gray-700' : 'text-gray-300'} break-all">curl -X ${method} "${BASE_URL}${path}"</code>
-                        </div>
-                    </div>
-                    
-                    <div id="response-${catIdx}-${epIdx}" class="hidden mt-4">
-                        <h4 class="font-bold text-sm ${isLightMode ? 'text-gray-700' : 'text-gray-300'} mb-2">📄 Response</h4>
-                        <div class="${isLightMode ? 'bg-gray-200 border-gray-300' : 'bg-gray-900/50 border-gray-700'} border px-4 py-3 rounded-lg max-h-96 overflow-auto" id="response-content-${catIdx}-${epIdx}"></div>
                     </div>`;
             } else {
-                html += `<div class="px-4 py-3 status-warning border rounded-lg text-sm">⚠️ This endpoint is not available for testing</div>`;
+                html += `<div class="px-4 py-3 status-warning border rounded-lg text-sm">${i18n[currentLang].endpointNotAvailable}</div>`;
             }
-
-            html += `
-                </div>
-            </div>`;
+            html += `</div></div>`;
         });
-        
         html += `</div></div></div>`;
     });
-    
     apiList.innerHTML = html;
     allApiElements = Array.from(document.querySelectorAll('.api-item'));
 }
@@ -639,31 +650,20 @@ function performSearch() {
     if (searchTerm === '') {
         document.querySelectorAll('.category-group').forEach(cat => {
             cat.classList.remove('hidden');
-            cat.querySelectorAll('.api-item').forEach(item => {
-                item.classList.remove('hidden');
-            });
+            cat.querySelectorAll('.api-item').forEach(item => item.classList.remove('hidden'));
         });
         noResults.classList.add('hidden');
         return;
     }
 
     let hasVisibleItems = false;
-
     document.querySelectorAll('.category-group').forEach(category => {
         let categoryHasVisibleItems = false;
-        
         category.querySelectorAll('.api-item').forEach(item => {
-            const path = item.dataset.path.toLowerCase();
-            const alias = item.dataset.alias;
-            const desc = item.dataset.description;
-            const categoryName = item.dataset.category;
-
-            const matches = 
-                path.includes(searchTerm) || 
-                alias.includes(searchTerm) || 
-                desc.includes(searchTerm) ||
-                categoryName.includes(searchTerm);
-
+            const matches = item.dataset.path.toLowerCase().includes(searchTerm) || 
+                            item.dataset.alias.includes(searchTerm) || 
+                            item.dataset.description.includes(searchTerm) ||
+                            item.dataset.category.includes(searchTerm);
             if (matches) {
                 item.classList.remove('hidden');
                 categoryHasVisibleItems = true;
@@ -672,19 +672,9 @@ function performSearch() {
                 item.classList.add('hidden');
             }
         });
-
-        if (categoryHasVisibleItems) {
-            category.classList.remove('hidden');
-        } else {
-            category.classList.add('hidden');
-        }
+        category.classList.toggle('hidden', !categoryHasVisibleItems);
     });
-
-    if (hasVisibleItems) {
-        noResults.classList.add('hidden');
-    } else {
-        noResults.classList.remove('hidden');
-    }
+    noResults.classList.toggle('hidden', hasVisibleItems);
 }
 
 async function loadLinkBio() {
@@ -693,17 +683,12 @@ async function loadLinkBio() {
         if (!response.ok) throw new Error('Failed to load linkbio.json');
         const socialData = await response.json();
         
-        if (!socialData.link_bio || !Array.isArray(socialData.link_bio)) {
-            throw new Error('Invalid linkbio.json format');
-        }
-        
         document.getElementById('socialLoading').classList.add('hidden');
         document.getElementById('socialError').classList.add('hidden');
         
         const socialContainer = document.getElementById('socialContainer');
         const isLightMode = body.classList.contains('light-mode');
         
-        // Bersihkan kontainer terlebih dahulu sebelum merender ulang
         const loadingEl = document.getElementById('socialLoading');
         const errorEl = document.getElementById('socialError');
         socialContainer.innerHTML = '';
@@ -714,7 +699,7 @@ async function loadLinkBio() {
             const socialElement = document.createElement('a');
             socialElement.href = social.url;
             socialElement.target = '_blank';
-            socialElement.className = 'social-badge w-full'; // Full width agar rapi ke bawah
+            socialElement.className = 'social-badge w-full';
             
             const innerDiv = document.createElement('div');
             innerDiv.className = 'px-4 py-2 rounded-lg text-xs font-medium transition-colors text-center border light-mode:border-gray-200 border-slate-800/60';
@@ -724,12 +709,10 @@ async function loadLinkBio() {
             } else {
                 innerDiv.classList.add('bg-gray-800/50', 'text-gray-300', 'hover:bg-gray-700');
             }
-            
             innerDiv.textContent = social.name;
             socialElement.appendChild(innerDiv);
             socialContainer.appendChild(socialElement);
         });
-        
     } catch (error) {
         console.error('Error loading link bio:', error);
         document.getElementById('socialLoading').classList.add('hidden');
@@ -737,13 +720,11 @@ async function loadLinkBio() {
     }
 }
 
-// === MULTI TRACK MUSIC PLAYER CORE FUNCTION ===
 function initMultiMusicPlayer() {
     const playlist = window.musicPlaylist || [];
     if (!playlist.length) return;
 
     let currentTrackIdx = 0;
-
     const audio = document.getElementById('audioElement');
     const playBtn = document.getElementById('playBtn');
     const playIcon = document.getElementById('playIcon');
@@ -754,12 +735,7 @@ function initMultiMusicPlayer() {
     const coverImg = document.getElementById('musicCoverImg');
     const titleEl = document.getElementById('musicTitle');
     const artistEl = document.getElementById('musicArtist');
-    const prevBtn = document.getElementById('prevBtn');
-    const nextBtn = document.getElementById('nextBtn');
-    const playlistToggleBtn = document.getElementById('playlistToggleBtn');
     const playlistPanel = document.getElementById('playlistPanel');
-
-    if (!audio || !playBtn) return;
 
     function formatTime(secs) {
         if (isNaN(secs)) return "0:00";
@@ -777,7 +753,6 @@ function initMultiMusicPlayer() {
         coverImg.src = track.cover;
         progressBar.style.width = '0%';
         currentTimeEl.textContent = '0:00';
-        
         renderPlaylistItems();
     }
 
@@ -786,120 +761,75 @@ function initMultiMusicPlayer() {
         playlist.forEach((track, idx) => {
             const isActive = idx === currentTrackIdx;
             const itemBtn = document.createElement('button');
-            
-            itemBtn.className = `w-full text-left px-3 py-2 text-xs rounded-xl flex items-center justify-between transition-all ${
-                isActive 
-                ? 'bg-blue-600/10 border border-blue-500/30 text-blue-500 font-bold' 
-                : 'hover:bg-slate-800/40 light-mode:hover:bg-gray-100 text-gray-400 light-mode:text-gray-600'
-            }`;
-            
-            itemBtn.innerHTML = `
-                <div class="flex items-center gap-2 truncate">
-                    <span class="opacity-50 text-[10px] code-font">${String(idx + 1).padStart(2, '0')}</span>
-                    <span class="truncate">${track.title} <span class="opacity-60 font-normal">- ${track.artist}</span></span>
-                </div>
-                ${isActive ? '<span class="text-[9px] tracking-wider text-blue-500 bg-blue-500/10 px-1.5 py-0.5 rounded animate-pulse font-bold">PLAYING</span>' : ''}
-            `;
-            
+            itemBtn.className = `w-full text-left px-3 py-2 text-xs rounded-xl flex items-center justify-between transition-all ${isActive ? 'bg-blue-600/10 border border-blue-500/30 text-blue-500 font-bold' : 'hover:bg-slate-800/40 light-mode:hover:bg-gray-100 text-gray-400 light-mode:text-gray-600'}`;
+            itemBtn.innerHTML = `<div class="flex items-center gap-2 truncate"><span class="opacity-50 text-[10px] code-font">${String(idx + 1).padStart(2, '0')}</span><span class="truncate">${track.title} <span class="opacity-60 font-normal">- ${track.artist}</span></span></div>${isActive ? '<span class="text-[9px] tracking-wider text-blue-500 bg-blue-500/10 px-1.5 py-0.5 rounded animate-pulse font-bold">PLAYING</span>' : ''}`;
             itemBtn.addEventListener('click', () => {
                 loadTrack(idx);
-                audio.play().catch(e => console.log("Playback blocked:", e));
+                audio.play().catch(e => console.log(e));
             });
             playlistPanel.appendChild(itemBtn);
         });
     }
 
-    playBtn.addEventListener('click', () => {
-        if (audio.paused) {
-            audio.play().catch(err => console.log("Playback error:", err));
-        } else {
-            audio.pause();
-        }
-    });
-
+    playBtn.addEventListener('click', () => { audio.paused ? audio.play().catch(err => console.log(err)) : audio.pause(); });
     audio.addEventListener('play', () => {
         playIcon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
         coverImg.classList.add('scale-105', 'rotate-3');
-        showToast(`Playing: ${playlist[currentTrackIdx].title}`);
     });
-
     audio.addEventListener('pause', () => {
         playIcon.innerHTML = '<path d="M8 5v14l11-7z"/>';
         coverImg.classList.remove('scale-105', 'rotate-3');
     });
-
     audio.addEventListener('timeupdate', () => {
         if (audio.duration) {
-            const progress = (audio.currentTime / audio.duration) * 100;
-            progressBar.style.width = `${progress}%`;
+            progressBar.style.width = `${(audio.currentTime / audio.duration) * 100}%`;
             currentTimeEl.textContent = formatTime(audio.currentTime);
         }
     });
-
-    audio.addEventListener('loadedmetadata', () => {
-        totalDurationEl.textContent = formatTime(audio.duration);
-    });
-
-    progressContainer.addEventListener('click', (e) => {
-        const width = progressContainer.clientWidth;
-        const clickX = e.offsetX;
-        const duration = audio.duration;
-        if (duration) {
-            audio.currentTime = (clickX / width) * duration;
-        }
-    });
-
-    prevBtn.addEventListener('click', () => {
-        let prevIdx = currentTrackIdx - 1;
-        if (prevIdx < 0) prevIdx = playlist.length - 1;
-        loadTrack(prevIdx);
-        audio.play().catch(e => console.log(e));
-    });
-
-    nextBtn.addEventListener('click', () => {
-        let nextIdx = currentTrackIdx + 1;
-        if (nextIdx >= playlist.length) nextIdx = 0;
-        loadTrack(nextIdx);
-        audio.play().catch(e => console.log(e));
-    });
-
-    audio.addEventListener('ended', () => {
-        let nextIdx = currentTrackIdx + 1;
-        if (nextIdx >= playlist.length) nextIdx = 0;
-        loadTrack(nextIdx);
-        audio.play().catch(e => console.log(e));
-    });
-
-    playlistToggleBtn.addEventListener('click', () => {
-        playlistPanel.classList.toggle('hidden');
-    });
+    audio.addEventListener('loadedmetadata', () => { totalDurationEl.textContent = formatTime(audio.duration); });
+    progressContainer.addEventListener('click', (e) => { if (audio.duration) audio.currentTime = (e.offsetX / progressContainer.clientWidth) * audio.duration; });
+    document.getElementById('prevBtn').addEventListener('click', () => { loadTrack(currentTrackIdx - 1 < 0 ? playlist.length - 1 : currentTrackIdx - 1); audio.play().catch(e => console.log(e)); });
+    document.getElementById('nextBtn').addEventListener('click', () => { loadTrack(currentTrackIdx + 1 >= playlist.length ? 0 : currentTrackIdx + 1); audio.play().catch(e => console.log(e)); });
+    audio.addEventListener('ended', () => { loadTrack(currentTrackIdx + 1 >= playlist.length ? 0 : currentTrackIdx + 1); audio.play().catch(e => console.log(e)); });
+    document.getElementById('playlistToggleBtn').addEventListener('click', () => { playlistPanel.classList.toggle('hidden'); });
 
     loadTrack(0);
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Inisialisasi preferensi bahasa
+    const savedLang = localStorage.getItem('lang') || 'id';
+    
     initTheme();
     initBatteryDetection();
     loadLinkBio();
     initMultiMusicPlayer();
+    setLanguage(savedLang);
     
-    // === LOGIKA TOGGLE MENU LINKBIO ===
-const bioMenuBtn = document.getElementById('bioMenuBtn');
-const bioDropdown = document.getElementById('bioDropdown');
+    // === LOGIKA BARU UNTUK DRAWER MENU SLIDE-OUT (Sesuai Gambar 2) ===
+    const bioMenuBtn = document.getElementById('bioMenuBtn');
+    const bioDropdown = document.getElementById('bioDropdown');
+    const closeMenuBtn = document.getElementById('closeMenuBtn');
+    const menuOverlay = document.getElementById('menuOverlay');
 
-if (bioMenuBtn && bioDropdown) {
-    bioMenuBtn.addEventListener('click', (e) => {
-        e.stopPropagation(); // Mencegah dropdown langsung tertutup saat tombol diklik
-        bioDropdown.classList.toggle('hidden');
-    });
+    if (bioMenuBtn && bioDropdown && menuOverlay) {
+        bioMenuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            bioDropdown.style.transform = 'translateX(0)';
+            menuOverlay.classList.remove('hidden');
+        });
 
-    // Menutup dropdown otomatis jika pengguna mengklik area di luar menu dropdown atau tombol
-    document.addEventListener('click', (e) => {
-        if (!bioDropdown.contains(e.target) && !bioMenuBtn.contains(e.target)) {
-            bioDropdown.classList.add('hidden');
+        if (closeMenuBtn) {
+            closeMenuBtn.addEventListener('click', closeSidebarMenu);
         }
-    });
-}
+
+        menuOverlay.addEventListener('click', closeSidebarMenu);
+        
+        // Mencegah penutupan menu saat area dalam dropdown diklik
+        bioDropdown.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+    }
     
     fetch('/api/apilist')
         .then(res => {
@@ -908,17 +838,14 @@ if (bioMenuBtn && bioDropdown) {
         })
         .then(data => {
             apiData = data;
-            console.log('API data loaded successfully:', data.categories.length, 'categories');
             loadApis();
         })
         .catch(err => {
             console.error('Error loading API data:', err);
-            const apiList = document.getElementById('apiList');
-            apiList.innerHTML = `
+            document.getElementById('apiList').innerHTML = `
                 <div class="text-center p-8 bg-red-900/20 border border-red-700 rounded-lg">
                     <div class="text-4xl mb-4">⚠️</div>
                     <h3 class="font-bold text-lg mb-2">Failed to load API data</h3>
-                    <p class="text-sm">Please check if /api/apilist exists on the server</p>
                     <p class="text-xs mt-4 text-gray-400">Error: ${err.message}</p>
                 </div>
             `;
@@ -937,34 +864,6 @@ document.addEventListener('keydown', (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
         e.preventDefault();
         document.getElementById('searchInput').focus();
-    }
-});
-
-document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-    anchor.addEventListener('click', function (e) {
-        e.preventDefault();
-        
-        const targetId = this.getAttribute('href');
-        if (targetId === '#') return;
-        
-        const targetElement = document.querySelector(targetId);
-        if (targetElement) {
-            window.scrollTo({
-                top: targetElement.offsetTop - 80,
-                behavior: 'smooth'
-            });
-        }
-    });
-});
-
-document.addEventListener('click', function(event) {
-    const searchInput = document.getElementById('searchInput');
-    const searchContainer = document.querySelector('.relative');
-    
-    if (!searchContainer.contains(event.target)) {
-        if (searchInput.value.trim() === '') {
-            performSearch();
-        }
     }
 });
 
