@@ -13,8 +13,6 @@ For setting API name etc
 const title = "EH PI AY DOANG";
 const favicon = "https://raw.githubusercontent.com/upload-file-lab/fileupload7/main/uploads/1764494355026.jpeg?format=png&name=900x900";
 const logo = "https://raw.githubusercontent.com/upload-file-lab/fileupload7/main/uploads/1764494355026.jpeg";
-const headertitle = "REST EH PI AY";
-const headerdescription = "Kumpulan API Endpoint yang mungkin berguna.";
 const footer = "© SHIKAKU IYAYN AJAH";
 
 // === KONFIGURASI PLAYLIST BANYAK MUSIK ===
@@ -88,7 +86,6 @@ function getEndpointsFromRouter(category, file) {
 
 router.get('/apilist', (req, res) => {
   const categories = [];
-
   for (const category of endpointDirs) {
     const files = fs.readdirSync(path.join(apiPath, category)).filter(f => f.endsWith('.js'));
     const endpoints = [];
@@ -102,7 +99,6 @@ router.get('/apilist', (req, res) => {
       });
     }
   }
-
   categories.push({
     name: "OTHER",
     items: [
@@ -116,7 +112,6 @@ router.get('/apilist', (req, res) => {
       }
     ]
   });
-
   res.json({ categories });
 });
 
@@ -143,23 +138,15 @@ app.get('/', (req, res) => {
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css" />
-    
     <style>
-        /* Ketika body memiliki class .light-mode, paksa perubahan warna komponen musik */
         .light-mode .music-player-card {
             background-color: #ffffff !important;
             border-color: #cbd5e1 !important;
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
         }
-        .light-mode .music-text-title {
-            color: #1e293b !important;
-        }
-        .light-mode .music-text-artist {
-            color: #475569 !important;
-        }
-        .light-mode .music-progress-bar-bg {
-            background-color: #e2e8f0 !important;
-        }
+        .light-mode .music-text-title { color: #1e293b !important; }
+        .light-mode .music-text-artist { color: #475569 !important; }
+        .light-mode .music-progress-bar-bg { background-color: #e2e8f0 !important; }
         .light-mode .music-btn-nav {
             background-color: #f1f5f9 !important;
             border-color: #cbd5e1 !important;
@@ -169,8 +156,16 @@ app.get('/', (req, res) => {
             background-color: #e2e8f0 !important;
             color: #0f172a !important;
         }
-        .light-mode .music-playlist-border {
-            border-color: #e2e8f0 !important;
+        .light-mode .music-playlist-border { border-color: #e2e8f0 !important; }
+        
+        /* Custom styling untuk dropdown menu bahasa agar clean */
+        .lang-dropdown-select {
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 0.5rem center;
+            background-size: 1em;
+            padding-right: 1.75rem;
         }
     </style>
 </head>
@@ -184,34 +179,43 @@ app.get('/', (req, res) => {
         </div>
     </div>
 
-    <div class="fixed top-4 left-4 z-50">
-        <button id="bioMenuBtn" class="flex items-center justify-center w-10 h-10 rounded-xl border border-slate-800 bg-[#0e1629] text-gray-400 hover:text-white transition-all active:scale-95 shadow-lg focus:outline-none" aria-label="Open Link Bio">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-            </svg>
-        </button>
-        
-        <div id="bioDropdown" class="hidden absolute top-12 left-0 w-64 p-4 rounded-xl shadow-2xl border border-slate-800 bg-[#090e1a] transition-all duration-300 z-50">
-            <h3 class="text-xs font-bold tracking-wider uppercase mb-3 text-gray-400">Link Bio</h3>
-            <div id="socialContainer" class="flex flex-col gap-2">
-                <div id="socialLoading" class="text-center py-2 w-full">
-                    <p class="text-xs text-gray-500">Loading...</p>
-                </div>
-                <div id="socialError" class="text-center py-2 w-full hidden">
-                    <p class="text-[10px] text-red-400">Link bio tidak tersedia.</p>
+    <div class="fixed top-4 right-4 z-50 flex items-center gap-2">
+        <div class="relative">
+            <select id="langSelect" class="lang-dropdown-select text-xs font-bold tracking-wide uppercase h-10 px-3 rounded-xl border border-slate-800 bg-[#0e1629] text-gray-400 light-mode:bg-white light-mode:border-gray-300 light-mode:text-gray-700 cursor-pointer focus:outline-none transition-all shadow-lg">
+                <option value="id">ID</option>
+                <option value="en">EN</option>
+            </select>
+        </div>
+
+        <div class="relative">
+            <button id="bioMenuBtn" class="flex items-center justify-center w-10 h-10 rounded-xl border border-slate-800 bg-[#0e1629] text-gray-400 hover:text-white light-mode:bg-white light-mode:border-gray-300 light-mode:text-gray-700 light-mode:hover:text-black transition-all active:scale-95 shadow-lg focus:outline-none" aria-label="Open Link Bio">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                </svg>
+            </button>
+            
+            <div id="bioDropdown" class="hidden absolute top-12 right-0 w-64 p-4 rounded-xl shadow-2xl border border-slate-800 bg-[#090e1a] light-mode:bg-white light-mode:border-gray-300 transition-all duration-300 z-50">
+                <h3 id="lang-bio-title" class="text-xs font-bold tracking-wider uppercase mb-3 text-gray-400 light-mode:text-gray-500">Link Bio</h3>
+                <div id="socialContainer" class="flex flex-col gap-2">
+                    <div id="socialLoading" class="text-center py-2 w-full">
+                        <p id="lang-loading" class="text-xs text-gray-500">Loading...</p>
+                    </div>
+                    <div id="socialError" class="text-center py-2 w-full hidden">
+                        <p id="lang-error-bio" class="text-[10px] text-red-400">Link bio tidak tersedia.</p>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <button id="themeToggle" class="theme-toggle-btn fixed top-4 right-4 z-50" aria-label="Toggle theme">
-        <svg id="theme-toggle-dark-icon" class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-            <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
-        </svg>
-        <svg id="theme-toggle-light-icon" class="w-6 h-6 hidden" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-            <path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path>
-        </svg>
-    </button>
+        <button id="themeToggle" class="theme-toggle-btn flex items-center justify-center w-10 h-10 rounded-xl border border-slate-800 bg-[#0e1629] text-gray-400 hover:text-white light-mode:bg-white light-mode:border-gray-300 light-mode:text-gray-700 light-mode:hover:text-black transition-all active:scale-95 shadow-lg focus:outline-none" aria-label="Toggle theme">
+            <svg id="theme-toggle-dark-icon" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
+            </svg>
+            <svg id="theme-toggle-light-icon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                <path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path>
+            </svg>
+        </button>
+    </div>
 
     <div class="max-w-5xl mx-auto px-4 py-8">
         <header id="api" class="mb-12">
@@ -219,12 +223,12 @@ app.get('/', (req, res) => {
                 <img id="logoImg" src="${logo}" alt="Logo" class="w-full max-w-sm rounded-xl shadow-xl hover:scale-105 transition-all duration-300">
             </div>
             <h1 id="mainTitle" class="text-4xl md:text-6xl font-black mb-4 leading-tight tracking-wider text-center gray-gradient-text">${headertitle}</h1>
-            <p id="mainDescription" class="text-lg font-light tracking-wide text-center text-gray-300 light-mode:text-gray-600">${headerdescription}</p>
+            <p id="mainDescription" class="text-lg font-light tracking-wide text-center text-gray-300 light-mode:text-gray-600">Loading description...</p>
             
             <div class="mt-8 flex flex-wrap justify-center items-center gap-4 md:gap-8">
                 <div class="stats-card flex items-center gap-3 px-4 py-3 rounded-lg">
                     <div class="flex flex-col items-center">
-                        <span class="text-xs font-medium stats-text-secondary">Your Battery</span>
+                        <span id="lang-stat-battery" class="text-xs font-medium stats-text-secondary">Your Battery</span>
                         <div class="flex items-center gap-2 mt-1">
                             <div id="batteryContainer" class="battery-container">
                                 <div id="batteryLevel" class="battery-level bg-green-500" style="width: 0%"></div>
@@ -240,14 +244,14 @@ app.get('/', (req, res) => {
                 
                 <div class="stats-card flex items-center gap-3 px-4 py-3 rounded-lg">
                     <div class="flex flex-col items-center">
-                        <span class="text-xs font-medium stats-text-secondary">Total Endpoints</span>
+                        <span id="lang-stat-endpoints" class="text-xs font-medium stats-text-secondary">Total Endpoints</span>
                         <span id="totalEndpoints" class="text-lg font-bold">0</span>
                     </div>
                 </div>
                 
                 <div class="stats-card flex items-center gap-3 px-4 py-3 rounded-lg">
                     <div class="flex flex-col items-center">
-                        <span class="text-xs font-medium stats-text-secondary">Total Categories</span>
+                        <span id="lang-stat-categories" class="text-xs font-medium stats-text-secondary">Total Categories</span>
                         <span id="totalCategories" class="text-lg font-bold">0</span>
                     </div>
                 </div>
@@ -257,17 +261,14 @@ app.get('/', (req, res) => {
 
             <div class="music-player-card mt-8 max-w-2xl mx-auto bg-[#090e1a] border border-slate-800/80 rounded-2xl p-4 shadow-2xl relative overflow-hidden transition-all duration-300">
                 <audio id="audioElement"></audio>
-                
                 <div class="flex items-center justify-between gap-4">
                     <div class="flex items-center gap-4 flex-1 min-w-0">
                         <div class="relative w-16 h-16 rounded-xl overflow-hidden bg-black flex-shrink-0 border border-slate-800">
                             <img id="musicCoverImg" src="" alt="Cover" class="w-full h-full object-cover transition-transform duration-500">
                         </div>
-                        
                         <div class="flex-1 min-w-0">
                             <h3 id="musicTitle" class="music-text-title text-white font-bold text-sm tracking-wider uppercase truncate m-0">Loading...</h3>
                             <p id="musicArtist" class="music-text-artist text-gray-400 text-xs font-semibold tracking-wide truncate mt-0.5">-</p>
-                            
                             <div class="flex items-center gap-2 mt-2">
                                 <span id="currentTime" class="text-[10px] text-gray-500 code-font w-7 text-left">0:00</span>
                                 <div id="progressContainer" class="music-progress-bar-bg flex-1 h-1 bg-slate-800 rounded-full relative cursor-pointer group">
@@ -277,25 +278,14 @@ app.get('/', (req, res) => {
                             </div>
                         </div>
                     </div>
-                    
                     <div class="flex items-center gap-1.5 flex-shrink-0">
-                        <button id="prevBtn" class="music-btn-nav w-9 h-9 flex items-center justify-center bg-[#0e1629] border border-slate-800 rounded-xl text-gray-400 hover:text-white transition-all active:scale-95">
-                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
-                        </button>
-                        <button id="playBtn" class="music-btn-nav w-10 h-10 flex items-center justify-center bg-[#0e1629] border border-slate-800 rounded-xl text-gray-400 hover:text-white transition-all active:scale-95">
-                            <svg id="playIcon" class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                        </button>
-                        <button id="nextBtn" class="music-btn-nav w-9 h-9 flex items-center justify-center bg-[#0e1629] border border-slate-800 rounded-xl text-gray-400 hover:text-white transition-all active:scale-95">
-                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M16 6h2v12h-2zm-10.5 12l8.5-6-8.5-6z"/></svg>
-                        </button>
-                        <button id="playlistToggleBtn" class="music-btn-nav w-9 h-9 flex items-center justify-center bg-[#0e1629] border border-slate-800 rounded-xl text-gray-400 hover:text-white transition-all active:scale-95">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
-                        </button>
+                        <button id="prevBtn" class="music-btn-nav w-9 h-9 flex items-center justify-center bg-[#0e1629] border border-slate-800 rounded-xl text-gray-400 hover:text-white transition-all active:scale-95"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
+                        <button id="playBtn" class="music-btn-nav w-10 h-10 flex items-center justify-center bg-[#0e1629] border border-slate-800 rounded-xl text-gray-400 hover:text-white transition-all active:scale-95"><svg id="playIcon" class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+                        <button id="nextBtn" class="music-btn-nav w-9 h-9 flex items-center justify-center bg-[#0e1629] border border-slate-800 rounded-xl text-gray-400 hover:text-white transition-all active:scale-95"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M16 6h2v12h-2zm-10.5 12l8.5-6-8.5-6z"/></svg></button>
+                        <button id="playlistToggleBtn" class="music-btn-nav w-9 h-9 flex items-center justify-center bg-[#0e1629] border border-slate-800 rounded-xl text-gray-400 hover:text-white transition-all active:scale-95"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg></button>
                     </div>
                 </div>
-                
-                <div id="playlistPanel" class="music-playlist-border hidden mt-4 pt-4 border-t border-slate-800/60 max-h-40 overflow-y-auto space-y-1">
-                </div>
+                <div id="playlistPanel" class="music-playlist-border hidden mt-4 pt-4 border-t border-slate-800/60 max-h-40 overflow-y-auto space-y-1"></div>
             </div>
         </header>
 
@@ -304,7 +294,7 @@ app.get('/', (req, res) => {
                 <input 
                     type="text" 
                     id="searchInput" 
-                    placeholder="Search endpoints by name, path, or category..."
+                    placeholder="Search endpoints..."
                     class="search-input w-full px-4 py-3 text-sm rounded-lg focus:outline-none focus:border-blue-500 transition-all code-font"
                 >
                 <svg class="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -315,8 +305,8 @@ app.get('/', (req, res) => {
 
         <div id="noResults" class="text-center py-12 hidden">
             <div class="text-4xl mb-2">🔍</div>
-            <h3 class="text-sm font-bold mb-1">No endpoints found</h3>
-            <p class="text-xs">Try a different search term</p>
+            <h3 id="lang-no-result-title" class="text-sm font-bold mb-1">No endpoints found</h3>
+            <p id="lang-no-result-desc" class="text-xs">Try a different search term</p>
         </div>
 
         <div id="apiList" class="space-y-4"></div>
