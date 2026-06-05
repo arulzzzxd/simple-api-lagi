@@ -2,6 +2,7 @@ const BASE_URL = window.location.origin;
 let isRequestInProgress = false;
 let apiData = null;
 let currentTheme = 'dark';
+let currentLang = 'id'; // Bahasa bawaan awal
 let allApiElements = [];
 let totalEndpoints = 0;
 let totalCategories = 0;
@@ -11,6 +12,43 @@ const themeToggleBtn = document.getElementById('themeToggle');
 const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
 const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
 const body = document.body;
+const langSelect = document.getElementById('langSelect');
+
+// Kamus Translasi Bahasa (Indonesia & Inggris)
+const i18n = {
+    id: {
+        description: "Kumpulan API Endpoint yang mungkin berguna.",
+        batteryCard: "Baterai Kamu",
+        endpointsCard: "Total Endpoint",
+        categoriesCard: "Total Kategori",
+        searchPlaceholder: "Cari endpoint berdasarkan nama, jalur, atau kategori...",
+        noResultTitle: "Endpoint tidak ditemukan",
+        noResultDesc: "Coba gunakan kata kunci pencarian yang lain",
+        bioTitle: "Link Bio",
+        loading: "Memuat...",
+        errorBio: "Link bio tidak tersedia.",
+        batFull: "Penuh",
+        batCharging: "Mengisi Daya",
+        batDischarging: "Sisa Waktu",
+        batLow: "Lemah"
+    },
+    en: {
+        description: "A collection of API Endpoints that might be useful.",
+        batteryCard: "Your Battery",
+        endpointsCard: "Total Endpoints",
+        categoriesCard: "Total Categories",
+        searchPlaceholder: "Search endpoints by name, path, or category...",
+        noResultTitle: "No endpoints found",
+        noResultDesc: "Try a different search term",
+        bioTitle: "Link Bio",
+        loading: "Loading...",
+        errorBio: "Link bio is unavailable.",
+        batFull: "Full",
+        batCharging: "Charging",
+        batDischarging: "Discharging",
+        batLow: "Low"
+    }
+};
 
 function initTheme() {
     const savedTheme = localStorage.getItem('theme') || 'dark';
@@ -35,895 +73,363 @@ function toggleTheme() {
         themeToggleDarkIcon.classList.remove('hidden');
         themeToggleLightIcon.classList.add('hidden');
         currentTheme = 'dark';
+        localStorage.setItem('theme', 'dark');
     } else {
         body.classList.add('light-mode');
         themeToggleDarkIcon.classList.add('hidden');
         themeToggleLightIcon.classList.remove('hidden');
         currentTheme = 'light';
-    }
-    
-    localStorage.setItem('theme', currentTheme);
-    updateSocialBadges();
-    if (apiData) loadApis();
-}
-
-function updateSocialBadges() {
-    const isLightMode = body.classList.contains('light-mode');
-    const socialBadges = document.querySelectorAll('.social-badge > div');
-    
-    socialBadges.forEach(badge => {
-        badge.className = 'px-4 py-2 rounded-lg text-sm transition-colors';
-        if (isLightMode) {
-            badge.classList.add('bg-gray-100', 'text-gray-800', 'hover:bg-gray-200');
-        } else {
-            badge.classList.add('bg-gray-800', 'text-gray-300', 'hover:bg-gray-700');
-        }
-    });
-}
-
-function initBatteryDetection() {
-    const batteryLevelElement = document.getElementById('batteryLevel');
-    const batteryPercentageElement = document.getElementById('batteryPercentage');
-    const batteryStatusElement = document.getElementById('batteryStatus');
-    const batteryContainer = document.getElementById('batteryContainer');
-    
-    if ('getBattery' in navigator) {
-        navigator.getBattery().then(function(battery) {
-            function updateBatteryInfo() {
-                const level = battery.level * 100;
-                const isCharging = battery.charging;
-                const roundedLevel = Math.round(level);
-                const isLightMode = body.classList.contains('light-mode');
-                
-                batteryPercentageElement.textContent = `${roundedLevel}%`;
-                batteryLevelElement.style.width = `${level}%`;
-                
-                if (level > 60) {
-                    batteryLevelElement.className = 'battery-level ' + (isLightMode ? 'bg-green-600' : 'bg-green-500');
-                } else if (level > 20) {
-                    batteryLevelElement.className = 'battery-level ' + (isLightMode ? 'bg-yellow-600' : 'bg-yellow-500');
-                } else {
-                    batteryLevelElement.className = 'battery-level ' + (isLightMode ? 'bg-red-600' : 'bg-red-500');
-                }
-                
-                if (isCharging) {
-                    batteryContainer.classList.add('charging');
-                    batteryStatusElement.textContent = 'Charging';
-                    batteryLevelElement.classList.add('battery-charging');
-                } else {
-                    batteryContainer.classList.remove('charging');
-                    batteryLevelElement.classList.remove('battery-charging');
-                    
-                    if (battery.dischargingTime === Infinity) {
-                        batteryStatusElement.textContent = 'Fully charged';
-                    } else {
-                        batteryStatusElement.textContent = 'Discharging';
-                    }
-                }
-                
-                if (isCharging && battery.chargingTime !== Infinity) {
-                    const hours = Math.floor(battery.chargingTime / 3600);
-                    const minutes = Math.floor((battery.chargingTime % 3600) / 60);
-                    batteryStatusElement.textContent = `Charging (${hours}h ${minutes}m)`;
-                } else if (!isCharging && battery.dischargingTime !== Infinity) {
-                    const hours = Math.floor(battery.dischargingTime / 3600);
-                    const minutes = Math.floor((battery.dischargingTime % 3600) / 60);
-                    batteryStatusElement.textContent = `${hours}h ${minutes}m left`;
-                }
-            }
-            
-            updateBatteryInfo();
-            battery.addEventListener('levelchange', updateBatteryInfo);
-            battery.addEventListener('chargingchange', updateBatteryInfo);
-            battery.addEventListener('chargingtimechange', updateBatteryInfo);
-            battery.addEventListener('dischargingtimechange', updateBatteryInfo);
-            batteryMonitor = battery;
-            
-        }).catch(function(error) {
-            console.error("Battery API error:", error);
-            batteryStatusElement.textContent = 'API Error';
-            fallbackBattery();
-        });
-    } else {
-        console.log("Battery Status API not supported");
-        batteryStatusElement.textContent = 'API Not Supported';
-        fallbackBattery();
-    }
-    
-    function fallbackBattery() {
-        batteryStatusElement.textContent = 'Simulated';
-        let simulatedLevel = localStorage.getItem('simulatedBattery');
-        if (!simulatedLevel) {
-            simulatedLevel = Math.floor(Math.random() * 30) + 30;
-            localStorage.setItem('simulatedBattery', simulatedLevel.toString());
-        } else {
-            simulatedLevel = parseInt(simulatedLevel);
-        }
-        
-        let isSimulatedCharging = localStorage.getItem('simulatedCharging') === 'true';
-        
-        function simulateBattery() {
-            const isLightMode = body.classList.contains('light-mode');
-            let newLevel = simulatedLevel;
-            
-            if (isSimulatedCharging) {
-                const chargeRate = 0.5;
-                newLevel = Math.min(100, newLevel + chargeRate);
-                
-                if (newLevel >= 100) {
-                    isSimulatedCharging = false;
-                    localStorage.setItem('simulatedCharging', 'false');
-                    batteryContainer.classList.remove('charging');
-                    batteryLevelElement.classList.remove('battery-charging');
-                    batteryStatusElement.textContent = 'Fully charged';
-                } else {
-                    batteryStatusElement.textContent = 'Charging';
-                }
-            } else {
-                const drainRate = 0.1;
-                newLevel = Math.max(5, newLevel - drainRate);
-                
-                if (newLevel <= 15 && Math.random() > 0.7) {
-                    isSimulatedCharging = true;
-                    localStorage.setItem('simulatedCharging', 'true');
-                    batteryContainer.classList.add('charging');
-                    batteryLevelElement.classList.add('battery-charging');
-                    batteryStatusElement.textContent = 'Charging';
-                } else {
-                    const minutesLeft = Math.round((newLevel - 5) / drainRate);
-                    const hours = Math.floor(minutesLeft / 60);
-                    const minutes = minutesLeft % 60;
-                    
-                    if (hours > 0) {
-                        batteryStatusElement.textContent = `${hours}h ${minutes}m left`;
-                    } else {
-                        batteryStatusElement.textContent = `${minutes}m left`;
-                    }
-                }
-            }
-            
-            simulatedLevel = newLevel;
-            localStorage.setItem('simulatedBattery', newLevel.toString());
-            const roundedLevel = Math.round(newLevel);
-            batteryPercentageElement.textContent = `${roundedLevel}%`;
-            batteryLevelElement.style.width = `${newLevel}%`;
-            
-            if (newLevel > 60) {
-                batteryLevelElement.className = 'battery-level ' + (isLightMode ? 'bg-green-600' : 'bg-green-500');
-            } else if (newLevel > 20) {
-                batteryLevelElement.className = 'battery-level ' + (isLightMode ? 'bg-yellow-600' : 'bg-yellow-500');
-            } else {
-                batteryLevelElement.className = 'battery-level ' + (isLightMode ? 'bg-red-600' : 'bg-red-500');
-            }
-        }
-        
-        simulateBattery();
-        setInterval(simulateBattery, 10000);
+        localStorage.setItem('theme', 'light');
     }
 }
 
-function cleanupBatteryMonitor() {
+// MANAJEMEN PERUBAHAN BAHASA HALAMAN
+function applyLanguage(lang) {
+    currentLang = lang;
+    localStorage.setItem('lang', lang);
+    
+    // Update teks komponen statis & dinamis
+    document.getElementById('mainDescription').innerText = i18n[lang].description;
+    document.getElementById('lang-stat-battery').innerText = i18n[lang].batteryCard;
+    document.getElementById('lang-stat-endpoints').innerText = i18n[lang].endpointsCard;
+    document.getElementById('lang-stat-categories').innerText = i18n[lang].categoriesCard;
+    document.getElementById('searchInput').placeholder = i18n[lang].searchPlaceholder;
+    document.getElementById('lang-no-result-title').innerText = i18n[lang].noResultTitle;
+    document.getElementById('lang-no-result-desc').innerText = i18n[lang].noResultDesc;
+    document.getElementById('lang-bio-title').innerText = i18n[lang].bioTitle;
+    document.getElementById('lang-loading').innerText = i18n[lang].loading;
+    document.getElementById('lang-error-bio').innerText = i18n[lang].errorBio;
+    
+    // Update teks status indikator daya baterai
     if (batteryMonitor) {
-        batteryMonitor.removeEventListener('levelchange', updateBatteryInfo);
-        batteryMonitor.removeEventListener('chargingchange', updateBatteryInfo);
-        batteryMonitor.removeEventListener('chargingtimechange', updateBatteryInfo);
-        batteryMonitor.removeEventListener('dischargingtimechange', updateBatteryInfo);
-        batteryMonitor = null;
+        updateBatteryStatusText(batteryMonitor);
     }
 }
 
-function updateTotalEndpoints() {
-    const totalEndpointsElement = document.getElementById('totalEndpoints');
-    totalEndpointsElement.textContent = totalEndpoints;
+function initLanguage() {
+    const savedLang = localStorage.getItem('lang') || 'id';
+    langSelect.value = savedLang;
+    applyLanguage(savedLang);
 }
 
-function updateTotalCategories() {
-    const totalCategoriesElement = document.getElementById('totalCategories');
-    totalCategoriesElement.textContent = totalCategories;
-}
+langSelect.addEventListener('change', (e) => {
+    applyLanguage(e.target.value);
+});
 
-function showToast(message, isError = false) {
-    const toast = document.getElementById('toast');
-    const toastMessage = document.getElementById('toastMessage');
-    const toastIcon = document.getElementById('toastIcon');
-    
-    toastMessage.textContent = message;
-    
-    if (isError) {
-        toastIcon.innerHTML = '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>';
-    } else {
-        toastIcon.innerHTML = '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>';
-    }
-    
-    toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), 3000);
-}
-
-function copyText(text, type = 'path') {
-    navigator.clipboard.writeText(text).then(() => {
-        showToast(`${type} copied to clipboard!`);
-    }).catch(() => {
-        showToast('Failed to copy', true);
-    });
-}
-
-function toggleCategory(index) {
-    const content = document.getElementById(`cat-${index}`);
-    const icon = document.getElementById(`cat-icon-${index}`);
-    content.classList.toggle('hidden');
-    icon.style.transform = content.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(180deg)';
-}
-
-function toggleEndpoint(catIdx, epIdx) {
-    const content = document.getElementById(`ep-${catIdx}-${epIdx}`);
-    const icon = document.getElementById(`ep-icon-${catIdx}-${epIdx}`);
-    content.classList.toggle('hidden');
-    icon.style.transform = content.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(180deg)';
-}
-
-function isMediaFile(url) {
-    const mediaExtensions = [
-        '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg', '.ico',
-        '.mp4', '.webm', '.ogg', '.mov', '.avi', '.mkv',
-        '.mp3', '.wav', '.ogg', '.m4a', '.flac',
-        '.pdf', '.doc', '.docx', '.ppt', '.pptx', '.xls', '.xlsx'
-    ];
-    
-    return mediaExtensions.some(ext => 
-        url.toLowerCase().includes(ext) || 
-        url.toLowerCase().startsWith('data:image/') ||
-        url.toLowerCase().startsWith('data:video/') ||
-        url.toLowerCase().startsWith('data:audio/')
-    );
-}
-
-function getContentType(url, contentType) {
-    if (contentType) {
-        if (contentType.includes('image/')) return 'image';
-        if (contentType.includes('video/')) return 'video';
-        if (contentType.includes('audio/')) return 'audio';
-        if (contentType.includes('application/pdf')) return 'pdf';
-    }
-    
-    if (url.includes('.jpg') || url.includes('.jpeg') || url.includes('.png') || 
-        url.includes('.gif') || url.includes('.webp') || url.includes('.svg')) {
-        return 'image';
-    }
-    if (url.includes('.mp4') || url.includes('.webm') || url.includes('.ogg') || 
-        url.includes('.mov') || url.includes('.avi')) {
-        return 'video';
-    }
-    if (url.includes('.mp3') || url.includes('.wav') || url.includes('.ogg') || 
-        url.includes('.m4a')) {
-        return 'audio';
-    }
-    if (url.includes('.pdf')) return 'pdf';
-    
-    return 'unknown';
-}
-
-function createMediaPreview(url, contentType, originalUrl = '') {
-    const type = getContentType(url, contentType);
-    let previewHtml = '';
-    
-    switch(type) {
-        case 'image':
-            previewHtml = `<div class="media-preview"><img src="${url}" class="media-image" alt="Response Image"></div>`;
-            break;
-        case 'video':
-            previewHtml = `<div class="media-preview"><video controls class="media-iframe"><source src="${url}" type="${contentType || 'video/mp4'}">Your browser does not support the video tag.</video></div>`;
-            break;
-        case 'audio':
-            previewHtml = `<div class="media-preview"><audio controls class="w-full"><source src="${url}" type="${contentType || 'audio/mpeg'}">Your browser does not support the audio tag.</audio></div>`;
-            break;
-        case 'pdf':
-            previewHtml = `<div class="media-preview"><iframe src="${url}" class="media-iframe" frameborder="0"></iframe></div>`;
-            break;
-        default:
-            previewHtml = `<div class="media-preview"><iframe src="${url}" class="media-iframe" frameborder="0"></iframe></div>`;
-    }
-    
-    const isLightMode = body.classList.contains('light-mode');
-    const btnClass = isLightMode 
-        ? 'px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5' 
-        : 'px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-white rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5';
-    
-    const copyUrl = originalUrl || url;
-    
-    const actionButtons = `
-        <div class="flex gap-2 mt-3 justify-start">
-            <button type="button" onclick="copyText('${copyUrl}', 'Media URL')" class="${btnClass}">
-                <span>📋</span> Copy URL
-            </button>
-            <a href="${url}" download="downloaded_media" class="${btnClass}">
-                <span>📥</span> Download File
-            </a>
-        </div>
-    `;
-    
-    return `<div class="w-full">${previewHtml}${actionButtons}</div>`;
-}
-
-async function executeRequest(e, catIdx, epIdx, method, path) {
-    e.preventDefault();
-    
-    if (isRequestInProgress) {
-        showToast('Please wait for current request', true);
-        return;
-    }
-
-    const form = document.getElementById(`form-${catIdx}-${epIdx}`);
-    const responseDiv = document.getElementById(`response-${catIdx}-${epIdx}`);
-    const responseContent = document.getElementById(`response-content-${catIdx}-${epIdx}`);
-    const curlSection = document.getElementById(`curl-section-${catIdx}-${epIdx}`);
-    const urlSection = document.getElementById(`url-section-${catIdx}-${epIdx}`);
-    const curlCommand = document.getElementById(`curl-command-${catIdx}-${epIdx}`);
-    const urlCommand = document.getElementById(`url-command-${catIdx}-${epIdx}`);
-    const executeBtn = form.querySelector('button[type="submit"]');
-    
-    let spinner = executeBtn.querySelector('.local-spinner');
-    if (!spinner) {
-        spinner = document.createElement('span');
-        spinner.className = 'local-spinner ml-2';
-        executeBtn.appendChild(spinner);
-    }
-    
-    isRequestInProgress = true;
-    executeBtn.disabled = true;
-    executeBtn.classList.add('btn-loading');
-    spinner.classList.add('active');
-    
-    const formData = new FormData(form);
-    const params = new URLSearchParams();
-    for (const [key, value] of formData.entries()) {
-        if (value) params.append(key, value);
-    }
-
-    const fullPath = `${BASE_URL}${path.split('?')[0]}?${params.toString()}`;
-    responseDiv.classList.remove('hidden');
-    responseContent.innerHTML = '<div class="spinner mx-auto"></div>';
-    
-    const curlText = `curl -X ${method} "${fullPath}"`;
-    curlCommand.textContent = curlText;
-    curlSection.classList.remove('hidden');
-    
-    const urlText = fullPath;
-    urlCommand.textContent = urlText;
-    urlSection.classList.remove('hidden');
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000);
-
-    try {
-        const response = await fetch(fullPath, { signal: controller.signal });
-        clearTimeout(timeoutId);
-
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-        const contentType = response.headers.get("content-type");
-        
-        if (contentType?.includes("application/json")) {
-            const data = await response.json();
-            responseContent.innerHTML = `<pre class="code-font text-sm overflow-auto">${JSON.stringify(data, null, 2)}</pre>`;
-        } else if (contentType?.startsWith("image/")) {
-            const blob = await response.blob();
-            const imageUrl = URL.createObjectURL(blob);
-            responseContent.innerHTML = createMediaPreview(imageUrl, contentType, fullPath);
-        } else if (contentType?.startsWith("video/")) {
-            const blob = await response.blob();
-            const videoUrl = URL.createObjectURL(blob);
-            responseContent.innerHTML = createMediaPreview(videoUrl, contentType, fullPath);
-        } else if (contentType?.startsWith("audio/")) {
-            const blob = await response.blob();
-            const audioUrl = URL.createObjectURL(blob);
-            responseContent.innerHTML = createMediaPreview(audioUrl, contentType, fullPath);
-        } else if (contentType?.includes("application/pdf")) {
-            const blob = await response.blob();
-            const pdfUrl = URL.createObjectURL(blob);
-            responseContent.innerHTML = createMediaPreview(pdfUrl, contentType, fullPath);
-        } else {
-            const text = await response.text();
-            
-            if (isMediaFile(text)) {
-                responseContent.innerHTML = createMediaPreview(text, contentType, text);
-            } else {
-                responseContent.innerHTML = `<pre class="code-font text-sm overflow-auto">${text}</pre>`;
-            }
-        }
-        
-        showToast('Request completed successfully!');
-        
-    } catch (error) {
-        clearTimeout(timeoutId);
-        const errorMsg = error.name === 'AbortError' ? 'Request timeout (30s)' : error.message;
-        responseContent.innerHTML = `<pre class="text-red-400 code-font text-sm">Error: ${errorMsg}</pre>`;
-        showToast('Request failed!', true);
-        
-    } finally {
-        isRequestInProgress = false;
-        executeBtn.disabled = false;
-        executeBtn.classList.remove('btn-loading');
-        spinner.classList.remove('active');
-    }
-}
-
-function clearResponse(catIdx, epIdx) {
-    const responseDiv = document.getElementById(`response-${catIdx}-${epIdx}`);
-    const curlSection = document.getElementById(`curl-section-${catIdx}-${epIdx}`);
-    const urlSection = document.getElementById(`url-section-${catIdx}-${epIdx}`);
-    responseDiv.classList.add('hidden');
-    curlSection.classList.add('hidden');
-    urlSection.classList.add('hidden');
-}
-
-function loadApis() {
-    const apiList = document.getElementById('apiList');
-    if (!apiData || !apiData.categories) {
-        apiList.innerHTML = '<p class="text-center">No API data loaded.</p>';
-        return;
-    }
-    
-    const isLightMode = body.classList.contains('light-mode');
-    
-    totalEndpoints = 0;
-    totalCategories = apiData.categories.length;
-    
-    apiData.categories.forEach(category => {
-        totalEndpoints += category.items.length;
-    });
-    
-    updateTotalEndpoints();
-    updateTotalCategories();
-    
-    let html = '';
-    apiData.categories.forEach((category, catIdx) => {
-        html += `
-        <div class="category-group fade-in" data-category="${category.name.toLowerCase()}">
-            <div class="${isLightMode ? 'bg-white border-gray-300' : 'bg-gray-900 border-gray-700'} border rounded-xl overflow-hidden card-hover">
-                <button onclick="toggleCategory(${catIdx})" class="w-full px-4 py-3 flex items-center justify-between ${isLightMode ? 'hover:bg-gray-100' : 'hover:bg-gray-800'} transition-colors">
-                    <div class="flex items-center gap-3">
-                        <span class="text-lg">📁</span>
-                        <div class="text-left">
-                            <h3 class="font-bold text-sm gray-gradient-text">${category.name}</h3>
-                            <p class="text-xs ${isLightMode ? 'text-gray-600' : 'text-gray-400'}">${category.items.length} endpoints</p>
-                        </div>
-                    </div>
-                    <svg id="cat-icon-${catIdx}" class="w-4 h-4 ${isLightMode ? 'text-gray-600' : 'text-gray-400'} transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                    </svg>
-                </button>
-                
-                <div id="cat-${catIdx}" class="hidden">`;
-        
-        category.items.forEach((item, epIdx) => {
-            const method = 'GET';
-            const pathParts = item.path.split('?');
-            const path = pathParts[0];
-            const queryParams = new URLSearchParams(pathParts[1] || '');
-
-            let statusClass = 'status-ready';
-            if (item.status === 'update') statusClass = 'status-update';
-            if (item.status === 'error') statusClass = 'status-error';
-
-            html += `
-            <div class="api-item border-t ${isLightMode ? 'border-gray-300' : 'border-gray-700'}" 
-                data-method="${method}"
-                data-path="${path}"
-                data-alias="${item.name.toLowerCase()}"
-                data-description="${item.desc.toLowerCase()}"
-                data-category="${category.name.toLowerCase()}">
-                <button onclick="toggleEndpoint(${catIdx}, ${epIdx})" class="w-full px-4 py-2.5 flex items-center justify-between ${isLightMode ? 'hover:bg-gray-100' : 'hover:bg-gray-800'} transition-colors">
-                    <div class="flex items-center gap-3 flex-1 min-w-0">
-                        <span class="${isLightMode ? 'bg-gray-200 text-gray-800' : 'bg-gray-700 text-white'} px-2 py-0.5 rounded text-[10px] flex-shrink-0">${method}</span>
-                        <div class="text-left flex-1 min-w-0">
-                            <p class="code-font font-semibold text-xs truncate">${path}</p>
-                            <div class="flex items-center gap-2 mt-0.5">
-                                <p class="text-xs ${isLightMode ? 'text-gray-700' : 'text-gray-300'} truncate">${item.name}</p>
-                                <span class="px-1.5 py-0.5 text-[10px] rounded-full ${statusClass} flex-shrink-0">${item.status || 'ready'}</span>
-                            </div>
-                        </div>
-                    </div>
-                    <svg id="ep-icon-${catIdx}-${epIdx}" class="w-4 h-4 ${isLightMode ? 'text-gray-600' : 'text-gray-400'} transition-transform duration-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                    </svg>
-                </button>
-                
-                <div id="ep-${catIdx}-${epIdx}" class="hidden ${isLightMode ? 'bg-gray-100' : 'bg-gray-800/30'} px-4 py-3 border-t ${isLightMode ? 'border-gray-300' : 'border-gray-700'}">
-                    <p class="${isLightMode ? 'text-gray-700' : 'text-gray-300'} mb-3 text-xs">${item.desc}</p>
-                    
-                    <div class="mb-3">
-                        <div class="flex items-center justify-between mb-1.5">
-                            <h4 class="font-bold text-xs ${isLightMode ? 'text-gray-700' : 'text-gray-300'}">🔗 Endpoint</h4>
-                            <div class="flex gap-2">
-                                <button onclick="copyText('${path}', 'Path')" class="px-2 py-1 ${isLightMode ? 'bg-gray-200 hover:bg-gray-300' : 'bg-gray-800 hover:bg-gray-700'} rounded text-[10px] transition-colors">
-                                    Copy Path
-                                </button>
-                                <button onclick="copyText('${BASE_URL}${path}', 'URL')" class="px-2 py-1 ${isLightMode ? 'bg-gray-200 hover:bg-gray-300' : 'bg-gray-800 hover:bg-gray-700'} rounded text-[10px] transition-colors">
-                                    Copy Full URL
-                                </button>
-                            </div>
-                        </div>
-                        <div class="${isLightMode ? 'bg-gray-200 border-gray-300' : 'bg-gray-900/50 border-gray-700'} border px-3 py-2 rounded-lg">
-                            <code class="code-font text-xs ${isLightMode ? 'text-gray-700' : 'text-gray-300'}">${path}</code>
-                        </div>
-                    </div>`;
-
-            if (item.status === 'ready') {
-                html += `
-                    <div>
-                        <h4 class="font-bold text-sm ${isLightMode ? 'text-gray-700' : 'text-gray-300'} mb-3">⚡ Try it out</h4>
-                        <form id="form-${catIdx}-${epIdx}" onsubmit="executeRequest(event, ${catIdx}, ${epIdx}, '${method}', '${path}')">
-                            <div class="space-y-3 mb-4">`;
-                
-                if (item.params) {
-                    Object.keys(item.params).forEach(paramName => {
-                        const isRequired = !queryParams.has(paramName) || queryParams.get(paramName) === '';
-                        html += `
-                            <div>
-                                <label class="block text-sm font-medium ${isLightMode ? 'text-gray-700' : 'text-gray-300'} mb-2">
-                                    ${paramName} ${isRequired ? '<span class="text-red-500">*</span>' : ''}
-                                </label>
-                                <input 
-                                    type="text" 
-                                    name="${paramName}" 
-                                    class="search-input w-full px-4 py-2 rounded-lg focus:outline-none focus:border-blue-500 code-font text-sm" 
-                                    placeholder="${item.params[paramName]}" 
-                                    ${isRequired ? 'required' : ''}
-                                >
-                            </div>`;
-                    });
-                }
-                
-                html += `
-                            </div>
-                            <div class="flex gap-3 flex-wrap">
-                                <button type="submit" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-sm transition-all flex items-center justify-center">
-                                    Execute
-                                    <span class="local-spinner ml-2"></span>
-                                </button>
-                                <button type="button" onclick="clearResponse(${catIdx}, ${epIdx})" class="px-6 py-2 ${isLightMode ? 'bg-gray-300 hover:bg-gray-400 border-gray-400' : 'bg-gray-700 hover:bg-gray-600 border-gray-600'} border rounded-lg font-semibold text-sm transition-colors">
-                                    Clear
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                    
-                    <div id="url-section-${catIdx}-${epIdx}" class="hidden mt-4">
-                        <div class="flex items-center justify-between mb-1.5">
-                            <h4 class="font-bold text-xs ${isLightMode ? 'text-gray-700' : 'text-gray-300'}">🌐 URL Request</h4>
-                            <button onclick="copyText(document.getElementById('url-command-${catIdx}-${epIdx}').textContent, 'URL')" class="px-2 py-1 ${isLightMode ? 'bg-gray-200 hover:bg-gray-300' : 'bg-gray-800 hover:bg-gray-700'} rounded text-[10px] transition-colors">
-                                Copy URL
-                            </button>
-                        </div>
-                        <div class="${isLightMode ? 'bg-gray-200 border-gray-300' : 'bg-gray-900/50 border-gray-700'} border px-3 py-2 rounded-lg">
-                            <code id="url-command-${catIdx}-${epIdx}" class="code-font text-xs ${isLightMode ? 'text-gray-700' : 'text-gray-300'} break-all"></code>
-                        </div>
-                    </div>
-                    
-                    <div id="curl-section-${catIdx}-${epIdx}" class="hidden mt-4">
-                        <div class="flex items-center justify-between mb-1.5">
-                            <h4 class="font-bold text-xs ${isLightMode ? 'text-gray-700' : 'text-gray-300'}">📟 cURL Command</h4>
-                            <button onclick="copyText(document.getElementById('curl-command-${catIdx}-${epIdx}').textContent, 'cURL')" class="px-2 py-1 ${isLightMode ? 'bg-gray-200 hover:bg-gray-300' : 'bg-gray-800 hover:bg-gray-700'} rounded text-[10px] transition-colors">
-                                Copy cURL
-                            </button>
-                        </div>
-                        <div class="${isLightMode ? 'bg-gray-200 border-gray-300' : 'bg-gray-900/50 border-gray-700'} border px-3 py-2 rounded-lg">
-                            <code id="curl-command-${catIdx}-${epIdx}" class="code-font text-xs ${isLightMode ? 'text-gray-700' : 'text-gray-300'} break-all">curl -X ${method} "${BASE_URL}${path}"</code>
-                        </div>
-                    </div>
-                    
-                    <div id="response-${catIdx}-${epIdx}" class="hidden mt-4">
-                        <h4 class="font-bold text-sm ${isLightMode ? 'text-gray-700' : 'text-gray-300'} mb-2">📄 Response</h4>
-                        <div class="${isLightMode ? 'bg-gray-200 border-gray-300' : 'bg-gray-900/50 border-gray-700'} border px-4 py-3 rounded-lg max-h-96 overflow-auto" id="response-content-${catIdx}-${epIdx}"></div>
-                    </div>`;
-            } else {
-                html += `<div class="px-4 py-3 status-warning border rounded-lg text-sm">⚠️ This endpoint is not available for testing</div>`;
-            }
-
-            html += `
-                </div>
-            </div>`;
-        });
-        
-        html += `</div></div></div>`;
-    });
-    
-    apiList.innerHTML = html;
-    allApiElements = Array.from(document.querySelectorAll('.api-item'));
-}
-
-function performSearch() {
-    const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
-    const noResults = document.getElementById('noResults');
-
-    if (searchTerm === '') {
-        document.querySelectorAll('.category-group').forEach(cat => {
-            cat.classList.remove('hidden');
-            cat.querySelectorAll('.api-item').forEach(item => {
-                item.classList.remove('hidden');
-            });
-        });
-        noResults.classList.add('hidden');
-        return;
-    }
-
-    let hasVisibleItems = false;
-
-    document.querySelectorAll('.category-group').forEach(category => {
-        let categoryHasVisibleItems = false;
-        
-        category.querySelectorAll('.api-item').forEach(item => {
-            const path = item.dataset.path.toLowerCase();
-            const alias = item.dataset.alias;
-            const desc = item.dataset.description;
-            const categoryName = item.dataset.category;
-
-            const matches = 
-                path.includes(searchTerm) || 
-                alias.includes(searchTerm) || 
-                desc.includes(searchTerm) ||
-                categoryName.includes(searchTerm);
-
-            if (matches) {
-                item.classList.remove('hidden');
-                categoryHasVisibleItems = true;
-                hasVisibleItems = true;
-            } else {
-                item.classList.add('hidden');
-            }
-        });
-
-        if (categoryHasVisibleItems) {
-            category.classList.remove('hidden');
-        } else {
-            category.classList.add('hidden');
-        }
-    });
-
-    if (hasVisibleItems) {
-        noResults.classList.add('hidden');
-    } else {
-        noResults.classList.remove('hidden');
-    }
-}
-
-async function loadLinkBio() {
-    try {
-        const response = await fetch('linkbio.json');
-        if (!response.ok) throw new Error('Failed to load linkbio.json');
-        const socialData = await response.json();
-        
-        if (!socialData.link_bio || !Array.isArray(socialData.link_bio)) {
-            throw new Error('Invalid linkbio.json format');
-        }
-        
-        document.getElementById('socialLoading').classList.add('hidden');
-        document.getElementById('socialError').classList.add('hidden');
-        
-        const socialContainer = document.getElementById('socialContainer');
-        const isLightMode = body.classList.contains('light-mode');
-        
-        // Bersihkan kontainer terlebih dahulu sebelum merender ulang
-        const loadingEl = document.getElementById('socialLoading');
-        const errorEl = document.getElementById('socialError');
-        socialContainer.innerHTML = '';
-        socialContainer.appendChild(loadingEl);
-        socialContainer.appendChild(errorEl);
-
-        socialData.link_bio.forEach(social => {
-            const socialElement = document.createElement('a');
-            socialElement.href = social.url;
-            socialElement.target = '_blank';
-            socialElement.className = 'social-badge w-full'; // Full width agar rapi ke bawah
-            
-            const innerDiv = document.createElement('div');
-            innerDiv.className = 'px-4 py-2 rounded-lg text-xs font-medium transition-colors text-center border light-mode:border-gray-200 border-slate-800/60';
-            
-            if (isLightMode) {
-                innerDiv.classList.add('bg-gray-100', 'text-gray-800', 'hover:bg-gray-200');
-            } else {
-                innerDiv.classList.add('bg-gray-800/50', 'text-gray-300', 'hover:bg-gray-700');
-            }
-            
-            innerDiv.textContent = social.name;
-            socialElement.appendChild(innerDiv);
-            socialContainer.appendChild(socialElement);
-        });
-        
-    } catch (error) {
-        console.error('Error loading link bio:', error);
-        document.getElementById('socialLoading').classList.add('hidden');
-        document.getElementById('socialError').classList.remove('hidden');
-    }
-}
-
-// === MULTI TRACK MUSIC PLAYER CORE FUNCTION ===
-function initMultiMusicPlayer() {
-    const playlist = window.musicPlaylist || [];
-    if (!playlist.length) return;
-
-    let currentTrackIdx = 0;
-
-    const audio = document.getElementById('audioElement');
-    const playBtn = document.getElementById('playBtn');
-    const playIcon = document.getElementById('playIcon');
-    const progressBar = document.getElementById('progressBar');
-    const progressContainer = document.getElementById('progressContainer');
-    const currentTimeEl = document.getElementById('currentTime');
-    const totalDurationEl = document.getElementById('totalDuration');
-    const coverImg = document.getElementById('musicCoverImg');
-    const titleEl = document.getElementById('musicTitle');
-    const artistEl = document.getElementById('musicArtist');
-    const prevBtn = document.getElementById('prevBtn');
-    const nextBtn = document.getElementById('nextBtn');
-    const playlistToggleBtn = document.getElementById('playlistToggleBtn');
-    const playlistPanel = document.getElementById('playlistPanel');
-
-    if (!audio || !playBtn) return;
-
-    function formatTime(secs) {
-        if (isNaN(secs)) return "0:00";
-        const mins = Math.floor(secs / 60);
-        const remainingSecs = Math.floor(secs % 60);
-        return `${mins}:${remainingSecs < 10 ? '0' : ''}${remainingSecs}`;
-    }
-
-    function loadTrack(index) {
-        currentTrackIdx = index;
-        const track = playlist[index];
-        audio.src = track.url;
-        titleEl.textContent = track.title;
-        artistEl.textContent = track.artist;
-        coverImg.src = track.cover;
-        progressBar.style.width = '0%';
-        currentTimeEl.textContent = '0:00';
-        
-        renderPlaylistItems();
-    }
-
-    function renderPlaylistItems() {
-        playlistPanel.innerHTML = '';
-        playlist.forEach((track, idx) => {
-            const isActive = idx === currentTrackIdx;
-            const itemBtn = document.createElement('button');
-            
-            itemBtn.className = `w-full text-left px-3 py-2 text-xs rounded-xl flex items-center justify-between transition-all ${
-                isActive 
-                ? 'bg-blue-600/10 border border-blue-500/30 text-blue-500 font-bold' 
-                : 'hover:bg-slate-800/40 light-mode:hover:bg-gray-100 text-gray-400 light-mode:text-gray-600'
-            }`;
-            
-            itemBtn.innerHTML = `
-                <div class="flex items-center gap-2 truncate">
-                    <span class="opacity-50 text-[10px] code-font">${String(idx + 1).padStart(2, '0')}</span>
-                    <span class="truncate">${track.title} <span class="opacity-60 font-normal">- ${track.artist}</span></span>
-                </div>
-                ${isActive ? '<span class="text-[9px] tracking-wider text-blue-500 bg-blue-500/10 px-1.5 py-0.5 rounded animate-pulse font-bold">PLAYING</span>' : ''}
-            `;
-            
-            itemBtn.addEventListener('click', () => {
-                loadTrack(idx);
-                audio.play().catch(e => console.log("Playback blocked:", e));
-            });
-            playlistPanel.appendChild(itemBtn);
-        });
-    }
-
-    playBtn.addEventListener('click', () => {
-        if (audio.paused) {
-            audio.play().catch(err => console.log("Playback error:", err));
-        } else {
-            audio.pause();
-        }
-    });
-
-    audio.addEventListener('play', () => {
-        playIcon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
-        coverImg.classList.add('scale-105', 'rotate-3');
-        showToast(`Playing: ${playlist[currentTrackIdx].title}`);
-    });
-
-    audio.addEventListener('pause', () => {
-        playIcon.innerHTML = '<path d="M8 5v14l11-7z"/>';
-        coverImg.classList.remove('scale-105', 'rotate-3');
-    });
-
-    audio.addEventListener('timeupdate', () => {
-        if (audio.duration) {
-            const progress = (audio.currentTime / audio.duration) * 100;
-            progressBar.style.width = `${progress}%`;
-            currentTimeEl.textContent = formatTime(audio.currentTime);
-        }
-    });
-
-    audio.addEventListener('loadedmetadata', () => {
-        totalDurationEl.textContent = formatTime(audio.duration);
-    });
-
-    progressContainer.addEventListener('click', (e) => {
-        const width = progressContainer.clientWidth;
-        const clickX = e.offsetX;
-        const duration = audio.duration;
-        if (duration) {
-            audio.currentTime = (clickX / width) * duration;
-        }
-    });
-
-    prevBtn.addEventListener('click', () => {
-        let prevIdx = currentTrackIdx - 1;
-        if (prevIdx < 0) prevIdx = playlist.length - 1;
-        loadTrack(prevIdx);
-        audio.play().catch(e => console.log(e));
-    });
-
-    nextBtn.addEventListener('click', () => {
-        let nextIdx = currentTrackIdx + 1;
-        if (nextIdx >= playlist.length) nextIdx = 0;
-        loadTrack(nextIdx);
-        audio.play().catch(e => console.log(e));
-    });
-
-    audio.addEventListener('ended', () => {
-        let nextIdx = currentTrackIdx + 1;
-        if (nextIdx >= playlist.length) nextIdx = 0;
-        loadTrack(nextIdx);
-        audio.play().catch(e => console.log(e));
-    });
-
-    playlistToggleBtn.addEventListener('click', () => {
-        playlistPanel.classList.toggle('hidden');
-    });
-
-    loadTrack(0);
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-    initTheme();
-    initBatteryDetection();
-    loadLinkBio();
-    initMultiMusicPlayer();
-    
-    // === LOGIKA TOGGLE MENU LINKBIO ===
+// DROPDOWN MENU EVENT HANDLER (LINK BIO)
 const bioMenuBtn = document.getElementById('bioMenuBtn');
 const bioDropdown = document.getElementById('bioDropdown');
 
-if (bioMenuBtn && bioDropdown) {
-    bioMenuBtn.addEventListener('click', (e) => {
-        e.stopPropagation(); // Mencegah dropdown langsung tertutup saat tombol diklik
-        bioDropdown.classList.toggle('hidden');
-    });
+bioMenuBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    bioDropdown.classList.toggle('hidden');
+});
 
-    // Menutup dropdown otomatis jika pengguna mengklik area di luar menu dropdown atau tombol
-    document.addEventListener('click', (e) => {
-        if (!bioDropdown.contains(e.target) && !bioMenuBtn.contains(e.target)) {
-            bioDropdown.classList.add('hidden');
+document.addEventListener('click', (e) => {
+    if (!bioDropdown.contains(e.target) && e.target !== bioMenuBtn && e.target !== langSelect) {
+        bioDropdown.classList.add('hidden');
+    }
+});
+
+// SYSTEM PEMUTAR MUSIK MULTIPLE TRACK
+let currentTrackIndex = 0;
+const playlist = window.musicPlaylist || [];
+const audioElement = document.getElementById('audioElement');
+const musicCoverImg = document.getElementById('musicCoverImg');
+const musicTitle = document.getElementById('musicTitle');
+const musicArtist = document.getElementById('musicArtist');
+const playBtn = document.getElementById('playBtn');
+const playIcon = document.getElementById('playIcon');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const currentTimeEl = document.getElementById('currentTime');
+const totalDurationEl = document.getElementById('totalDuration');
+const progressBar = document.getElementById('progressBar');
+const progressContainer = document.getElementById('progressContainer');
+const playlistToggleBtn = document.getElementById('playlistToggleBtn');
+const playlistPanel = document.getElementById('playlistPanel');
+
+function loadTrack(index) {
+    if (!playlist || playlist.length === 0) return;
+    const track = playlist[index];
+    audioElement.src = track.url;
+    musicCoverImg.src = track.cover;
+    musicTitle.textContent = track.title;
+    musicArtist.textContent = track.artist;
+    
+    progressBar.style.width = '0%';
+    currentTimeEl.textContent = '0:00';
+    totalDurationEl.textContent = '0:00';
+    
+    updatePlaylistActiveUI();
+}
+
+function playTrack() {
+    audioElement.play().then(() => {
+        playIcon.innerHTML = `<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>`;
+        musicCoverImg.classList.add('animate-spin');
+    }).catch(err => console.log("Playback error:", err));
+}
+
+function pauseTrack() {
+    audioElement.pause();
+    playIcon.innerHTML = `<path d="M8 5v14l11-7z"/>`;
+    musicCoverImg.classList.remove('animate-spin');
+}
+
+function togglePlay() {
+    if (audioElement.paused) {
+        playTrack();
+    } else {
+        pauseTrack();
+    }
+}
+
+function nextTrack() {
+    currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
+    loadTrack(currentTrackIndex);
+    playTrack();
+}
+
+function prevTrack() {
+    currentTrackIndex = (currentTrackIndex - 1 + playlist.length) % playlist.length;
+    loadTrack(currentTrackIndex);
+    playTrack();
+}
+
+if(playlist.length > 0) {
+    loadTrack(currentTrackIndex);
+    playBtn.addEventListener('click', togglePlay);
+    nextBtn.addEventListener('click', nextTrack);
+    prevBtn.addEventListener('click', prevTrack);
+    
+    audioElement.addEventListener('timeupdate', () => {
+        const current = audioElement.currentTime;
+        const duration = audioElement.duration || 0;
+        if (duration > 0) {
+            const percentage = (current / duration) * 100;
+            progressBar.style.width = `${percentage}%`;
+            
+            let currMin = Math.floor(current / 60);
+            let currSec = Math.floor(current % 60);
+            if (currSec < 10) currSec = `0${currSec}`;
+            currentTimeEl.textContent = `${currMin}:${currSec}`;
+            
+            let durMin = Math.floor(duration / 60);
+            let durSec = Math.floor(duration % 60);
+            if (durSec < 10) durSec = `0${durSec}`;
+            totalDurationEl.textContent = `${durMin}:${durSec}`;
+        }
+    });
+    
+    audioElement.addEventListener('ended', nextTrack);
+    
+    progressContainer.addEventListener('click', (e) => {
+        const width = progressContainer.clientWidth;
+        const clickX = e.offsetX;
+        const duration = audioElement.duration;
+        if(duration) {
+            audioElement.currentTime = (clickX / width) * duration;
+        }
+    });
+    
+    playlistPanel.innerHTML = '';
+    playlist.forEach((track, i) => {
+        const item = document.createElement('div');
+        item.className = `playlist-item flex items-center gap-3 p-2 rounded-xl cursor-pointer text-xs transition-all hover:bg-slate-800/40 light-mode:hover:bg-gray-100`;
+        item.innerHTML = `
+            <img src="${track.cover}" class="w-8 h-8 rounded-lg object-cover">
+            <div class="flex-1 min-w-0">
+                <p class="font-bold text-gray-200 light-mode:text-gray-800 truncate m-0">${track.title}</p>
+                <p class="text-[10px] text-gray-500 truncate m-0 mt-0.5">${track.artist}</p>
+            </div>
+        `;
+        item.addEventListener('click', () => {
+            currentTrackIndex = i;
+            loadTrack(currentTrackIndex);
+            playTrack();
+        });
+        playlistPanel.appendChild(item);
+    });
+    
+    playlistToggleBtn.addEventListener('click', () => {
+        playlistPanel.classList.toggle('hidden');
+    });
+}
+
+function updatePlaylistActiveUI() {
+    const items = playlistPanel.querySelectorAll('.playlist-item');
+    items.forEach((item, idx) => {
+        if(idx === currentTrackIndex) {
+            item.classList.add('bg-blue-600/10', 'border', 'border-blue-500/20');
+        } else {
+            item.classList.remove('bg-blue-600/10', 'border', 'border-blue-500/20');
         }
     });
 }
+
+// SINKRONISASI TEKS STATUS BATERAI LUAR & DALAM NEGERI
+function updateBatteryStatusText(battery) {
+    const statusTextEl = document.getElementById('batteryStatus');
+    if (battery.charging) {
+        statusTextEl.textContent = i18n[currentLang].batCharging;
+    } else {
+        if (battery.level === 1) {
+            statusTextEl.textContent = i18n[currentLang].batFull;
+        } else {
+            statusTextEl.textContent = i18n[currentLang].batDischarging;
+        }
+    }
+}
+
+function initBattery() {
+    if (navigator.getBattery) {
+        navigator.getBattery().then(battery => {
+            batteryMonitor = battery;
+            const level = Math.round(battery.level * 100);
+            document.getElementById('batteryLevel').style.width = `${level}%`;
+            document.getElementById('batteryPercentage').textContent = `${level}%`;
+            updateBatteryStatusText(battery);
+            
+            battery.addEventListener('levelchange', () => {
+                const currentLevel = Math.round(battery.level * 100);
+                document.getElementById('batteryLevel').style.width = `${currentLevel}%`;
+                document.getElementById('batteryPercentage').textContent = `${currentLevel}%`;
+            });
+            
+            battery.addEventListener('chargingchange', () => {
+                updateBatteryStatusText(battery);
+            });
+        });
+    }
+}
+
+function updateSocialBadges() {
+    const container = document.getElementById('socialContainer');
+    const loading = document.getElementById('socialLoading');
+    const errorEl = document.getElementById('socialError');
     
-    fetch('/api/apilist')
-        .then(res => {
-            if (!res.ok) throw new Error('Failed to load listapi.json');
-            return res.json();
-        })
+    fetch('/linkbio.json')
+        .then(res => res.json())
         .then(data => {
-            apiData = data;
-            console.log('API data loaded successfully:', data.categories.length, 'categories');
-            loadApis();
+            loading.classList.add('hidden');
+            Array.from(container.children).forEach(child => {
+                if(child !== loading && child !== errorEl) child.remove();
+            });
+            
+            data.forEach(item => {
+                const a = document.createElement('a');
+                a.href = item.url;
+                a.target = "_blank";
+                a.className = "flex items-center gap-3 p-2.5 rounded-xl border border-slate-800 light-mode:border-gray-200 bg-[#0e1629]/50 light-mode:bg-gray-50 hover:bg-[#15223e] light-mode:hover:bg-gray-100 transition-all text-xs font-bold text-gray-300 light-mode:text-gray-700 decoration-none";
+                a.innerHTML = `<span>${item.icon || '🔗'}</span> <span class="truncate">${item.name}</span>`;
+                container.appendChild(a);
+            });
         })
         .catch(err => {
-            console.error('Error loading API data:', err);
-            const apiList = document.getElementById('apiList');
-            apiList.innerHTML = `
-                <div class="text-center p-8 bg-red-900/20 border border-red-700 rounded-lg">
-                    <div class="text-4xl mb-4">⚠️</div>
-                    <h3 class="font-bold text-lg mb-2">Failed to load API data</h3>
-                    <p class="text-sm">Please check if /api/apilist exists on the server</p>
-                    <p class="text-xs mt-4 text-gray-400">Error: ${err.message}</p>
-                </div>
-            `;
+            loading.classList.add('hidden');
+            errorEl.classList.remove('hidden');
         });
-});
+}
+
+function loadApiList() {
+    const listContainer = document.getElementById('apiList');
+    fetch('/api/apilist')
+        .then(res => res.json())
+        .then(data => {
+            apiData = data;
+            listContainer.innerHTML = '';
+            allApiElements = [];
+            totalEndpoints = 0;
+            totalCategories = data.categories.length;
+            
+            data.categories.forEach(cat => {
+                const catSection = document.createElement('div');
+                catSection.className = "mb-8 bg-[#090e1a] light-mode:bg-white border border-slate-800/60 light-mode:border-gray-200 rounded-2xl p-4 shadow-xl";
+                
+                const catTitle = document.createElement('h2');
+                catTitle.className = "text-sm font-black tracking-widest text-blue-500 uppercase mb-4 pb-2 border-b border-slate-800/40 light-mode:border-gray-100";
+                catTitle.textContent = cat.name;
+                catSection.appendChild(catTitle);
+                
+                const grid = document.createElement('div');
+                grid.className = "grid grid-cols-1 md:grid-cols-2 gap-3";
+                
+                cat.items.forEach(item => {
+                    totalEndpoints++;
+                    const card = document.createElement('div');
+                    card.className = "p-3 rounded-xl bg-[#0e1629]/40 light-mode:bg-gray-50 border border-slate-800/40 light-mode:border-gray-200/60 flex items-center justify-between gap-2 hover:border-blue-500/40 transition-all";
+                    
+                    const info = document.createElement('div');
+                    info.className = "min-w-0 flex-1";
+                    
+                    const name = document.createElement('h3');
+                    name.className = "text-xs font-bold text-white light-mode:text-gray-800 uppercase truncate m-0 tracking-wider";
+                    name.textContent = item.name.replace(/^\//, '');
+                    
+                    const pathSpan = document.createElement('p');
+                    pathSpan.className = "text-[10px] text-gray-500 code-font truncate mt-1 m-0";
+                    pathSpan.textContent = item.path;
+                    
+                    info.appendChild(name);
+                    info.appendChild(pathSpan);
+                    
+                    const btn = document.createElement('a');
+                    btn.href = item.path;
+                    btn.target = "_blank";
+                    btn.className = "px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-[10px] rounded-lg tracking-wider transition-all shadow-md shadow-blue-600/10 active:scale-95 whitespace-nowrap decoration-none";
+                    btn.textContent = "TRY";
+                    
+                    card.appendChild(info);
+                    card.appendChild(btn);
+                    grid.appendChild(card);
+                    
+                    allApiElements.push({
+                        element: card,
+                        categoryName: cat.name.toLowerCase(),
+                        itemName: item.name.toLowerCase(),
+                        itemPath: item.path.toLowerCase()
+                    });
+                });
+                
+                catSection.appendChild(grid);
+                listContainer.appendChild(catSection);
+            });
+            
+            document.getElementById('totalEndpoints').textContent = totalEndpoints;
+            document.getElementById('totalCategories').textContent = totalCategories;
+        });
+}
+
+function performSearch() {
+    const query = document.getElementById('searchInput').value.toLowerCase().trim();
+    let hasResults = false;
+    
+    allApiElements.forEach(item => {
+        if (item.itemName.includes(query) || item.itemPath.includes(query) || item.categoryName.includes(query)) {
+            item.element.classList.remove('hidden');
+            hasResults = true;
+        } else {
+            item.element.classList.add('hidden');
+        }
+    });
+    
+    document.querySelectorAll('#apiList > div').forEach(catSection => {
+        const cards = catSection.querySelectorAll('.grid > div:not(.hidden)');
+        if (cards.length === 0 && query !== '') {
+            catSection.classList.add('hidden');
+        } else {
+            catSection.classList.remove('hidden');
+        }
+    });
+    
+    const noResultsEl = document.getElementById('noResults');
+    if (!hasResults && query !== '') {
+        noResultsEl.classList.remove('hidden');
+    } else {
+        noResultsEl.classList.add('hidden');
+    }
+}
 
 themeToggleBtn.addEventListener('click', toggleTheme);
 
@@ -940,34 +446,9 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-    anchor.addEventListener('click', function (e) {
-        e.preventDefault();
-        
-        const targetId = this.getAttribute('href');
-        if (targetId === '#') return;
-        
-        const targetElement = document.querySelector(targetId);
-        if (targetElement) {
-            window.scrollTo({
-                top: targetElement.offsetTop - 80,
-                behavior: 'smooth'
-            });
-        }
-    });
-});
-
-document.addEventListener('click', function(event) {
-    const searchInput = document.getElementById('searchInput');
-    const searchContainer = document.querySelector('.relative');
-    
-    if (!searchContainer.contains(event.target)) {
-        if (searchInput.value.trim() === '') {
-            performSearch();
-        }
-    }
-});
-
-window.addEventListener('beforeunload', function() {
-    cleanupBatteryMonitor();
+document.addEventListener('DOMContentLoaded', () => {
+    initTheme();
+    initLanguage();
+    initBattery();
+    loadApiList();
 });
