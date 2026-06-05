@@ -70,12 +70,12 @@ function initTheme() {
         body.classList.add('light-mode');
         themeToggleDarkIcon?.classList.add('hidden');
         themeToggleLightIcon?.classList.remove('hidden');
-        themeToggleBtn.className = "flex items-center justify-center w-12 h-12 rounded-full bg-slate-900 text-white shadow-[0_4px_20px_rgba(0,0,0,0.15)] transition-all active:scale-95 focus:outline-none border border-slate-800";
+        themeToggleBtn.className = "flex items-center justify-center w-8 h-8 rounded-lg bg-slate-900 text-white transition-all active:scale-95 focus:outline-none border border-slate-800";
     } else {
         body.classList.remove('light-mode');
         themeToggleDarkIcon?.classList.remove('hidden');
         themeToggleLightIcon?.classList.add('hidden');
-        themeToggleBtn.className = "flex items-center justify-center w-12 h-12 rounded-full bg-white text-black shadow-[0_4px_20px_rgba(0,0,0,0.15)] transition-all active:scale-95 focus:outline-none border border-slate-100";
+        themeToggleBtn.className = "flex items-center justify-center w-8 h-8 rounded-lg bg-white text-black transition-all active:scale-95 focus:outline-none border border-slate-200";
     }
     
     updateSocialBadges();
@@ -89,13 +89,13 @@ function toggleTheme() {
         body.classList.remove('light-mode');
         themeToggleDarkIcon?.classList.remove('hidden');
         themeToggleLightIcon?.classList.add('hidden');
-        themeToggleBtn.className = "flex items-center justify-center w-12 h-12 rounded-full bg-white text-black shadow-[0_4px_20px_rgba(0,0,0,0.15)] transition-all active:scale-95 focus:outline-none border border-slate-100";
+        themeToggleBtn.className = "flex items-center justify-center w-8 h-8 rounded-lg bg-white text-black transition-all active:scale-95 focus:outline-none border border-slate-200";
         currentTheme = 'dark';
     } else {
         body.classList.add('light-mode');
         themeToggleDarkIcon?.classList.add('hidden');
         themeToggleLightIcon?.classList.remove('hidden');
-        themeToggleBtn.className = "flex items-center justify-center w-12 h-12 rounded-full bg-slate-900 text-white shadow-[0_4px_20px_rgba(0,0,0,0.15)] transition-all active:scale-95 focus:outline-none border border-slate-800";
+        themeToggleBtn.className = "flex items-center justify-center w-8 h-8 rounded-lg bg-slate-900 text-white transition-all active:scale-95 focus:outline-none border border-slate-800";
         currentTheme = 'light';
     }
     
@@ -111,7 +111,6 @@ function setLanguage(lang) {
     document.getElementById('lang-id').classList.toggle('active', lang === 'id');
     document.getElementById('lang-en').classList.toggle('active', lang === 'en');
     
-    // Perbarui teks statis halaman luar
     document.getElementById('searchInput').placeholder = i18n[lang].searchPlaceholder;
     document.getElementById('no-results-title').textContent = i18n[lang].noResultsTitle;
     document.getElementById('no-results-desc').textContent = i18n[lang].noResultsDesc;
@@ -120,7 +119,6 @@ function setLanguage(lang) {
     document.getElementById('stat-categories-title').textContent = i18n[lang].categoriesTitle;
     
     if (batteryMonitor) {
-        // Trigger perubahan info baterai agar bahasanya ikut ter-update
         window.dispatchEvent(new Event('batteryupdate-hook'));
     }
     
@@ -285,10 +283,7 @@ function initBatteryDetection() {
 
 function cleanupBatteryMonitor() {
     if (batteryMonitor) {
-        batteryMonitor.removeEventListener('levelchange', updateBatteryInfo);
-        batteryMonitor.removeEventListener('chargingchange', updateBatteryInfo);
-        batteryMonitor.removeEventListener('chargingtimechange', updateBatteryInfo);
-        batteryMonitor.removeEventListener('dischargingtimechange', updateBatteryInfo);
+        window.removeEventListener('batteryupdate-hook', updateBatteryInfo);
         batteryMonitor = null;
     }
 }
@@ -333,7 +328,7 @@ function toggleCategory(index) {
     icon.style.transform = content.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(180deg)';
 }
 
-// Menutup menu laci samping kiri
+// Menutup menu drawer samping kanan
 function closeSidebarMenu() {
     const bioDropdown = document.getElementById('bioDropdown');
     const menuOverlay = document.getElementById('menuOverlay');
@@ -797,7 +792,6 @@ function initMultiMusicPlayer() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Inisialisasi preferensi bahasa
     const savedLang = localStorage.getItem('lang') || 'id';
     
     initTheme();
@@ -806,7 +800,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initMultiMusicPlayer();
     setLanguage(savedLang);
     
-    // === LOGIKA BARU UNTUK DRAWER MENU SLIDE-OUT (Sesuai Gambar 2) ===
+    // === INTEGRASI DRAWER MENU SLIDE-OUT (Sesuai Gambar 2) ===
     const bioMenuBtn = document.getElementById('bioMenuBtn');
     const bioDropdown = document.getElementById('bioDropdown');
     const closeMenuBtn = document.getElementById('closeMenuBtn');
@@ -824,12 +818,37 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         menuOverlay.addEventListener('click', closeSidebarMenu);
-        
-        // Mencegah penutupan menu saat area dalam dropdown diklik
-        bioDropdown.addEventListener('click', (e) => {
-            e.stopPropagation();
-        });
+        bioDropdown.addEventListener('click', (e) => { e.stopPropagation(); });
     }
+    
+    // === LOGIKA AGAR SEMUA TOMBOL MENU BERFUNGSI SAAT DIKLIK ===
+    document.querySelectorAll('.menu-link').forEach(anchor => {
+        anchor.addEventListener('click', function(e) {
+            const href = this.getAttribute('href');
+            
+            // Jika link mengarah ke internal anchor hash (contoh: #api atau #apiList)
+            if (href.startsWith('#') && href !== '#') {
+                e.preventDefault();
+                const targetElement = document.querySelector(href);
+                if (targetElement) {
+                    // Tutup menu samping dulu supaya tidak menghalangi pandangan
+                    closeSidebarMenu();
+                    
+                    // Lakukan smooth scroll ke target element
+                    setTimeout(() => {
+                        window.scrollTo({
+                            top: targetElement.offsetTop - 20,
+                            behavior: 'smooth'
+                        });
+                    }, 300);
+                }
+            } else if (href === '#') {
+                // Mencegah reload halaman jika link kosong placeholder '#'
+                e.preventDefault();
+            }
+            // Jika ada link url eksternal murni, biarkan berjalan normal bawaan browser
+        });
+    });
     
     fetch('/api/apilist')
         .then(res => {
