@@ -19,10 +19,13 @@ const bgLightSource = 'https://cdn.pixabay.com/video/2019/03/28/22373-328940142_
 
 // Pemetaan Ikon Kategori (SVG Kuning)
 const categoryIcons = {
-    'ai': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-yellow-400"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73A2 2 0 1 1 12 2zm-2 10a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm4 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/></svg>',
-    'download': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-yellow-400"><path d="M12 16l-5-5h3V4h4v7h3l-5 5zm9 4H3v-2h18v2z"/></svg>',
-    'search': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-yellow-400"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>',
-    'default': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-yellow-400"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>'
+    'ai': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-yellow-400">...</svg>',
+    'download': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-yellow-400">...</svg>',
+    'search': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-yellow-400">...</svg>',
+    'islam': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-yellow-400"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg>',
+    'tools': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-yellow-400"><path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.5 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z"/></svg>',
+    'random': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-yellow-400"><path d="M16 17.01V10h-2v7.01h-3L15 21l4-3.99h-3zM9 3L5 6.99h3V14h2V6.99h3L9 3z"/></svg>',
+    'default': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-yellow-400">...</svg>'
 };
 
 // Penampung teks multibahasa
@@ -76,10 +79,10 @@ const i18n = {
 function initTheme() {
     const savedTheme = localStorage.getItem('theme') || 'dark';
     currentTheme = savedTheme;
-    
+
     const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
     const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
-    
+
     if (savedTheme === 'light') {
         body.classList.add('light-mode');
         themeToggleDarkIcon?.classList.add('hidden');
@@ -93,14 +96,14 @@ function initTheme() {
         themeToggleBtn.className = "flex items-center justify-center w-8 h-8 rounded-lg bg-slate-900 text-white transition-all active:scale-95 focus:outline-none border border-slate-800";
         if (videoBg) videoBg.src = bgDarkSource;
     }
-    
+
     updateSocialBadges();
 }
 
 function toggleTheme() {
     const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
     const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
-    
+
     if (body.classList.contains('light-mode')) {
         body.classList.remove('light-mode');
         themeToggleDarkIcon?.classList.remove('hidden');
@@ -124,7 +127,7 @@ function toggleTheme() {
             videoBg.play();
         }
     }
-    
+
     localStorage.setItem('theme', currentTheme);
     updateSocialBadges();
     if (apiData) loadApis();
@@ -133,27 +136,27 @@ function toggleTheme() {
 function setLanguage(lang) {
     currentLang = lang;
     localStorage.setItem('lang', lang);
-    
+
     document.getElementById('lang-id').classList.toggle('active', lang === 'id');
     document.getElementById('lang-en').classList.toggle('active', lang === 'en');
-    
+
     document.getElementById('searchInput').placeholder = i18n[lang].searchPlaceholder;
     document.getElementById('no-results-title').textContent = i18n[lang].noResultsTitle;
     document.getElementById('no-results-desc').textContent = i18n[lang].noResultsDesc;
     document.getElementById('stat-battery-title').textContent = i18n[lang].batteryTitle;
     document.getElementById('stat-endpoints-title').textContent = i18n[lang].endpointsTitle;
-    
+
     if (batteryMonitor) {
         window.dispatchEvent(new Event('batteryupdate-hook'));
     }
-    
+
     if (apiData) loadApis();
 }
 
 function updateSocialBadges() {
     const isLightMode = body.classList.contains('light-mode');
     const socialBadges = document.querySelectorAll('.social-badge > div');
-    
+
     socialBadges.forEach(badge => {
         badge.className = 'px-4 py-2 rounded-lg text-xs font-medium transition-colors text-center border light-mode:border-gray-200 border-slate-800/60';
         if (isLightMode) {
@@ -169,7 +172,7 @@ function initBatteryDetection() {
     const batteryPercentageElement = document.getElementById('batteryPercentage');
     const batteryStatusElement = document.getElementById('batteryStatus');
     const batteryContainer = document.getElementById('batteryContainer');
-    
+
     if ('getBattery' in navigator) {
         navigator.getBattery().then(function(battery) {
             function updateBatteryInfo() {
@@ -177,10 +180,10 @@ function initBatteryDetection() {
                 const isCharging = battery.charging;
                 const roundedLevel = Math.round(level);
                 const isLightMode = body.classList.contains('light-mode');
-                
+
                 batteryPercentageElement.textContent = `${roundedLevel}%`;
                 batteryLevelElement.style.width = `${level}%`;
-                
+
                 if (level > 60) {
                     batteryLevelElement.className = 'battery-level ' + (isLightMode ? 'bg-green-600' : 'bg-green-500');
                 } else if (level > 20) {
@@ -188,7 +191,7 @@ function initBatteryDetection() {
                 } else {
                     batteryLevelElement.className = 'battery-level ' + (isLightMode ? 'bg-red-600' : 'bg-red-500');
                 }
-                
+
                 if (isCharging) {
                     batteryContainer.classList.add('charging');
                     batteryStatusElement.textContent = i18n[currentLang].batteryCharging;
@@ -196,7 +199,7 @@ function initBatteryDetection() {
                 } else {
                     batteryContainer.classList.remove('charging');
                     batteryLevelElement.classList.remove('battery-charging');
-                    
+
                     if (battery.dischargingTime === Infinity) {
                         batteryStatusElement.textContent = i18n[currentLang].batteryFull;
                     } else {
@@ -204,18 +207,18 @@ function initBatteryDetection() {
                     }
                 }
             }
-            
+
             updateBatteryInfo();
             battery.addEventListener('levelchange', updateBatteryInfo);
             battery.addEventListener('chargingchange', updateBatteryInfo);
             window.addEventListener('batteryupdate-hook', updateBatteryInfo);
             batteryMonitor = battery;
-            
+
         }).catch(function() { fallbackBattery(); });
     } else {
         fallbackBattery();
     }
-    
+
     function fallbackBattery() {
         batteryStatusElement.textContent = 'Simulated';
         batteryPercentageElement.textContent = '85%';
@@ -235,7 +238,7 @@ function showToast(message, isError = false) {
     const toast = document.getElementById('toast');
     const toastMessage = document.getElementById('toastMessage');
     const toastIcon = document.getElementById('toastIcon');
-    
+
     toastMessage.textContent = message;
     if (isError) {
         toastIcon.innerHTML = '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>';
@@ -292,7 +295,7 @@ function getContentType(url, contentType) {
 function createMediaPreview(url, contentType, originalUrl = '') {
     const type = getContentType(url, contentType);
     let previewHtml = '';
-    
+
     switch(type) {
         case 'image':
             previewHtml = `<div class="media-preview"><img src="${url}" class="media-image" alt="Response Image"></div>`;
@@ -306,12 +309,12 @@ function createMediaPreview(url, contentType, originalUrl = '') {
         default:
             previewHtml = `<div class="media-preview"><iframe src="${url}" class="media-iframe" frameborder="0"></iframe></div>`;
     }
-    
+
     const isLightMode = body.classList.contains('light-mode');
     const btnClass = isLightMode 
         ? 'px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg text-xs font-semibold flex items-center gap-1.5' 
         : 'px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5';
-    
+
     return `<div class="w-full">${previewHtml}<div class="flex gap-2 mt-3"><button type="button" onclick="copyText('${originalUrl || url}', 'Media URL')" class="${btnClass}">📋 Copy URL</button><a href="${url}" download class="${btnClass}">📥 Download</a></div></div>`;
 }
 
@@ -326,19 +329,19 @@ async function executeRequest(e, catIdx, epIdx, method, path) {
     const responseDiv = document.getElementById(`response-${catIdx}-${epIdx}`);
     const responseContent = document.getElementById(`response-content-${catIdx}-${epIdx}`);
     const executeBtn = form.querySelector('button[type="submit"]');
-    
+
     let spinner = executeBtn.querySelector('.local-spinner');
     if (!spinner) {
         spinner = document.createElement('span');
         spinner.className = 'local-spinner ml-2';
         executeBtn.appendChild(spinner);
     }
-    
+
     isRequestInProgress = true;
     executeBtn.disabled = true;
     executeBtn.classList.add('btn-loading');
     spinner.classList.add('active');
-    
+
     const formData = new FormData(form);
     const params = new URLSearchParams();
     for (const [key, value] of formData.entries()) {
@@ -414,20 +417,20 @@ function loadApis() {
         apiList.innerHTML = '<p class="text-center">No API data loaded.</p>';
         return;
     }
-    
+
     const isLightMode = body.classList.contains('light-mode');
     totalEndpoints = 0;
     totalCategories = apiData.categories.length;
     apiData.categories.forEach(category => { totalEndpoints += category.items.length; });
-    
+
     updateTotalEndpoints();
     updateTotalCategories();
     renderCategoryFilters(); 
-    
+
     let html = '';
     apiData.categories.forEach((category, catIdx) => {
         const catNameLower = category.name.toLowerCase();
-        
+
         let iconSvg = categoryIcons.default;
         for (const [key, svg] of Object.entries(categoryIcons)) {
             if (catNameLower.includes(key)) {
@@ -454,7 +457,7 @@ function loadApis() {
                     </svg>
                 </button>
                 <div id="cat-${catIdx}" class="hidden">`;
-        
+
         category.items.forEach((item, epIdx) => {
             const method = item.methods && item.methods.length ? item.methods[0] : 'GET';
             const pathParts = item.path.split('?');
@@ -540,7 +543,7 @@ function performSearch() {
 
     document.querySelectorAll('.category-group').forEach(category => {
         const catName = category.dataset.category;
-        
+
         if (activeCategory !== 'all' && catName !== activeCategory) {
             category.classList.add('hidden');
             return;
@@ -560,10 +563,10 @@ function performSearch() {
                 item.classList.add('hidden');
             }
         });
-        
+
         category.classList.toggle('hidden', !categoryHasVisibleItems);
     });
-    
+
     noResults.classList.toggle('hidden', hasVisibleItems);
 }
 
@@ -572,11 +575,11 @@ async function loadLinkBio() {
         const response = await fetch('linkbio.json');
         if (!response.ok) throw new Error('Failed');
         const socialData = await response.json();
-        
+
         document.getElementById('socialLoading').classList.add('hidden');
         const socialContainer = document.getElementById('socialContainer');
         const isLightMode = body.classList.contains('light-mode');
-        
+
         socialContainer.innerHTML = '';
 
         socialData.link_bio.forEach(social => {
@@ -584,10 +587,10 @@ async function loadLinkBio() {
             socialElement.href = social.url;
             socialElement.target = '_blank';
             socialElement.className = 'social-badge w-full';
-            
+
             const innerDiv = document.createElement('div');
             innerDiv.className = 'px-4 py-2 rounded-lg text-xs font-medium transition-colors text-center border light-mode:border-gray-200 border-slate-800/60';
-            
+
             if (isLightMode) {
                 innerDiv.classList.add('bg-gray-100', 'text-gray-800', 'hover:bg-gray-200');
             } else {
@@ -681,13 +684,13 @@ function initMultiMusicPlayer() {
 
 document.addEventListener('DOMContentLoaded', function() {
     const savedLang = localStorage.getItem('lang') || 'id';
-    
+
     initTheme();
     initBatteryDetection();
     loadLinkBio();
     initMultiMusicPlayer();
     setLanguage(savedLang);
-    
+
     const bioMenuBtn = document.getElementById('bioMenuBtn');
     const bioDropdown = document.getElementById('bioDropdown');
     const closeMenuBtn = document.getElementById('closeMenuBtn');
@@ -704,7 +707,7 @@ document.addEventListener('DOMContentLoaded', function() {
         bioDropdown.addEventListener('click', (e) => { e.stopPropagation(); });
         themeToggleBtn.addEventListener('click', toggleTheme);
     }
-    
+
     fetch('/api/apilist')
         .then(res => res.json())
         .then(data => {
