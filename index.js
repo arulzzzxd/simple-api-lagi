@@ -10,12 +10,12 @@ app.use(express.json());
 /*
 For setting API name etc
 */
-const title = "EH PI AY DOANG";
-const favicon = "https://raw.githubusercontent.com/upload-file-lab/fileupload7/main/uploads/1764494355026.jpeg?format=png&name=900x900";
-const logo = "https://raw.githubusercontent.com/upload-file-lab/fileupload7/main/uploads/1764494355026.jpeg";
-const headertitle = "REST EH PI AY";
+const title = "API Arulz-XD";
+const favicon = "https://arulz-uploader.vercel.app/files/C5VYmq.jpg";
+const logo = "https://arulz-uploader.vercel.app/files/SnhJe3.png";
+const headertitle = "REST API ARULZ XD ";
 const headerdescription = "Kumpulan API Endpoint yang mungkin berguna.";
-const footer = "© SHIKAKU IYAYN AJAH";
+const footer = "© Arulz-XD";
 
 // === KONFIGURASI PLAYLIST BANYAK MUSIK ===
 const playlist = [
@@ -86,16 +86,7 @@ function getEndpointsFromRouter(category, file) {
   return endpoints;
 }
 
-// Tambahkan variabel cache di luar fungsi
-let cachedApiList = null;
-
 router.get('/apilist', (req, res) => {
-  // 1. Jika data cache sudah ada, langsung kirimkan datanya (Sangat Cepat)
-  if (cachedApiList) {
-    return res.json({ categories: cachedApiList });
-  }
-
-  // 2. Jika belum ada, proses membaca folder seperti biasa
   const categories = [];
 
   for (const category of endpointDirs) {
@@ -106,7 +97,7 @@ router.get('/apilist', (req, res) => {
     }
     if (endpoints.length) {
       categories.push({
-        name: `${category.toUpperCase()} API ENDPOINT`,
+        name: `${category.toUpperCase()}`,
         items: endpoints
       });
     }
@@ -126,12 +117,8 @@ router.get('/apilist', (req, res) => {
     ]
   });
 
-  // 3. Simpan hasilnya ke variabel cache sebelum dikirim
-  cachedApiList = categories;
-
   res.json({ categories });
 });
-
 
 app.use('/api', router);
 
