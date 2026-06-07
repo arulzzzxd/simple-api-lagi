@@ -7,9 +7,6 @@ const PORT = process.env.PORT || 3000;
 app.use(express.static(path.join(__dirname)));
 app.use(express.json());
 
-/*
-For setting API name etc
-*/
 const title = "API Arulz-XD";
 const favicon = "https://arulz-uploader.vercel.app/files/C5VYmq.jpg";
 const logo = "https://arulz-uploader.vercel.app/files/SnhJe3.png";
@@ -17,43 +14,40 @@ const headertitle = "API Explorer <br>& Tester";
 const headerdescription = "$ Browse, inspect & fire requests<br>against live endpoints._";
 const footer = "© Arulz-XD";
 
-// === KONFIGURASI PLAYLIST BANYAK MUSIK ===
 const playlist = [
-  {
-    title: "PAMIT KERJO",
-    artist: "NDX. AKA",
-    cover: "https://raw.githubusercontent.com/upload-file-lab/fileupload7/main/uploads/1764494355026.jpeg",
-    url: "https://files.catbox.moe/gfuwnv.mp3"
-  },
-  {
-    title: "TANPO HUBUNGAN",
-    artist: "LA TASYA",
-    cover: "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=300&auto=format&fit=crop",
-    url: "https://files.catbox.moe/xd5oq3.mp3"
-  },
-  {
-    title: "DJ CIDRO 2",
-    artist: "TIDAK DIKETAHUI",
-    cover: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=300&auto=format&fit=crop",
-    url: "https://files.catbox.moe/u30w9k.mp3"
-  }
+  { title: "PAMIT KERJO", artist: "NDX. AKA", cover: "https://raw.githubusercontent.com/upload-file-lab/fileupload7/main/uploads/1764494355026.jpeg", url: "https://files.catbox.moe/gfuwnv.mp3" },
+  { title: "TANPO HUBUNGAN", artist: "LA TASYA", cover: "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=300&auto=format&fit=crop", url: "https://files.catbox.moe/xd5oq3.mp3" },
+  { title: "DJ CIDRO 2", artist: "TIDAK DIKETAHUI", cover: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=300&auto=format&fit=crop", url: "https://files.catbox.moe/u30w9k.mp3" }
 ];
 
 const router = express.Router();
 const apiPath = path.join(__dirname, 'api');
-// Mencegah error jika folder api belum ada
+
 if (!fs.existsSync(apiPath)) {
     fs.mkdirSync(apiPath, { recursive: true });
 }
-const endpointDirs = fs.readdirSync(apiPath).filter(f => fs.statSync(path.join(apiPath, f)).isDirectory());
+
+// FIX: Filter direktori dengan pengecekan apakah folder ada isinya
+const endpointDirs = fs.readdirSync(apiPath).filter(f => {
+    const p = path.join(apiPath, f);
+    return fs.statSync(p).isDirectory() && fs.readdirSync(p).length > 0;
+});
 
 for (const category of endpointDirs) {
   const categoryPath = path.join(apiPath, category);
   const files = fs.readdirSync(categoryPath).filter(f => f.endsWith('.js'));
+  
   for (const file of files) {
-    const routeName = path.basename(file, '.js');
-    const route = require(path.join(categoryPath, file));
-    router.use(`/${category}/${routeName}`, route);
+    try {
+        const routeName = path.basename(file, '.js');
+        const route = require(path.join(categoryPath, file));
+        // Memastikan route adalah middleware yang valid
+        if (route) {
+            router.use(`/${category}/${routeName}`, route);
+        }
+    } catch (e) {
+        console.error(`Gagal memuat route ${category}/${file}:`, e);
+    }
   }
 }
 
