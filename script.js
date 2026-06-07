@@ -7,9 +7,27 @@ let allApiElements = [];
 let totalEndpoints = 0;
 let totalCategories = 0;
 let batteryMonitor = null;
+let activeCategory = 'all';
 
 const themeToggleBtn = document.getElementById('themeToggle');
 const body = document.body;
+
+// Pemetaan Ikon Kategori (SVG Kuning)
+const categoryIcons = {
+    'ai': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-yellow-400"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73A2 2 0 1 1 12 2zm-2 10a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm4 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/></svg>',
+    'download': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-yellow-400"><path d="M12 16l-5-5h3V4h4v7h3l-5 5zm9 4H3v-2h18v2z"/></svg>',
+    'search': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-yellow-400"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>',
+    'image': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-yellow-400"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>',
+    'tools': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-yellow-400"><path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.1L9 6 6 9 1.8 4.7C.5 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z"/></svg>',
+    'maker': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-yellow-400"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>',
+    'stalker': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-yellow-400"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>',
+    'canvas': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-yellow-400"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>',
+    'security': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-yellow-400"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>',
+    'news': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-yellow-400"><path d="M21 3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 16H5V5h14v14zm-9-2h8v-2h-8v2zm0-4h8v-2h-8v2zm0-4h8V7h-8v2zm-4 8h2v-8H6v8z"/></svg>',
+    'random': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-yellow-400"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg>',
+    'islam': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-yellow-400"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg>',
+    'default': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-yellow-400"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>'
+};
 
 // Penampung teks multibahasa
 const i18n = {
@@ -70,13 +88,11 @@ function initTheme() {
         body.classList.add('light-mode');
         themeToggleDarkIcon?.classList.add('hidden');
         themeToggleLightIcon?.classList.remove('hidden');
-        // MODE TERANG: Background putih, matahari gelap/hitam
         themeToggleBtn.className = "flex items-center justify-center w-8 h-8 rounded-lg bg-white text-black transition-all active:scale-95 focus:outline-none border border-slate-200 shadow-sm";
     } else {
         body.classList.remove('light-mode');
         themeToggleDarkIcon?.classList.remove('hidden');
         themeToggleLightIcon?.classList.add('hidden');
-        // MODE GELAP: Background gelap, bulan putih
         themeToggleBtn.className = "flex items-center justify-center w-8 h-8 rounded-lg bg-slate-900 text-white transition-all active:scale-95 focus:outline-none border border-slate-800";
     }
     
@@ -91,14 +107,12 @@ function toggleTheme() {
         body.classList.remove('light-mode');
         themeToggleDarkIcon?.classList.remove('hidden');
         themeToggleLightIcon?.classList.add('hidden');
-        // BERUBAH KE MODE GELAP: Background gelap, bulan putih
         themeToggleBtn.className = "flex items-center justify-center w-8 h-8 rounded-lg bg-slate-900 text-white transition-all active:scale-95 focus:outline-none border border-slate-800";
         currentTheme = 'dark';
     } else {
         body.classList.add('light-mode');
         themeToggleDarkIcon?.classList.add('hidden');
         themeToggleLightIcon?.classList.remove('hidden');
-        // BERUBAH KE MODE TERANG: Background putih, matahari gelap/hitam
         themeToggleBtn.className = "flex items-center justify-center w-8 h-8 rounded-lg bg-white text-black transition-all active:scale-95 focus:outline-none border border-slate-200 shadow-sm";
         currentTheme = 'light';
     }
@@ -182,123 +196,35 @@ function initBatteryDetection() {
                         batteryStatusElement.textContent = i18n[currentLang].batteryDischarging;
                     }
                 }
-                
-                if (isCharging && battery.chargingTime !== Infinity) {
-                    const hours = Math.floor(battery.chargingTime / 3600);
-                    const minutes = Math.floor((battery.chargingTime % 3600) / 60);
-                    batteryStatusElement.textContent = `${i18n[currentLang].batteryCharging} (${hours}h ${minutes}m)`;
-                } else if (!isCharging && battery.dischargingTime !== Infinity) {
-                    const hours = Math.floor(battery.dischargingTime / 3600);
-                    const minutes = Math.floor((battery.dischargingTime % 3600) / 60);
-                    batteryStatusElement.textContent = `${hours}h ${minutes}m ${i18n[currentLang].batteryLeft}`;
-                }
             }
             
             updateBatteryInfo();
             battery.addEventListener('levelchange', updateBatteryInfo);
             battery.addEventListener('chargingchange', updateBatteryInfo);
-            battery.addEventListener('chargingtimechange', updateBatteryInfo);
-            battery.addEventListener('dischargingtimechange', updateBatteryInfo);
             window.addEventListener('batteryupdate-hook', updateBatteryInfo);
             batteryMonitor = battery;
             
-        }).catch(function(error) {
-            console.error("Battery API error:", error);
-            batteryStatusElement.textContent = 'API Error';
-            fallbackBattery();
-        });
+        }).catch(function() { fallbackBattery(); });
     } else {
-        batteryStatusElement.textContent = 'API Not Supported';
         fallbackBattery();
     }
     
     function fallbackBattery() {
         batteryStatusElement.textContent = 'Simulated';
-        let simulatedLevel = localStorage.getItem('simulatedBattery');
-        if (!simulatedLevel) {
-            simulatedLevel = Math.floor(Math.random() * 30) + 30;
-            localStorage.setItem('simulatedBattery', simulatedLevel.toString());
-        } else {
-            simulatedLevel = parseInt(simulatedLevel);
-        }
-        
-        let isSimulatedCharging = localStorage.getItem('simulatedCharging') === 'true';
-        
-        function simulateBattery() {
-            const isLightMode = body.classList.contains('light-mode');
-            let newLevel = simulatedLevel;
-            
-            if (isSimulatedCharging) {
-                const chargeRate = 0.5;
-                newLevel = Math.min(100, newLevel + chargeRate);
-                
-                if (newLevel >= 100) {
-                    isSimulatedCharging = false;
-                    localStorage.setItem('simulatedCharging', 'false');
-                    batteryContainer.classList.remove('charging');
-                    batteryLevelElement.classList.remove('battery-charging');
-                    batteryStatusElement.textContent = i18n[currentLang].batteryFull;
-                } else {
-                    batteryStatusElement.textContent = i18n[currentLang].batteryCharging;
-                }
-            } else {
-                const drainRate = 0.1;
-                newLevel = Math.max(5, newLevel - drainRate);
-                
-                if (newLevel <= 15 && Math.random() > 0.7) {
-                    isSimulatedCharging = true;
-                    localStorage.setItem('simulatedCharging', 'true');
-                    batteryContainer.classList.add('charging');
-                    batteryLevelElement.classList.add('battery-charging');
-                    batteryStatusElement.textContent = i18n[currentLang].batteryCharging;
-                } else {
-                    const minutesLeft = Math.round((newLevel - 5) / drainRate);
-                    const hours = Math.floor(minutesLeft / 60);
-                    const minutes = minutesLeft % 60;
-                    
-                    if (hours > 0) {
-                        batteryStatusElement.textContent = `${hours}h ${minutes}m ${i18n[currentLang].batteryLeft}`;
-                    } else {
-                        batteryStatusElement.textContent = `${minutes}m ${i18n[currentLang].batteryLeft}`;
-                    }
-                }
-            }
-            
-            simulatedLevel = newLevel;
-            localStorage.setItem('simulatedBattery', newLevel.toString());
-            const roundedLevel = Math.round(newLevel);
-            batteryPercentageElement.textContent = `${roundedLevel}%`;
-            batteryLevelElement.style.width = `${newLevel}%`;
-            
-            if (newLevel > 60) {
-                batteryLevelElement.className = 'battery-level ' + (isLightMode ? 'bg-green-600' : 'bg-green-500');
-            } else if (newLevel > 20) {
-                batteryLevelElement.className = 'battery-level ' + (isLightMode ? 'bg-yellow-600' : 'bg-yellow-500');
-            } else {
-                batteryLevelElement.className = 'battery-level ' + (isLightMode ? 'bg-red-600' : 'bg-red-500');
-            }
-        }
-        
-        simulateBattery();
-        setInterval(simulateBattery, 10000);
-        window.addEventListener('batteryupdate-hook', simulateBattery);
+        batteryPercentageElement.textContent = '85%';
+        batteryLevelElement.style.width = '85%';
+        batteryLevelElement.className = 'battery-level bg-green-500';
     }
 }
 
 function cleanupBatteryMonitor() {
     if (batteryMonitor) {
-        window.removeEventListener('batteryupdate-hook', updateBatteryInfo);
         batteryMonitor = null;
     }
 }
 
-function updateTotalEndpoints() {
-    document.getElementById('totalEndpoints').textContent = totalEndpoints;
-}
-
-function updateTotalCategories() {
-    document.getElementById('totalCategories').textContent = totalCategories;
-}
+function updateTotalEndpoints() { document.getElementById('totalEndpoints').textContent = totalEndpoints; }
+function updateTotalCategories() { document.getElementById('totalCategories').textContent = totalCategories; }
 
 function showToast(message, isError = false) {
     const toast = document.getElementById('toast');
@@ -306,13 +232,11 @@ function showToast(message, isError = false) {
     const toastIcon = document.getElementById('toastIcon');
     
     toastMessage.textContent = message;
-    
     if (isError) {
         toastIcon.innerHTML = '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>';
     } else {
         toastIcon.innerHTML = '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>';
     }
-    
     toast.classList.add('show');
     setTimeout(() => toast.classList.remove('show'), 3000);
 }
@@ -347,18 +271,8 @@ function toggleEndpoint(catIdx, epIdx) {
 }
 
 function isMediaFile(url) {
-    const mediaExtensions = [
-        '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg', '.ico',
-        '.mp4', '.webm', '.ogg', '.mov', '.avi', '.mkv',
-        '.mp3', '.wav', '.ogg', '.m4a', '.flac',
-        '.pdf', '.doc', '.docx', '.ppt', '.pptx', '.xls', '.xlsx'
-    ];
-    return mediaExtensions.some(ext => 
-        url.toLowerCase().includes(ext) || 
-        url.toLowerCase().startsWith('data:image/') ||
-        url.toLowerCase().startsWith('data:video/') ||
-        url.toLowerCase().startsWith('data:audio/')
-    );
+    const mediaExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.mp4', '.webm', '.mp3', '.pdf'];
+    return mediaExtensions.some(ext => url.toLowerCase().includes(ext) || url.toLowerCase().startsWith('data:'));
 }
 
 function getContentType(url, contentType) {
@@ -368,18 +282,9 @@ function getContentType(url, contentType) {
         if (contentType.includes('audio/')) return 'audio';
         if (contentType.includes('application/pdf')) return 'pdf';
     }
-    if (url.includes('.jpg') || url.includes('.jpeg') || url.includes('.png') || 
-        url.includes('.gif') || url.includes('.webp') || url.includes('.svg')) {
-        return 'image';
-    }
-    if (url.includes('.mp4') || url.includes('.webm') || url.includes('.ogg') || 
-        url.includes('.mov') || url.includes('.avi')) {
-        return 'video';
-    }
-    if (url.includes('.mp3') || url.includes('.wav') || url.includes('.ogg') || 
-        url.includes('.m4a')) {
-        return 'audio';
-    }
+    if (url.includes('.jpg') || url.includes('.png')) return 'image';
+    if (url.includes('.mp4')) return 'video';
+    if (url.includes('.mp3')) return 'audio';
     if (url.includes('.pdf')) return 'pdf';
     return 'unknown';
 }
@@ -393,13 +298,10 @@ function createMediaPreview(url, contentType, originalUrl = '') {
             previewHtml = `<div class="media-preview"><img src="${url}" class="media-image" alt="Response Image"></div>`;
             break;
         case 'video':
-            previewHtml = `<div class="media-preview"><video controls class="media-iframe"><source src="${url}" type="${contentType || 'video/mp4'}">Your browser does not support the video tag.</video></div>`;
+            previewHtml = `<div class="media-preview"><video controls class="media-iframe"><source src="${url}">Your browser does not support the video tag.</video></div>`;
             break;
         case 'audio':
-            previewHtml = `<div class="media-preview"><audio controls class="w-full"><source src="${url}" type="${contentType || 'audio/mpeg'}">Your browser does not support the audio tag.</audio></div>`;
-            break;
-        case 'pdf':
-            previewHtml = `<div class="media-preview"><iframe src="${url}" class="media-iframe" frameborder="0"></iframe></div>`;
+            previewHtml = `<div class="media-preview"><audio controls class="w-full"><source src="${url}">Your browser does not support the audio tag.</audio></div>`;
             break;
         default:
             previewHtml = `<div class="media-preview"><iframe src="${url}" class="media-iframe" frameborder="0"></iframe></div>`;
@@ -407,27 +309,14 @@ function createMediaPreview(url, contentType, originalUrl = '') {
     
     const isLightMode = body.classList.contains('light-mode');
     const btnClass = isLightMode 
-        ? 'px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5' 
-        : 'px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-white rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5';
+        ? 'px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg text-xs font-semibold flex items-center gap-1.5' 
+        : 'px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5';
     
-    const copyUrl = originalUrl || url;
-    
-    const actionButtons = `
-        <div class="flex gap-2 mt-3 justify-start">
-            <button type="button" onclick="copyText('${copyUrl}', 'Media URL')" class="${btnClass}">
-                <span>📋</span> Copy URL
-            </button>
-            <a href="${url}" download="downloaded_media" class="${btnClass}">
-                <span>📥</span> Download File
-            </a>
-        </div>
-    `;
-    return `<div class="w-full">${previewHtml}${actionButtons}</div>`;
+    return `<div class="w-full">${previewHtml}<div class="flex gap-2 mt-3"><button type="button" onclick="copyText('${originalUrl || url}', 'Media URL')" class="${btnClass}">📋 Copy URL</button><a href="${url}" download class="${btnClass}">📥 Download</a></div></div>`;
 }
 
 async function executeRequest(e, catIdx, epIdx, method, path) {
     e.preventDefault();
-    
     if (isRequestInProgress) {
         showToast(i18n[currentLang].toastRequestWait, true);
         return;
@@ -436,10 +325,6 @@ async function executeRequest(e, catIdx, epIdx, method, path) {
     const form = document.getElementById(`form-${catIdx}-${epIdx}`);
     const responseDiv = document.getElementById(`response-${catIdx}-${epIdx}`);
     const responseContent = document.getElementById(`response-content-${catIdx}-${epIdx}`);
-    const curlSection = document.getElementById(`curl-section-${catIdx}-${epIdx}`);
-    const urlSection = document.getElementById(`url-section-${catIdx}-${epIdx}`);
-    const curlCommand = document.getElementById(`curl-command-${catIdx}-${epIdx}`);
-    const urlCommand = document.getElementById(`url-command-${catIdx}-${epIdx}`);
     const executeBtn = form.querySelector('button[type="submit"]');
     
     let spinner = executeBtn.querySelector('.local-spinner');
@@ -463,58 +348,26 @@ async function executeRequest(e, catIdx, epIdx, method, path) {
     const fullPath = `${BASE_URL}${path.split('?')[0]}?${params.toString()}`;
     responseDiv.classList.remove('hidden');
     responseContent.innerHTML = '<div class="spinner mx-auto"></div>';
-    
-    const curlText = `curl -X ${method} "${fullPath}"`;
-    curlCommand.textContent = curlText;
-    curlSection.classList.remove('hidden');
-    
-    const urlText = fullPath;
-    urlCommand.textContent = urlText;
-    urlSection.classList.remove('hidden');
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000);
 
     try {
-        const response = await fetch(fullPath, { signal: controller.signal });
-        clearTimeout(timeoutId);
-
+        const response = await fetch(fullPath);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
         const contentType = response.headers.get("content-type");
-        
         if (contentType?.includes("application/json")) {
             const data = await response.json();
             responseContent.innerHTML = `<pre class="code-font text-sm overflow-auto">${JSON.stringify(data, null, 2)}</pre>`;
-        } else if (contentType?.startsWith("image/")) {
+        } else if (contentType?.startsWith("image/") || contentType?.startsWith("video/") || contentType?.startsWith("audio/") || contentType?.includes("application/pdf")) {
             const blob = await response.blob();
-            const imageUrl = URL.createObjectURL(blob);
-            responseContent.innerHTML = createMediaPreview(imageUrl, contentType, fullPath);
-        } else if (contentType?.startsWith("video/")) {
-            const blob = await response.blob();
-            const videoUrl = URL.createObjectURL(blob);
-            responseContent.innerHTML = createMediaPreview(videoUrl, contentType, fullPath);
-        } else if (contentType?.startsWith("audio/")) {
-            const blob = await response.blob();
-            const audioUrl = URL.createObjectURL(blob);
-            responseContent.innerHTML = createMediaPreview(audioUrl, contentType, fullPath);
-        } else if (contentType?.includes("application/pdf")) {
-            const blob = await response.blob();
-            const pdfUrl = URL.createObjectURL(blob);
-            responseContent.innerHTML = createMediaPreview(pdfUrl, contentType, fullPath);
+            const url = URL.createObjectURL(blob);
+            responseContent.innerHTML = createMediaPreview(url, contentType, fullPath);
         } else {
             const text = await response.text();
-            if (isMediaFile(text)) {
-                responseContent.innerHTML = createMediaPreview(text, contentType, text);
-            } else {
-                responseContent.innerHTML = `<pre class="code-font text-sm overflow-auto">${text}</pre>`;
-            }
+            responseContent.innerHTML = `<pre class="code-font text-sm overflow-auto">${text}</pre>`;
         }
         showToast(i18n[currentLang].toastRequestSuccess);
     } catch (error) {
-        clearTimeout(timeoutId);
-        const errorMsg = error.name === 'AbortError' ? 'Request timeout (30s)' : error.message;
-        responseContent.innerHTML = `<pre class="text-red-400 code-font text-sm">Error: ${errorMsg}</pre>`;
+        responseContent.innerHTML = `<pre class="text-red-400 code-font text-sm">Error: ${error.message}</pre>`;
         showToast(i18n[currentLang].toastRequestFailed, true);
     } finally {
         isRequestInProgress = false;
@@ -526,8 +379,33 @@ async function executeRequest(e, catIdx, epIdx, method, path) {
 
 function clearResponse(catIdx, epIdx) {
     document.getElementById(`response-${catIdx}-${epIdx}`).classList.add('hidden');
-    document.getElementById(`curl-section-${catIdx}-${epIdx}`).classList.add('hidden');
-    document.getElementById(`url-section-${catIdx}-${epIdx}`).classList.add('hidden');
+}
+
+function renderCategoryFilters() {
+    const container = document.getElementById('categoryFilters');
+    if (!container || !apiData || !apiData.categories) return;
+
+    let html = `<button class="filter-btn active" data-filter="all" onclick="filterByCategory('all')">semua (${totalEndpoints})</button>`;
+
+    apiData.categories.forEach(category => {
+        const catName = category.name.toLowerCase();
+        const count = category.items.length;
+        html += `<button class="filter-btn" data-filter="${catName}" onclick="filterByCategory('${catName}')">${catName} (${count})</button>`;
+    });
+
+    container.innerHTML = html;
+}
+
+function filterByCategory(catName) {
+    activeCategory = catName;
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        if (btn.dataset.filter === catName) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+    performSearch();
 }
 
 function loadApis() {
@@ -544,21 +422,37 @@ function loadApis() {
     
     updateTotalEndpoints();
     updateTotalCategories();
+    renderCategoryFilters(); // Menyiapkan tombol kategori
     
     let html = '';
     apiData.categories.forEach((category, catIdx) => {
+        const catNameLower = category.name.toLowerCase();
+        
+        // Memilih ikon yang cocok
+        let iconSvg = categoryIcons.default;
+        for (const [key, svg] of Object.entries(categoryIcons)) {
+            if (catNameLower.includes(key)) {
+                iconSvg = svg;
+                break;
+            }
+        }
+
         html += `
-        <div class="category-group fade-in" data-category="${category.name.toLowerCase()}">
-            <div class="${isLightMode ? 'bg-white border-gray-300' : 'bg-gray-900 border-gray-700'} border rounded-xl overflow-hidden card-hover">
-                <button onclick="toggleCategory(${catIdx})" class="w-full px-4 py-3 flex items-center justify-between ${isLightMode ? 'hover:bg-gray-100' : 'hover:bg-gray-800'} transition-colors">
-                    <div class="flex items-center gap-3">
-                        <span class="text-lg">📁</span>
+        <div class="category-group fade-in" data-category="${catNameLower}">
+            <div class="${isLightMode ? 'bg-white border-gray-300' : 'bg-[#111111] border-slate-800'} border rounded-xl overflow-hidden card-hover">
+                <button onclick="toggleCategory(${catIdx})" class="w-full px-4 py-4 flex items-center justify-between ${isLightMode ? 'hover:bg-gray-100' : 'hover:bg-[#1a1a1a]'} transition-colors">
+                    <div class="flex items-center gap-4">
+                        
+                        <div class="w-12 h-12 flex items-center justify-center bg-[#0a0a0a] rounded-lg border border-slate-800 shadow-sm flex-shrink-0">
+                            ${iconSvg}
+                        </div>
+                        
                         <div class="text-left">
-                            <h3 class="font-bold text-sm gray-gradient-text">${category.name}</h3>
-                            <p class="text-xs ${isLightMode ? 'text-gray-600' : 'text-gray-400'}">${category.items.length} ${i18n[currentLang].endpointsCount}</p>
+                            <h3 class="font-bold text-sm tracking-widest gray-gradient-text uppercase">${category.name}</h3>
+                            <p class="text-[11px] code-font ${isLightMode ? 'text-gray-500' : 'text-gray-400'}">${category.items.length} ${i18n[currentLang].endpointsCount}</p>
                         </div>
                     </div>
-                    <svg id="cat-icon-${catIdx}" class="w-4 h-4 ${isLightMode ? 'text-gray-600' : 'text-gray-400'} transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg id="cat-icon-${catIdx}" class="w-5 h-5 ${isLightMode ? 'text-gray-500' : 'text-gray-400'} transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                     </svg>
                 </button>
@@ -572,42 +466,36 @@ function loadApis() {
             let statusClass = item.status === 'update' ? 'status-update' : (item.status === 'error' ? 'status-error' : 'status-ready');
 
             html += `
-            <div class="api-item border-t ${isLightMode ? 'border-gray-300' : 'border-gray-700'}" 
+            <div class="api-item border-t ${isLightMode ? 'border-gray-200' : 'border-slate-800/50'}" 
                 data-method="${method}" data-path="${path}" data-alias="${item.name.toLowerCase()}" data-description="${item.desc.toLowerCase()}" data-category="${category.name.toLowerCase()}">
-                <button onclick="toggleEndpoint(${catIdx}, ${epIdx})" class="w-full px-4 py-2.5 flex items-center justify-between ${isLightMode ? 'hover:bg-gray-100' : 'hover:bg-gray-800'} transition-colors">
+                <button onclick="toggleEndpoint(${catIdx}, ${epIdx})" class="w-full px-4 py-3 flex items-center justify-between ${isLightMode ? 'hover:bg-gray-50' : 'hover:bg-[#1a1a1a]/50'} transition-colors">
                     <div class="flex items-center gap-3 flex-1 min-w-0">
-                        <span class="${isLightMode ? 'bg-gray-200 text-gray-800' : 'bg-gray-700 text-white'} px-2 py-0.5 rounded text-[10px] flex-shrink-0">${method}</span>
+                        <span class="${isLightMode ? 'bg-gray-200 text-gray-800' : 'bg-gray-800 text-white'} px-2 py-1 rounded text-[10px] flex-shrink-0 code-font font-bold">${method}</span>
                         <div class="text-left flex-1 min-w-0">
-                            <p class="code-font font-semibold text-xs truncate">${path}</p>
-                            <div class="flex items-center gap-2 mt-0.5">
-                                <p class="text-xs ${isLightMode ? 'text-gray-700' : 'text-gray-300'} truncate">${item.name}</p>
-                                <span class="px-1.5 py-0.5 text-[10px] rounded-full ${statusClass} flex-shrink-0">${item.status || 'ready'}</span>
+                            <p class="code-font font-semibold text-[13px] truncate">${path}</p>
+                            <div class="flex items-center gap-2 mt-1">
+                                <p class="text-xs ${isLightMode ? 'text-gray-600' : 'text-gray-400'} truncate">${item.name}</p>
+                                <span class="px-1.5 py-0.5 text-[9px] rounded-sm ${statusClass} flex-shrink-0 uppercase tracking-wider">${item.status || 'ready'}</span>
                             </div>
                         </div>
                     </div>
-                    <svg id="ep-icon-${catIdx}-${epIdx}" class="w-4 h-4 ${isLightMode ? 'text-gray-600' : 'text-gray-400'} transition-transform duration-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                    </svg>
                 </button>
-                <div id="ep-${catIdx}-${epIdx}" class="hidden ${isLightMode ? 'bg-gray-100' : 'bg-gray-800/30'} px-4 py-3 border-t ${isLightMode ? 'border-gray-300' : 'border-gray-700'}">
-                    <p class="${isLightMode ? 'text-gray-700' : 'text-gray-300'} mb-3 text-xs">${item.desc}</p>
-                    <div class="mb-3">
-                        <div class="flex items-center justify-between mb-1.5">
-                            <h4 class="font-bold text-xs ${isLightMode ? 'text-gray-700' : 'text-gray-300'}">🔗 Endpoint</h4>
-                            <div class="flex gap-2">
-                                <button onclick="copyText('${path}', 'Path')" class="px-2 py-1 ${isLightMode ? 'bg-gray-200 hover:bg-gray-300' : 'bg-gray-800 hover:bg-gray-700'} rounded text-[10px] transition-colors">Copy Path</button>
-                                <button onclick="copyText('${BASE_URL}${path}', 'URL')" class="px-2 py-1 ${isLightMode ? 'bg-gray-200 hover:bg-gray-300' : 'bg-gray-800 hover:bg-gray-700'} rounded text-[10px] transition-colors">Copy Full URL</button>
-                            </div>
+                <div id="ep-${catIdx}-${epIdx}" class="hidden ${isLightMode ? 'bg-gray-50' : 'bg-[#0f141c]'} px-4 py-4 border-t ${isLightMode ? 'border-gray-200' : 'border-slate-800/50'}">
+                    <p class="${isLightMode ? 'text-gray-600' : 'text-gray-400'} mb-4 text-xs">${item.desc}</p>
+                    <div class="mb-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <h4 class="font-bold text-[11px] uppercase tracking-wider ${isLightMode ? 'text-gray-500' : 'text-gray-400'}">Endpoint</h4>
+                            <button onclick="copyText('${BASE_URL}${path}', 'URL')" class="px-2 py-1 ${isLightMode ? 'bg-gray-200 hover:bg-gray-300' : 'bg-gray-800 hover:bg-gray-700'} rounded text-[10px] transition-colors code-font">Copy URL</button>
                         </div>
-                        <div class="${isLightMode ? 'bg-gray-200 border-gray-300' : 'bg-gray-900/50 border-gray-700'} border px-3 py-2 rounded-lg">
-                            <code class="code-font text-xs ${isLightMode ? 'text-gray-700' : 'text-gray-300'}">${path}</code>
+                        <div class="${isLightMode ? 'bg-white border-gray-300' : 'bg-[#0a0a0a] border-slate-800'} border px-3 py-2 rounded-lg">
+                            <code class="code-font text-xs ${isLightMode ? 'text-gray-800' : 'text-yellow-400'}">${path}</code>
                         </div>
                     </div>`;
 
             if (item.status === 'ready') {
                 html += `
                     <div>
-                        <h4 class="font-bold text-sm ${isLightMode ? 'text-gray-700' : 'text-gray-300'} mb-3">⚡ Try it out</h4>
+                        <h4 class="font-bold text-[11px] uppercase tracking-wider ${isLightMode ? 'text-gray-500' : 'text-gray-400'} mb-3">Parameter</h4>
                         <form id="form-${catIdx}-${epIdx}" onsubmit="executeRequest(event, ${catIdx}, ${epIdx}, '${method}', '${path}')">
                             <div class="space-y-3 mb-4">`;
                 if (item.params) {
@@ -615,51 +503,30 @@ function loadApis() {
                         const isRequired = !queryParams.has(paramName) || queryParams.get(paramName) === '';
                         html += `
                             <div>
-                                <label class="block text-sm font-medium ${isLightMode ? 'text-gray-700' : 'text-gray-300'} mb-2">
+                                <label class="block text-xs font-medium ${isLightMode ? 'text-gray-700' : 'text-gray-300'} mb-1.5 code-font">
                                     ${paramName} ${isRequired ? '<span class="text-red-500">*</span>' : ''}
                                 </label>
-                                <input type="text" name="${paramName}" class="search-input w-full px-4 py-2 rounded-lg focus:outline-none focus:border-blue-500 code-font text-sm" placeholder="${item.params[paramName]}" ${isRequired ? 'required' : ''}>
+                                <input type="text" name="${paramName}" class="search-input w-full px-3 py-2 rounded-lg focus:outline-none focus:border-yellow-500 code-font text-sm bg-black" placeholder="${item.params[paramName]}" ${isRequired ? 'required' : ''}>
                             </div>`;
                     });
                 }
                 html += `
                             </div>
-                            <div class="flex gap-3 flex-wrap">
-                                <button type="submit" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-sm transition-all flex items-center justify-center">${i18n[currentLang].btnExecute}<span class="local-spinner ml-2"></span></button>
-                                <button type="button" onclick="clearResponse(${catIdx}, ${epIdx})" class="px-6 py-2 ${isLightMode ? 'bg-gray-300 hover:bg-gray-400 border-gray-400' : 'bg-gray-700 hover:bg-gray-600 border-gray-600'} border rounded-lg font-semibold text-sm transition-colors">${i18n[currentLang].btnClear}</button>
+                            <div class="flex gap-3">
+                                <button type="submit" class="px-5 py-2 bg-yellow-500 hover:bg-yellow-400 text-black rounded-md font-bold text-xs transition-all flex items-center justify-center">EKSEKUSI</button>
+                                <button type="button" onclick="clearResponse(${catIdx}, ${epIdx})" class="px-5 py-2 bg-transparent border border-gray-600 hover:border-gray-400 text-gray-300 rounded-md font-bold text-xs transition-colors">BERSIHKAN</button>
                             </div>
                         </form>
 
                         <div id="response-${catIdx}-${epIdx}" class="hidden mt-6 space-y-4">
-                            
-                            <div id="url-section-${catIdx}-${epIdx}" class="hidden">
-                                <div class="flex items-center justify-between mb-1.5">
-                                    <h5 class="text-xs font-bold ${isLightMode ? 'text-gray-700' : 'text-gray-300'}">🌐 URL Request</h5>
-                                    <button onclick="copyText(document.getElementById('url-command-${catIdx}-${epIdx}').innerText, 'Request URL')" class="px-2 py-1 ${isLightMode ? 'bg-gray-200 hover:bg-gray-300' : 'bg-gray-800 hover:bg-gray-700'} rounded text-[10px] transition-colors">Copy Url</button>
-                                </div>
-                                <div class="${isLightMode ? 'bg-gray-200 border-gray-300 text-gray-800' : 'bg-gray-900 border-gray-700 text-gray-300'} border p-2 rounded text-xs break-all code-font" id="url-command-${catIdx}-${epIdx}"></div>
-                            </div>
-
-                            <div id="curl-section-${catIdx}-${epIdx}" class="hidden">
-                                <div class="flex items-center justify-between mb-1.5">
-                                    <h5 class="text-xs font-bold ${isLightMode ? 'text-gray-700' : 'text-gray-300'}">📟 cURL Command</h5>
-                                    <button onclick="copyText(document.getElementById('curl-command-${catIdx}-${epIdx}').innerText, 'cURL')" class="px-2 py-1 ${isLightMode ? 'bg-gray-200 hover:bg-gray-300' : 'bg-gray-800 hover:bg-gray-700'} rounded text-[10px] transition-colors">Copy Curl</button>
-                                </div>
-                                <div class="${isLightMode ? 'bg-gray-200 border-gray-300 text-gray-800' : 'bg-gray-900 border-gray-700 text-gray-300'} border p-2 rounded text-xs break-all code-font" id="curl-command-${catIdx}-${epIdx}"></div>
-                            </div>
-
                             <div>
-                                <div class="flex items-center justify-between mb-1.5">
-                                    <h5 class="text-xs font-bold ${isLightMode ? 'text-gray-700' : 'text-gray-300'}">📄 Response</h5>
-                                    <button onclick="copyText(document.getElementById('response-content-${catIdx}-${epIdx}').innerText, 'Response')" class="px-2 py-1 ${isLightMode ? 'bg-gray-200 hover:bg-gray-300' : 'bg-gray-800 hover:bg-gray-700'} rounded text-[10px] transition-colors">Copy Response</button>
-                                </div>
-                                <div class="${isLightMode ? 'bg-gray-200 border-gray-300 text-gray-800' : 'bg-gray-900 border-gray-700 text-gray-300'} border p-3 rounded-lg min-h-[100px] overflow-x-auto relative" id="response-content-${catIdx}-${epIdx}"></div>
+                                <h5 class="text-[11px] uppercase tracking-wider font-bold mb-2 ${isLightMode ? 'text-gray-500' : 'text-gray-400'}">Response</h5>
+                                <div class="${isLightMode ? 'bg-white border-gray-300' : 'bg-[#0a0a0a] border-slate-800'} border p-3 rounded-lg min-h-[100px] overflow-x-auto" id="response-content-${catIdx}-${epIdx}"></div>
                             </div>
-
                         </div>
                     </div>`;
             } else {
-                html += `<div class="px-4 py-3 status-warning border rounded-lg text-sm">${i18n[currentLang].endpointNotAvailable}</div>`;
+                html += `<div class="px-4 py-3 status-warning border rounded-lg text-xs">${i18n[currentLang].endpointNotAvailable}</div>`;
             }
             html += `</div></div>`;
         });
@@ -669,23 +536,20 @@ function loadApis() {
     allApiElements = Array.from(document.querySelectorAll('.api-item'));
 }
 
-
-
 function performSearch() {
     const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
     const noResults = document.getElementById('noResults');
-
-    if (searchTerm === '') {
-        document.querySelectorAll('.category-group').forEach(cat => {
-            cat.classList.remove('hidden');
-            cat.querySelectorAll('.api-item').forEach(item => item.classList.remove('hidden'));
-        });
-        noResults.classList.add('hidden');
-        return;
-    }
-
     let hasVisibleItems = false;
+
     document.querySelectorAll('.category-group').forEach(category => {
+        const catName = category.dataset.category;
+        
+        // Logika penyaringan tombol kategori baru
+        if (activeCategory !== 'all' && catName !== activeCategory) {
+            category.classList.add('hidden');
+            return;
+        }
+
         let categoryHasVisibleItems = false;
         category.querySelectorAll('.api-item').forEach(item => {
             const matches = item.dataset.path.toLowerCase().includes(searchTerm) || 
@@ -700,28 +564,24 @@ function performSearch() {
                 item.classList.add('hidden');
             }
         });
+        
         category.classList.toggle('hidden', !categoryHasVisibleItems);
     });
+    
     noResults.classList.toggle('hidden', hasVisibleItems);
 }
 
 async function loadLinkBio() {
     try {
         const response = await fetch('linkbio.json');
-        if (!response.ok) throw new Error('Failed to load linkbio.json');
+        if (!response.ok) throw new Error('Failed');
         const socialData = await response.json();
         
         document.getElementById('socialLoading').classList.add('hidden');
-        document.getElementById('socialError').classList.add('hidden');
-        
         const socialContainer = document.getElementById('socialContainer');
         const isLightMode = body.classList.contains('light-mode');
         
-        const loadingEl = document.getElementById('socialLoading');
-        const errorEl = document.getElementById('socialError');
         socialContainer.innerHTML = '';
-        socialContainer.appendChild(loadingEl);
-        socialContainer.appendChild(errorEl);
 
         socialData.link_bio.forEach(social => {
             const socialElement = document.createElement('a');
@@ -742,7 +602,6 @@ async function loadLinkBio() {
             socialContainer.appendChild(socialElement);
         });
     } catch (error) {
-        console.error('Error loading link bio:', error);
         document.getElementById('socialLoading').classList.add('hidden');
         document.getElementById('socialError').classList.remove('hidden');
     }
@@ -789,8 +648,8 @@ function initMultiMusicPlayer() {
         playlist.forEach((track, idx) => {
             const isActive = idx === currentTrackIdx;
             const itemBtn = document.createElement('button');
-            itemBtn.className = `w-full text-left px-3 py-2 text-xs rounded-xl flex items-center justify-between transition-all ${isActive ? 'bg-blue-600/10 border border-blue-500/30 text-blue-500 font-bold' : 'hover:bg-slate-800/40 light-mode:hover:bg-gray-100 text-gray-400 light-mode:text-gray-600'}`;
-            itemBtn.innerHTML = `<div class="flex items-center gap-2 truncate"><span class="opacity-50 text-[10px] code-font">${String(idx + 1).padStart(2, '0')}</span><span class="truncate">${track.title} <span class="opacity-60 font-normal">- ${track.artist}</span></span></div>${isActive ? '<span class="text-[9px] tracking-wider text-blue-500 bg-blue-500/10 px-1.5 py-0.5 rounded animate-pulse font-bold">PLAYING</span>' : ''}`;
+            itemBtn.className = `w-full text-left px-3 py-2 text-xs rounded-xl flex items-center justify-between transition-all ${isActive ? 'bg-yellow-500/10 border border-yellow-500/30 text-yellow-500 font-bold' : 'hover:bg-slate-800/40 text-gray-400'}`;
+            itemBtn.innerHTML = `<div class="flex items-center gap-2 truncate"><span class="opacity-50 text-[10px] code-font">${String(idx + 1).padStart(2, '0')}</span><span class="truncate">${track.title} <span class="opacity-60 font-normal">- ${track.artist}</span></span></div>${isActive ? '<span class="text-[9px] tracking-wider text-yellow-500 bg-yellow-500/10 px-1.5 py-0.5 rounded animate-pulse font-bold">PLAYING</span>' : ''}`;
             itemBtn.addEventListener('click', () => {
                 loadTrack(idx);
                 audio.play().catch(e => console.log(e));
@@ -799,7 +658,7 @@ function initMultiMusicPlayer() {
         });
     }
 
-    playBtn.addEventListener('click', () => { audio.paused ? audio.play().catch(err => console.log(err)) : audio.pause(); });
+    playBtn.addEventListener('click', () => { audio.paused ? audio.play() : audio.pause(); });
     audio.addEventListener('play', () => {
         playIcon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
         coverImg.classList.add('scale-105', 'rotate-3');
@@ -816,9 +675,9 @@ function initMultiMusicPlayer() {
     });
     audio.addEventListener('loadedmetadata', () => { totalDurationEl.textContent = formatTime(audio.duration); });
     progressContainer.addEventListener('click', (e) => { if (audio.duration) audio.currentTime = (e.offsetX / progressContainer.clientWidth) * audio.duration; });
-    document.getElementById('prevBtn').addEventListener('click', () => { loadTrack(currentTrackIdx - 1 < 0 ? playlist.length - 1 : currentTrackIdx - 1); audio.play().catch(e => console.log(e)); });
-    document.getElementById('nextBtn').addEventListener('click', () => { loadTrack(currentTrackIdx + 1 >= playlist.length ? 0 : currentTrackIdx + 1); audio.play().catch(e => console.log(e)); });
-    audio.addEventListener('ended', () => { loadTrack(currentTrackIdx + 1 >= playlist.length ? 0 : currentTrackIdx + 1); audio.play().catch(e => console.log(e)); });
+    document.getElementById('prevBtn').addEventListener('click', () => { loadTrack(currentTrackIdx - 1 < 0 ? playlist.length - 1 : currentTrackIdx - 1); audio.play(); });
+    document.getElementById('nextBtn').addEventListener('click', () => { loadTrack(currentTrackIdx + 1 >= playlist.length ? 0 : currentTrackIdx + 1); audio.play(); });
+    audio.addEventListener('ended', () => { loadTrack(currentTrackIdx + 1 >= playlist.length ? 0 : currentTrackIdx + 1); audio.play(); });
     document.getElementById('playlistToggleBtn').addEventListener('click', () => { playlistPanel.classList.toggle('hidden'); });
 
     loadTrack(0);
@@ -833,7 +692,6 @@ document.addEventListener('DOMContentLoaded', function() {
     initMultiMusicPlayer();
     setLanguage(savedLang);
     
-    // Integrasi Drawer Menu
     const bioMenuBtn = document.getElementById('bioMenuBtn');
     const bioDropdown = document.getElementById('bioDropdown');
     const closeMenuBtn = document.getElementById('closeMenuBtn');
@@ -845,56 +703,19 @@ document.addEventListener('DOMContentLoaded', function() {
             bioDropdown.style.transform = 'translateX(0)';
             menuOverlay.classList.remove('hidden');
         });
-
-        if (closeMenuBtn) {
-            closeMenuBtn.addEventListener('click', closeSidebarMenu);
-        }
-
+        if (closeMenuBtn) closeMenuBtn.addEventListener('click', closeSidebarMenu);
         menuOverlay.addEventListener('click', closeSidebarMenu);
         bioDropdown.addEventListener('click', (e) => { e.stopPropagation(); });
     }
     
-    // Smooth scrolling link navigasi menu
-    document.querySelectorAll('.menu-link').forEach(anchor => {
-        anchor.addEventListener('click', function(e) {
-            const href = this.getAttribute('href');
-            
-            if (href.startsWith('#') && href !== '#') {
-                e.preventDefault();
-                const targetElement = document.querySelector(href);
-                if (targetElement) {
-                    closeSidebarMenu();
-                    setTimeout(() => {
-                        window.scrollTo({
-                            top: targetElement.offsetTop - 20,
-                            behavior: 'smooth'
-                        });
-                    }, 300);
-                }
-            } else if (href === '#') {
-                e.preventDefault();
-            }
-        });
-    });
-    
     fetch('/api/apilist')
-        .then(res => {
-            if (!res.ok) throw new Error('Failed to load listapi.json');
-            return res.json();
-        })
+        .then(res => res.json())
         .then(data => {
             apiData = data;
             loadApis();
         })
         .catch(err => {
-            console.error('Error loading API data:', err);
-            document.getElementById('apiList').innerHTML = `
-                <div class="text-center p-8 bg-red-900/20 border border-red-700 rounded-lg">
-                    <div class="text-4xl mb-4">⚠️</div>
-                    <h3 class="font-bold text-lg mb-2">Failed to load API data</h3>
-                    <p class="text-xs mt-4 text-gray-400">Error: ${err.message}</p>
-                </div>
-            `;
+            document.getElementById('apiList').innerHTML = `<div class="text-center p-8 bg-red-900/20 border border-red-700 rounded-lg"><div class="text-4xl mb-4">⚠️</div><h3 class="font-bold text-lg mb-2">Failed to load API data</h3></div>`;
         });
 });
 
@@ -906,13 +727,4 @@ document.getElementById('searchInput').addEventListener('input', function() {
     searchTimeout = setTimeout(performSearch, 300);
 });
 
-document.addEventListener('keydown', (e) => {
-    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-        e.preventDefault();
-        document.getElementById('searchInput').focus();
-    }
-});
-
-window.addEventListener('beforeunload', function() {
-    cleanupBatteryMonitor();
-});
+window.addEventListener('beforeunload', cleanupBatteryMonitor);
