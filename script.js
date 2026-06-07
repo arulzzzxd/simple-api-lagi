@@ -9,7 +9,7 @@ let totalCategories = 0;
 let batteryMonitor = null;
 let activeCategory = 'all';
 
-// Penghapusan objek themeVideos, diganti dengan kode warna kelas CSS Tailwind
+// Menggunakan penanganan kelas background solid yang cepat
 const themeStyles = {
     dark: {
         bodyBg: 'bg-[#030712]',
@@ -26,7 +26,7 @@ const themeStyles = {
 const themeToggleBtn = document.getElementById('themeToggle');
 const body = document.body;
 
-// Pemetaan Ikon Kategori (SVG Kuning/Cyan)
+// Pemetaan Ikon Kategori
 const categoryIcons = {
     'ai': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-cyan-400 light-mode:text-cyan-600"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73A2 2 0 1 1 12 2zm-2 10a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm4 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/></svg>',
     'download': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-cyan-400 light-mode:text-cyan-600"><path d="M12 16l-5-5h3V4h4v7h3l-5 5zm9 4H3v-2h18v2z"/></svg>',
@@ -90,7 +90,6 @@ const i18n = {
     }
 };
 
-// Logika perbaruan warna solid background (Pengganti Video)
 function updateThemeBackground(theme) {
     if (theme === 'light') {
         body.classList.remove('bg-[#030712]');
@@ -177,7 +176,6 @@ function updateSocialBadges() {
     const socialBadges = document.querySelectorAll('.social-badge > div');
     
     socialBadges.forEach(badge => {
-        badge.className = 'px-4 py-2 rounded-xl text-xs font-bold transition-colors text-center border';
         if (isLightMode) {
             badge.className = 'px-4 py-2 rounded-xl text-xs font-bold transition-colors text-center border bg-white/80 text-slate-900 hover:bg-slate-100 border-black/10 shadow-sm';
         } else {
@@ -291,11 +289,6 @@ function toggleEndpoint(catIdx, epIdx) {
     const icon = document.getElementById(`ep-icon-${catIdx}-${epIdx}`);
     content.classList.toggle('hidden');
     icon.style.transform = content.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(180deg)';
-}
-
-function isMediaFile(url) {
-    const mediaExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.mp4', '.webm', '.mp3', '.pdf'];
-    return mediaExtensions.some(ext => url.toLowerCase().includes(ext) || url.toLowerCase().startsWith('data:'));
 }
 
 function getContentType(url, contentType) {
@@ -431,6 +424,46 @@ function filterByCategory(catName) {
     performSearch();
 }
 
+// OPTIMASI: Menggunakan Pencarian Tersinkronisasi Frame Rate (Mencegah Lagging CPU)
+function performSearch() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+    const noResults = document.getElementById('noResults');
+    let hasVisibleItems = false;
+
+    requestAnimationFrame(() => {
+        document.querySelectorAll('.category-group').forEach(category => {
+            const catName = category.dataset.category;
+            
+            if (activeCategory !== 'all' && catName !== activeCategory) {
+                category.classList.add('hidden');
+                return;
+            }
+
+            let categoryHasVisibleItems = false;
+            const items = category.querySelectorAll('.api-item');
+            
+            for (let i = 0; i < items.length; i++) {
+                const item = items[i];
+                const matches = item.dataset.path.includes(searchTerm) || 
+                                item.dataset.alias.includes(searchTerm) || 
+                                item.dataset.description.includes(searchTerm) ||
+                                item.dataset.category.includes(searchTerm);
+                if (matches) {
+                    item.classList.remove('hidden');
+                    categoryHasVisibleItems = true;
+                    hasVisibleItems = true;
+                } else {
+                    item.classList.add('hidden');
+                }
+            }
+            
+            category.classList.toggle('hidden', !categoryHasVisibleItems);
+        });
+        
+        noResults.classList.toggle('hidden', hasVisibleItems);
+    });
+}
+
 function loadApis() {
     const apiList = document.getElementById('apiList');
     if (!apiData || !apiData.categories) {
@@ -463,9 +496,9 @@ function loadApis() {
         }
 
         html += `
-        <div class="category-group fade-in" data-category="${catNameLower}">
+        <div class="category-group" data-category="${catNameLower}">
             <div class="glass-panel border rounded-xl overflow-hidden shadow-lg mb-4">
-                <button onclick="toggleCategory(${catIdx})" class="w-full px-4 py-4 flex items-center justify-between hover:bg-white/10 light-mode:hover:bg-black/5 transition-colors">
+                <button onclick="toggleCategory(${catIdx})" class="w-full px-4 py-4 flex items-center justify-between hover:bg-white/5 light-mode:hover:bg-black/5 transition-colors">
                     <div class="flex items-center gap-4">
                         <div class="w-12 h-12 flex items-center justify-center bg-slate-950/40 light-mode:bg-slate-200/50 rounded-xl border border-white/10 light-mode:border-slate-300 shadow-inner flex-shrink-0">
                             ${iconSvg}
@@ -557,40 +590,6 @@ function loadApis() {
     });
     apiList.innerHTML = html;
     allApiElements = Array.from(document.querySelectorAll('.api-item'));
-}
-
-function performSearch() {
-    const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
-    const noResults = document.getElementById('noResults');
-    let hasVisibleItems = false;
-
-    document.querySelectorAll('.category-group').forEach(category => {
-        const catName = category.dataset.category;
-        
-        if (activeCategory !== 'all' && catName !== activeCategory) {
-            category.classList.add('hidden');
-            return;
-        }
-
-        let categoryHasVisibleItems = false;
-        category.querySelectorAll('.api-item').forEach(item => {
-            const matches = item.dataset.path.toLowerCase().includes(searchTerm) || 
-                            item.dataset.alias.includes(searchTerm) || 
-                            item.dataset.description.includes(searchTerm) ||
-                            item.dataset.category.includes(searchTerm);
-            if (matches) {
-                item.classList.remove('hidden');
-                categoryHasVisibleItems = true;
-                hasVisibleItems = true;
-            } else {
-                item.classList.add('hidden');
-            }
-        });
-        
-        category.classList.toggle('hidden', !categoryHasVisibleItems);
-    });
-    
-    noResults.classList.toggle('hidden', hasVisibleItems);
 }
 
 async function loadLinkBio() {
@@ -738,7 +737,7 @@ themeToggleBtn.addEventListener('click', toggleTheme);
 let searchTimeout;
 document.getElementById('searchInput').addEventListener('input', function() {
     clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(performSearch, 300);
+    searchTimeout = setTimeout(performSearch, 150);
 });
 
 window.addEventListener('beforeunload', cleanupBatteryMonitor);
