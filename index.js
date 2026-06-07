@@ -146,45 +146,54 @@ app.get('/', (req, res) => {
     <link rel="stylesheet" href="styles.css" />
     
     <style>
-        /* Background Video Styler */
-        #videoBg {
-            position: fixed;
-            right: 0;
-            bottom: 0;
-            min-width: 100%;
-            min-height: 100%;
-            width: auto;
-            height: auto;
-            z-index: -100;
-            object-fit: cover;
-            transition: opacity 0.5s ease;
+        /* Smooth Transition untuk Theme Toggle */
+        body {
+            transition: background 0.4s ease, color 0.4s ease;
         }
 
-        /* Glassmorphism Styles matching the reference image */
+        /* Glassmorphism Styles dengan kontras tinggi */
         .glass-panel {
-            background: rgba(15, 23, 42, 0.45);
+            background: rgba(15, 23, 42, 0.65);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
             border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
         }
         
         .light-mode .glass-panel {
-            background: rgba(255, 255, 255, 0.45);
-            border: 1px solid rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.75);
+            border: 1px solid rgba(15, 23, 42, 0.12);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
         }
 
+        /* Perbaikan Kontras Tulisan Mode Terang */
+        .light-mode {
+            color: #0f172a !important;
+        }
+        .light-mode #mainTitle { color: #0f172a !important; }
+        .light-mode #mainDescription { color: #334155 !important; }
+        .light-mode #stat-battery-title,
+        .light-mode #stat-endpoints-title,
+        .light-mode #stat-categories-title { color: #475569 !important; }
+        .light-mode #siteFooter { color: #64748b !important; border-color: rgba(0,0,0,0.1); }
+        .light-mode #no-results-title { color: #0f172a !important; }
+
         .light-mode .music-player-card {
-            background: rgba(255, 255, 255, 0.5) !important;
-            border-color: rgba(0, 0, 0, 0.1) !important;
+            background: rgba(255, 255, 255, 0.8) !important;
+            border-color: rgba(0, 0, 0, 0.12) !important;
         }
         .light-mode .music-text-title { color: #0f172a !important; }
-        .light-mode .music-text-artist { color: #334155 !important; }
+        .light-mode .music-text-artist { color: #475569 !important; }
         .light-mode .music-progress-bar-bg { background-color: rgba(0,0,0,0.1) !important; }
         
         .light-mode .music-btn-nav {
-            background-color: rgba(255, 255, 255, 0.6) !important;
-            border-color: rgba(0,0,0,0.1) !important;
-            color: #334155 !important;
+            background-color: rgba(255, 255, 255, 0.9) !important;
+            border-color: rgba(0,0,0,0.12) !important;
+            color: #1e293b !important;
+        }
+        .light-mode .music-btn-nav:hover {
+            background-color: #f1f5f9 !important;
+            color: #0f172a !important;
         }
         
         /* Brutalist Toggle Language Switcher */
@@ -228,17 +237,18 @@ app.get('/', (req, res) => {
             font-weight: bold;
         }
         .light-mode .filter-btn {
-            border-color: rgba(0,0,0,0.1);
-            background: rgba(0,0,0,0.05);
-            color: #1e293b;
+            border-color: rgba(0,0,0,0.15);
+            background: rgba(0,0,0,0.04);
+            color: #334155;
+        }
+        .light-mode .filter-btn:hover {
+            background: rgba(0,0,0,0.08);
         }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="min-h-screen antialiased text-white light-mode:text-slate-900 relative">
-
-    <video autoplay loop muted playsinline id="videoBg"></video>
+<body class="min-h-screen antialiased bg-[#030712] text-slate-100 relative">
 
     <div id="toast" class="toast z-50">
         <div class="flex items-center gap-3">
@@ -249,15 +259,15 @@ app.get('/', (req, res) => {
         </div>
     </div>
 
-    <div class="fixed top-6 right-6 z-50">
-        <button id="bioMenuBtn" class="flex items-center justify-center w-12 h-12 rounded-xl glass-panel text-slate-300 hover:text-white shadow-lg transition-all active:scale-95 focus:outline-none">
+    <div class="fixed top-6 right-6 z-40">
+        <button id="bioMenuBtn" class="flex items-center justify-center w-12 h-12 rounded-xl glass-panel text-slate-300 hover:text-white shadow-lg transition-all active:scale-95 focus:outline-none light-mode:text-slate-700 light-mode:hover:text-slate-900">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
             </svg>
         </button>
     </div>
 
-    <div id="bioDropdown" class="fixed top-0 right-0 h-full w-72 bg-[#08111e]/90 backdrop-blur-lg border-l border-white/10 transform translate-x-full transition-transform duration-300 ease-in-out z-50 shadow-2xl flex flex-col p-6 font-['Space_Grotesk']">
+    <div id="bioDropdown" class="fixed top-0 right-0 h-full w-72 bg-[#08111e]/95 backdrop-blur-lg border-l border-white/10 transform translate-x-full transition-transform duration-300 ease-in-out z-50 shadow-2xl flex flex-col p-6 font-['Space_Grotesk'] light-mode:bg-white/95 light-mode:border-slate-200">
         <div class="flex items-center justify-between mb-8">
             <div class="flex gap-0 border border-black p-0.5 bg-[#111]">
                 <button id="lang-id" class="lang-btn active" onclick="setLanguage('id')">ID</button>
@@ -265,16 +275,16 @@ app.get('/', (req, res) => {
             </div>
             
             <div class="flex items-center gap-2">
-                <button id="themeToggle" class="flex items-center justify-center w-8 h-8 rounded-lg transition-all active:scale-95 focus:outline-none border border-white/20 bg-slate-900/50 text-white">
-                    <svg id="theme-toggle-dark-icon" class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <button id="themeToggle" class="flex items-center justify-center w-8 h-8 rounded-lg transition-all active:scale-95 focus:outline-none border border-white/20 bg-slate-900/50 text-white light-mode:bg-slate-100 light-mode:border-slate-300 light-mode:text-slate-900">
+                    <svg id="theme-toggle-dark-icon" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
                     </svg>
-                    <svg id="theme-toggle-light-icon" class="w-4 h-4 text-black hidden" fill="currentColor" viewBox="0 0 20 20">
+                    <svg id="theme-toggle-light-icon" class="w-4 h-4 hidden" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path>
                     </svg>
                 </button>
 
-                <button id="closeMenuBtn" class="text-white hover:text-red-400 transition-colors p-1.5 border border-white/10 rounded bg-slate-900/40">
+                <button id="closeMenuBtn" class="text-white hover:text-red-400 transition-colors p-1.5 border border-white/10 rounded bg-slate-900/40 light-mode:text-slate-700 light-mode:bg-slate-100 light-mode:border-slate-300 light-mode:hover:text-red-500">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
@@ -282,18 +292,18 @@ app.get('/', (req, res) => {
             </div>
         </div>
 
-        <nav class="flex flex-col gap-5 text-sm font-bold tracking-wider uppercase text-gray-300">
+        <nav class="flex flex-col gap-5 text-sm font-bold tracking-wider uppercase text-gray-300 light-mode:text-slate-700">
             <a href="#api" class="menu-link hover:text-cyan-400 transition-colors flex items-center gap-2">HOME</a>
             <a href="#apiList" class="menu-link hover:text-cyan-400 transition-colors flex items-center gap-2">DOCUMENTATION</a>
             <a href="#" class="menu-link hover:text-cyan-400 transition-colors flex items-center gap-2">FILE UPLOADER</a>
             <a href="#" class="menu-link hover:text-cyan-400 transition-colors flex items-center gap-2">PASTEBIN</a>
-            <hr class="border-white/10 my-2">
+            <hr class="border-white/10 my-2 light-mode:border-slate-200">
             <a href="#" class="menu-link hover:text-cyan-400 transition-colors flex items-center gap-2 text-xs opacity-80">BUG REPORT</a>
             <a href="#" class="menu-link hover:text-cyan-400 transition-colors flex items-center gap-2 text-xs opacity-80">PRIVACY POLICY</a>
         </nav>
 
         <div class="mt-8 flex-1 overflow-y-auto">
-            <h3 class="text-[10px] font-bold tracking-widest uppercase mb-3 text-slate-400 code-font">DYNAMIC LINK BIO</h3>
+            <h3 class="text-[10px] font-bold tracking-widest uppercase mb-3 text-slate-400 light-mode:text-slate-500 code-font">DYNAMIC LINK BIO</h3>
             <div id="socialContainer" class="flex flex-col gap-2">
                 <div id="socialLoading" class="text-center py-2 w-full"><p class="text-xs text-slate-400">Loading...</p></div>
                 <div id="socialError" class="text-center py-2 w-full hidden"><p class="text-[10px] text-red-400">Link bio tidak tersedia.</p></div>
@@ -301,54 +311,54 @@ app.get('/', (req, res) => {
         </div>
     </div>
 
-    <div id="menuOverlay" class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden z-40 transition-opacity duration-300"></div>
+    <div id="menuOverlay" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden z-30 transition-opacity duration-300"></div>
 
     <div class="max-w-5xl mx-auto px-4 py-8 relative z-10">
         <header id="api" class="mb-12 text-center">
             <div class="flex items-center justify-center gap-3 mb-2">
-                <span class="bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest animate-pulse">● ONLINE</span>
+                <span class="bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest animate-pulse light-mode:bg-cyan-100 light-mode:text-cyan-700">● ONLINE</span>
             </div>
-            <h1 id="mainTitle" class="text-5xl md:text-6xl font-black mb-4 tracking-tight font-['Space_Grotesk'] text-white drop-shadow-md">${headertitle}</h1>
-            <p id="mainDescription" class="text-md md:text-lg font-medium tracking-wide text-cyan-100/80 max-w-xl mx-auto">${headerdescription}</p>
+            <h1 id="mainTitle" class="text-5xl md:text-6xl font-black mb-4 tracking-tight font-['Space_Grotesk'] text-white">${headertitle}</h1>
+            <p id="mainDescription" class="text-md md:text-lg font-medium tracking-wide text-slate-300 max-w-xl mx-auto">${headerdescription}</p>
             
             <div class="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto">
                 <div class="glass-panel flex flex-col items-center justify-center p-4 rounded-xl shadow-lg">
-                    <span id="stat-battery-title" class="text-xs font-bold uppercase tracking-wider text-slate-300">Baterai Anda</span>
+                    <span id="stat-battery-title" class="text-xs font-bold uppercase tracking-wider text-slate-400">Baterai Anda</span>
                     <div class="flex items-center gap-3 mt-2">
-                        <div id="batteryContainer" class="battery-container border border-white/20">
+                        <div id="batteryContainer" class="battery-container border border-white/20 light-mode:border-slate-400">
                             <div id="batteryLevel" class="battery-level bg-green-400" style="width: 0%"></div>
                             <div class="battery-tip"></div>
                         </div>
                         <div class="text-left">
-                            <span id="batteryPercentage" class="text-lg font-bold block leading-none">0%</span>
-                            <span id="batteryStatus" class="text-[10px] uppercase text-slate-400 font-medium">Mendeteksi...</span>
+                            <span id="batteryPercentage" class="text-lg font-bold block leading-none light-mode:text-slate-900">0%</span>
+                            <span id="batteryStatus" class="text-[10px] uppercase text-slate-400 light-mode:text-slate-500 font-medium">Mendeteksi...</span>
                         </div>
                     </div>
                 </div>
                 
                 <div class="glass-panel flex flex-col items-center justify-center p-4 rounded-xl shadow-lg">
-                    <span id="stat-endpoints-title" class="text-xs font-bold uppercase tracking-wider text-slate-300">Total Endpoint</span>
-                    <span id="totalEndpoints" class="text-3xl font-black text-cyan-400 mt-1">0</span>
+                    <span id="stat-endpoints-title" class="text-xs font-bold uppercase tracking-wider text-slate-400">Total Endpoint</span>
+                    <span id="totalEndpoints" class="text-3xl font-black text-cyan-400 mt-1 light-mode:text-cyan-600">0</span>
                 </div>
                 
                 <div class="glass-panel flex flex-col items-center justify-center p-4 rounded-xl shadow-lg">
-                    <span id="stat-categories-title" class="text-xs font-bold uppercase tracking-wider text-slate-300">Total Kategori</span>
-                    <span id="totalCategories" class="text-3xl font-black text-cyan-400 mt-1">0</span>
+                    <span id="stat-categories-title" class="text-xs font-bold uppercase tracking-wider text-slate-400">Total Kategori</span>
+                    <span id="totalCategories" class="text-3xl font-black text-cyan-400 mt-1 light-mode:text-cyan-600">0</span>
                 </div>
             </div>
 
             <div class="glass-panel max-w-3xl mx-auto mt-4 p-3 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-3 border border-white/20">
-                <div class="flex items-center gap-2 text-sm text-cyan-200 code-font">
-                    <span>🔗</span> <span class="underline break-all">https://api-nanzz.my.id/docs/api/</span>
+                <div class="flex items-center gap-2 text-sm text-cyan-400 light-mode:text-cyan-700 code-font">
+                    <span>🔗</span> <span class="underline break-all font-semibold">https://api-nanzz.my.id/docs/api/</span>
                 </div>
-                <button class="w-full sm:w-auto px-6 py-2 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs uppercase rounded-lg shadow transition-all active:scale-95">
+                <button class="w-full sm:w-auto px-6 py-2 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs uppercase rounded-lg shadow transition-all active:scale-95 light-mode:bg-cyan-600 light-mode:hover:bg-cyan-500 light-mode:text-white">
                     + Request New Feature
                 </button>
             </div>
             
             <div class="flex justify-center gap-4 mt-4 max-w-3xl mx-auto">
-                <button class="flex-1 glass-panel py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-white/10 transition-colors">💬 Channel</button>
-                <button class="flex-1 glass-panel py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-white/10 transition-colors">👥 Group</button>
+                <button class="flex-1 glass-panel py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-white/10 light-mode:hover:bg-slate-100 transition-colors light-mode:text-slate-700">💬 Channel</button>
+                <button class="flex-1 glass-panel py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-white/10 light-mode:hover:bg-slate-100 transition-colors light-mode:text-slate-700">👥 Group</button>
             </div>
 
             <div class="music-player-card glass-panel mt-8 max-w-2xl mx-auto rounded-2xl p-4 shadow-2xl relative overflow-hidden border border-white/10">
@@ -360,13 +370,13 @@ app.get('/', (req, res) => {
                         </div>
                         <div class="flex-1 min-w-0 text-left">
                             <h3 id="musicTitle" class="music-text-title text-white font-bold text-sm tracking-wider uppercase truncate m-0">Loading...</h3>
-                            <p id="musicArtist" class="music-text-artist text-slate-300 text-xs font-semibold tracking-wide truncate mt-0.5">-</p>
+                            <p id="musicArtist" class="music-text-artist text-slate-400 text-xs font-semibold tracking-wide truncate mt-0.5">-</p>
                             <div class="flex items-center gap-2 mt-2">
-                                <span id="currentTime" class="text-[10px] text-slate-400 code-font w-7 text-left">0:00</span>
+                                <span id="currentTime" class="text-[10px] text-slate-400 light-mode:text-slate-500 code-font w-7 text-left">0:00</span>
                                 <div id="progressContainer" class="music-progress-bar-bg flex-1 h-1 bg-white/10 rounded-full relative cursor-pointer group">
                                     <div id="progressBar" class="h-full bg-cyan-400 rounded-full w-0 transition-all duration-300"></div>
                                 </div>
-                                <span id="totalDuration" class="text-[10px] text-slate-400 code-font w-7 text-right">0:00</span>
+                                <span id="totalDuration" class="text-[10px] text-slate-400 light-mode:text-slate-500 code-font w-7 text-right">0:00</span>
                             </div>
                         </div>
                     </div>
@@ -385,7 +395,7 @@ app.get('/', (req, res) => {
                         </button>
                     </div>
                 </div>
-                <div id="playlistPanel" class="music-playlist-border hidden mt-4 pt-4 border-t border-white/10 max-h-40 overflow-y-auto space-y-1"></div>
+                <div id="playlistPanel" class="music-playlist-border hidden mt-4 pt-4 border-t border-white/10 max-h-40 overflow-y-auto space-y-1 light-mode:border-slate-200"></div>
             </div>
         </header>
 
@@ -395,7 +405,7 @@ app.get('/', (req, res) => {
                     type="text" 
                     id="searchInput" 
                     placeholder="Cari endpoint berdasarkan nama, path, atau kategori..."
-                    class="search-input w-full px-4 py-3 text-sm rounded-xl focus:outline-none focus:border-cyan-500 transition-all code-font glass-panel border border-white/10 text-white placeholder-slate-400"
+                    class="search-input w-full px-4 py-3 text-sm rounded-xl focus:outline-none focus:border-cyan-500 transition-all code-font glass-panel border border-white/10 text-white placeholder-slate-400 light-mode:text-slate-900 light-mode:placeholder-slate-500 light-mode:focus:border-cyan-600"
                 >
                 <svg class="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
@@ -406,13 +416,13 @@ app.get('/', (req, res) => {
 
         <div id="noResults" class="text-center py-12 hidden">
             <div class="text-4xl mb-2">🔍</div>
-            <h3 id="no-results-title" class="text-sm font-bold mb-1">Endpoint tidak ditemukan</h3>
-            <p id="no-results-desc" class="text-xs text-slate-400">Coba gunakan kata kunci lain</p>
+            <h3 id="no-results-title" class="text-sm font-bold mb-1 text-white">Endpoint tidak ditemukan</h3>
+            <p id="no-results-desc" class="text-xs text-slate-400 light-mode:text-slate-500">Coba gunakan kata kunci lain</p>
         </div>
 
         <div id="apiList" class="space-y-4"></div>
 
-        <footer id="siteFooter" class="mt-12 pt-6 border-t border-white/10 text-center text-xs text-slate-400">
+        <footer id="siteFooter" class="mt-12 pt-6 border-t border-white/10 text-center text-xs text-slate-500">
             ${footer}
         </footer>
     </div>
