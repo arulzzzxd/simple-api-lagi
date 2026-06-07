@@ -142,35 +142,24 @@ app.get('/', (req, res) => {
     <title>${title}</title>
     <link id="faviconLink" rel="icon" type="image/x-icon" href="${favicon}">
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Tambahan Font Syne untuk Header Utama agar melebar seperti di gambar -->
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Space+Grotesk:wght@400;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css" />
     
     <style>
-        /* Desain Khusus Terinspirasi dari Screenshot_20260607-145326.png */
-        .hero-card {
-            background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.5)), url('https://images.unsplash.com/photo-1544551763-46a013bb70d5?q=80&w=1000&auto=format&fit=crop');
-            background-size: cover;
-            background-position: center;
-        }
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.07);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .font-syne {
-            font-family: 'Syne', sans-serif;
-        }
-        
         .light-mode .music-player-card {
             background-color: #ffffff !important;
             border-color: #cbd5e1 !important;
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
         }
-        .light-mode .music-text-title { color: #1e293b !important; }
-        .light-mode .music-text-artist { color: #475569 !important; }
-        .light-mode .music-progress-bar-bg { background-color: #e2e8f0 !important; }
+        .light-mode .music-text-title {
+            color: #1e293b !important;
+        }
+        .light-mode .music-text-artist {
+            color: #475569 !important;
+        }
+        .light-mode .music-progress-bar-bg {
+            background-color: #e2e8f0 !important;
+        }
         .light-mode .music-btn-nav {
             background-color: #f1f5f9 !important;
             border-color: #cbd5e1 !important;
@@ -180,8 +169,11 @@ app.get('/', (req, res) => {
             background-color: #e2e8f0 !important;
             color: #0f172a !important;
         }
-        .light-mode .music-playlist-border { border-color: #e2e8f0 !important; }
+        .light-mode .music-playlist-border {
+            border-color: #e2e8f0 !important;
+        }
         
+        /* Brutalist Toggle Language Switcher */
         .lang-btn {
             font-family: 'JetBrains Mono', monospace;
             font-size: 11px;
@@ -198,6 +190,7 @@ app.get('/', (req, res) => {
             box-shadow: 2px 2px 0px #000000;
         }
 
+        /* Filter Buttons Style */
         .filter-btn {
             font-family: 'JetBrains Mono', monospace;
             font-size: 11px;
@@ -211,21 +204,34 @@ app.get('/', (req, res) => {
             white-space: nowrap;
             cursor: pointer;
         }
-        .filter-btn:hover { border-color: var(--text-primary); color: var(--text-primary); }
+        .filter-btn:hover {
+            border-color: var(--text-primary);
+            color: var(--text-primary);
+        }
         .filter-btn.active {
-            background-color: #2ecc71;
+            background-color: #2ecc71; /* Warna hijau seperti gambar */
             color: #000000;
             border-color: #2ecc71;
             font-weight: bold;
         }
-        .light-mode .filter-btn { border-color: #d1d5db; }
-        .light-mode .filter-btn:hover { border-color: #374151; color: #000000; }
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
-        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        .light-mode .filter-btn {
+            border-color: #d1d5db;
+        }
+        .light-mode .filter-btn:hover {
+            border-color: #374151;
+            color: #000000;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
     </style>
 </head>
-<body class="min-h-screen antialiased bg-[#070b12] text-white">
-   <div id="toast" class="toast">
+<body class="min-h-screen antialiased">
+    <div id="toast" class="toast">
         <div class="flex items-center gap-3">
             <svg id="toastIcon" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
@@ -293,84 +299,52 @@ app.get('/', (req, res) => {
         </div>
     </div>
 
+    <div id="menuOverlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-40 transition-opacity duration-300"></div>
+
     <div class="max-w-5xl mx-auto px-4 py-8">
-        <!-- TAMPILAN HEADER BARU SESUAI SCREENSHOT -->
-        <header id="api" class="mb-12 hero-card rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden border border-cyan-500/20">
-            <!-- Top Badge Profile Row -->
-            <div class="flex justify-between items-start mb-8">
-                <div class="flex items-center gap-3">
-                    <div class="w-12 h-12 rounded-xl bg-yellow-500/10 border border-yellow-500/30 flex items-center justify-center overflow-hidden shadow-inner">
-                        <!-- ID logoImg diganti komponen IMG yang nantinya bisa disuntikkan file GIF via script.js -->
-                        <img id="logoImg" src="${logo}" alt="Logo" class="w-full h-full object-cover">
+        <header id="api" class="mb-12">
+            <div class="mb-6 flex justify-center">
+                <img id="logoImg" src="${logo}" alt="Logo" class="w-full max-w-sm rounded-xl shadow-xl hover:scale-105 transition-all duration-300">
+            </div>
+            <h1 id="mainTitle" class="text-4xl md:text-6xl font-black mb-4 leading-tight tracking-wider text-center gray-gradient-text">${headertitle}</h1>
+            <p id="mainDescription" class="text-lg font-light tracking-wide text-center text-gray-300 light-mode:text-gray-600">${headerdescription}</p>
+            
+            <div class="mt-8 flex flex-wrap justify-center items-center gap-4 md:gap-8">
+                <div class="stats-card flex items-center gap-3 px-4 py-3 rounded-lg">
+                    <div class="flex flex-col items-center">
+                        <span id="stat-battery-title" class="text-xs font-medium stats-text-secondary">Baterai Anda</span>
+                        <div class="flex items-center gap-2 mt-1">
+                            <div id="batteryContainer" class="battery-container">
+                                <div id="batteryLevel" class="battery-level bg-green-500" style="width: 0%"></div>
+                                <div class="battery-tip"></div>
+                            </div>
+                            <div class="flex flex-col items-start">
+                                <span id="batteryPercentage" class="text-sm font-bold">0%</span>
+                                <span id="batteryStatus" class="battery-status-text stats-text-secondary">Mendeteksi...</span>
+                            </div>
+                        </div>
                     </div>
-                    <div>
-                        <h2 class="text-white font-bold tracking-wider text-sm uppercase m-0">ARULZ-XD</h2>
-                        <p class="text-cyan-400 text-[11px] code-font opacity-80 mt-0.5">v2.0 • REST Documentation</p>
+                </div>
+                
+                <div class="stats-card flex items-center gap-3 px-4 py-3 rounded-lg">
+                    <div class="flex flex-col items-center">
+                        <span id="stat-endpoints-title" class="text-xs font-medium stats-text-secondary">Total Endpoint</span>
+                        <span id="totalEndpoints" class="text-lg font-bold">0</span>
                     </div>
                 </div>
-                <span class="bg-teal-500/20 text-teal-400 text-[10px] font-bold px-2.5 py-1 rounded-full border border-teal-500/30 tracking-widest uppercase flex items-center gap-1.5 shadow-sm">
-                    <span class="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse"></span> ONLINE
-                </span>
-            </div>
-
-            <!-- Title & Description Grid -->
-            <h1 id="mainTitle" class="text-4xl md:text-5xl font-extrabold mb-3 leading-none font-syne tracking-tight text-white uppercase max-w-xl">
-                API Explorer <br>& Tester
-            </h1>
-            <p id="mainDescription" class="text-xs md:text-sm font-normal tracking-wide text-cyan-100/70 code-font mb-8 max-w-lg">
-                <span class="text-cyan-400 font-bold">$</span> Kumpulan API Endpoint dinamis yang dirancang khusus untuk memenuhi kebutuhan fungsionalitas aplikasi terintegrasi Anda._
-            </p>
-
-            <!-- Stats Double Grid Card -->
-            <div class="grid grid-cols-2 gap-4 mb-6">
-                <div class="glass-panel p-4 rounded-xl">
-                    <span id="totalEndpoints" class="text-2xl md:text-3xl font-black font-syne text-white block">0</span>
-                    <span id="stat-endpoints-title" class="text-[10px] uppercase font-bold tracking-wider text-cyan-300/60 code-font">// Endpoints</span>
-                </div>
-                <div class="glass-panel p-4 rounded-xl">
-                    <span class="text-2xl md:text-3xl font-black font-syne text-sky-400 block">REST</span>
-                    <span id="stat-categories-title" class="text-[10px] uppercase font-bold tracking-wider text-cyan-300/60 code-font">// Protocol</span>
+                
+                <div class="stats-card flex items-center gap-3 px-4 py-3 rounded-lg">
+                    <div class="flex flex-col items-center">
+                        <span id="stat-categories-title" class="text-xs font-medium stats-text-secondary">Total Kategori</span>
+                        <span id="totalCategories" class="text-lg font-bold">0</span>
+                    </div>
                 </div>
             </div>
+            
+            <div class="mt-6 h-1 w-32 mx-auto bg-gradient-to-r from-gray-500 via-gray-400 to-gray-500 rounded-full"></div>
 
-            <!-- Endpoint Mock Bar Link -->
-            <div class="glass-panel px-4 py-3 rounded-xl flex items-center justify-between mb-6 text-xs code-font">
-                <div class="flex items-center gap-2 text-cyan-400 truncate">
-                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
-                    </svg>
-                    <span class="text-white/90 truncate">${BASE_URL}/api/</span>
-                </div>
-                <svg class="w-3.5 h-3.5 text-white/30" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg>
-            </div>
-
-            <!-- Action Buttons Footer Group -->
-            <div class="space-y-3">
-                <button onclick="window.open('https://wa.me/628xxx', '_blank')" class="w-full py-3 bg-cyan-500 hover:bg-cyan-400 text-slate-900 rounded-xl font-bold text-xs uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/20">
-                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd"/></svg>
-                    Request New Feature
-                </button>
-                <div class="grid grid-cols-2 gap-3">
-                    <a href="#" class="glass-panel py-2.5 rounded-xl text-center text-xs font-semibold hover:bg-white/10 transition-colors flex items-center justify-center gap-2">
-                        <span>💬</span> Channel
-                    </a>
-                    <a href="#" class="glass-panel py-2.5 rounded-xl text-center text-xs font-semibold hover:bg-white/10 transition-colors flex items-center justify-center gap-2">
-                        <span>👥</span> Group
-                    </a>
-                </div>
-            </div>
-
-            <!-- Hidden Battery Meter for logic sync -->
-            <div class="hidden">
-                <div id="batteryContainer"></div><div id="batteryLevel"></div>
-                <span id="batteryPercentage">0%</span><span id="batteryStatus"></span>
-                <span id="stat-battery-title"></span>
-            </div>
-        </header>
-        
-        <!-- MUSIC PLAYER (Dibawah Header) -->
-        <div class="music-player-card mb-8 max-w-2xl mx-auto bg-[#090e1a] border border-slate-800/80 rounded-2xl p-4 shadow-2xl relative overflow-hidden transition-all duration-300">
-        <audio id="audioElement"></audio>
+            <div class="music-player-card mt-8 max-w-2xl mx-auto bg-[#090e1a] border border-slate-800/80 rounded-2xl p-4 shadow-2xl relative overflow-hidden transition-all duration-300">
+                <audio id="audioElement"></audio>
                 
                 <div class="flex items-center justify-between gap-4">
                     <div class="flex items-center gap-4 flex-1 min-w-0">
@@ -411,31 +385,45 @@ app.get('/', (req, res) => {
                 <div id="playlistPanel" class="music-playlist-border hidden mt-4 pt-4 border-t border-slate-800/60 max-h-40 overflow-y-auto space-y-1">
                 </div>
             </div>
-            </header>
-            <div class="mb-8">
+        </header>
+
+        <div class="mb-8">
             <div class="relative">
-                <input type="text" id="searchInput" placeholder="Cari endpoint..." class="search-input w-full px-4 py-3 text-sm rounded-lg focus:outline-none focus:border-blue-500 transition-all code-font bg-[#0f141c] text-white border border-slate-800">
-                <svg class="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    placeholder="Cari endpoint berdasarkan nama, path, atau kategori..."
+                    class="search-input w-full px-4 py-3 text-sm rounded-lg focus:outline-none focus:border-blue-500 transition-all code-font"
+                >
+                <svg class="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
             </div>
-            <div id="categoryFilters" class="flex flex-wrap gap-2 mt-4 justify-start md:justify-center overflow-x-auto pb-2 scrollbar-hide"></div>
+            
+            <div id="categoryFilters" class="flex flex-wrap gap-2 mt-4 justify-start md:justify-center overflow-x-auto pb-2 scrollbar-hide">
+                </div>
         </div>
 
         <div id="noResults" class="text-center py-12 hidden">
             <div class="text-4xl mb-2">🔍</div>
-            <h3 id="no-results-title" class="text-sm font-bold mb-1">Not Found</h3>
+            <h3 id="no-results-title" class="text-sm font-bold mb-1">Endpoint tidak ditemukan</h3>
+            <p id="no-results-desc" class="text-xs">Coba gunakan kata kunci lain</p>
         </div>
 
         <div id="apiList" class="space-y-4"></div>
 
-        <footer id="siteFooter" class="mt-12 pt-6 border-t border-gray-800 text-center text-xs opacity-60">
+        <footer id="siteFooter" class="mt-12 pt-6 border-t border-gray-700 light-mode:border-gray-300 text-center text-xs">
             ${footer}
         </footer>
     </div>
-    <!-- ... Script tag bawaan ... -->
+<script class="notranslate" translate="no">
+    window.musicPlaylist = ${JSON.stringify(playlist)};
+</script>
+<script src="script.js"></script>
 </body>
-</html>`);
+</html>
+    `);
 });
-        
 
 if (require.main === module) {
   app.listen(PORT, () => {

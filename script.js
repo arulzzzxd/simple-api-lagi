@@ -77,34 +77,23 @@ const i18n = {
     }
 };
 
-// Konfigurasi aset URL animasi Video GIF Kustom untuk Logo saat ganti tema
-const GIF_LOGO_DARK = "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3NndXN0YTI1Y3VmbWxsM3BpaXN2MTJpYnd6cXp0ZXp0Z295Y293OCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/X78rWLUAt6mYw/giphy.gif"; 
-const GIF_LOGO_LIGHT = "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExbW01M3RtZ3A0NW9pZnV3b3V0YmZidmU0YmZ4YTh1eG93N3ptYm94NiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/3o7qE1YN7aBOFPRw8E/giphy.gif";
-
 function initTheme() {
     const savedTheme = localStorage.getItem('theme') || 'dark';
     currentTheme = savedTheme;
     
     const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
     const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
-    const logoImg = document.getElementById('logoImg');
     
     if (savedTheme === 'light') {
         body.classList.add('light-mode');
         themeToggleDarkIcon?.classList.add('hidden');
         themeToggleLightIcon?.classList.remove('hidden');
         themeToggleBtn.className = "flex items-center justify-center w-8 h-8 rounded-lg bg-white text-black transition-all active:scale-95 focus:outline-none border border-slate-200 shadow-sm";
-        
-        // Ganti Logo menjadi Video GIF bertema Light Mode
-        if(logoImg) logoImg.src = GIF_LOGO_LIGHT;
     } else {
         body.classList.remove('light-mode');
         themeToggleDarkIcon?.classList.remove('hidden');
         themeToggleLightIcon?.classList.add('hidden');
         themeToggleBtn.className = "flex items-center justify-center w-8 h-8 rounded-lg bg-slate-900 text-white transition-all active:scale-95 focus:outline-none border border-slate-800";
-        
-        // Ganti Logo menjadi Video GIF bertema Dark Mode
-        if(logoImg) logoImg.src = GIF_LOGO_DARK;
     }
     
     updateSocialBadges();
@@ -113,7 +102,6 @@ function initTheme() {
 function toggleTheme() {
     const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
     const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
-    const logoImg = document.getElementById('logoImg');
     
     if (body.classList.contains('light-mode')) {
         body.classList.remove('light-mode');
@@ -121,25 +109,18 @@ function toggleTheme() {
         themeToggleLightIcon?.classList.add('hidden');
         themeToggleBtn.className = "flex items-center justify-center w-8 h-8 rounded-lg bg-slate-900 text-white transition-all active:scale-95 focus:outline-none border border-slate-800";
         currentTheme = 'dark';
-        
-        // Ganti Logo menjadi Video GIF bertema Dark Mode
-        if(logoImg) logoImg.src = GIF_LOGO_DARK;
     } else {
         body.classList.add('light-mode');
         themeToggleDarkIcon?.classList.add('hidden');
         themeToggleLightIcon?.classList.remove('hidden');
         themeToggleBtn.className = "flex items-center justify-center w-8 h-8 rounded-lg bg-white text-black transition-all active:scale-95 focus:outline-none border border-slate-200 shadow-sm";
         currentTheme = 'light';
-        
-        // Ganti Logo menjadi Video GIF bertema Light Mode
-        if(logoImg) logoImg.src = GIF_LOGO_LIGHT;
     }
     
     localStorage.setItem('theme', currentTheme);
     updateSocialBadges();
     if (apiData) loadApis();
 }
-
 
 function setLanguage(lang) {
     currentLang = lang;
