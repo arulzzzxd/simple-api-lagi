@@ -13,7 +13,7 @@ For setting API name etc
 const title = "API Arulz-XD";
 const favicon = "https://arulz-uploader.vercel.app/files/C5VYmq.jpg";
 const logo = "https://arulz-uploader.vercel.app/files/SnhJe3.png";
-const headertitle = "NANZAPI"; // Mengikuti gambar
+const headertitle = "NANZAPI"; 
 const headerdescription = "Kumpulan API Endpoint yang mungkin berguna.";
 const footer = "© Arulz-XD";
 
@@ -41,7 +41,6 @@ const playlist = [
 
 const router = express.Router();
 const apiPath = path.join(__dirname, 'api');
-// Pastikan folder api ada, jika tidak, kita tangani agar tidak error saat start
 let endpointDirs = [];
 if (fs.existsSync(apiPath)) {
     endpointDirs = fs.readdirSync(apiPath).filter(f => fs.statSync(path.join(apiPath, f)).isDirectory());
@@ -91,7 +90,6 @@ function getEndpointsFromRouter(category, file) {
 
 router.get('/apilist', (req, res) => {
   const categories = [];
-
   for (const category of endpointDirs) {
     const files = fs.readdirSync(path.join(apiPath, category)).filter(f => f.endsWith('.js'));
     const endpoints = [];
@@ -105,7 +103,6 @@ router.get('/apilist', (req, res) => {
       });
     }
   }
-
   categories.push({
     name: "OTHER",
     items: [
@@ -119,21 +116,14 @@ router.get('/apilist', (req, res) => {
       }
     ]
   });
-
   res.json({ categories });
 });
 
 app.use('/api', router);
 
-app.get('/script.js', (req, res) => {
-  res.sendFile(path.join(__dirname, 'script.js'));
-});
-app.get('/linkbio.json', (req, res) => {
-  res.sendFile(path.join(__dirname, 'linkbio.json'));
-});
-app.get('/styles.css', (req, res) => {
-  res.sendFile(path.join(__dirname, 'styles.css'));
-});
+app.get('/script.js', (req, res) => { res.sendFile(path.join(__dirname, 'script.js')); });
+app.get('/linkbio.json', (req, res) => { res.sendFile(path.join(__dirname, 'linkbio.json')); });
+app.get('/styles.css', (req, res) => { res.sendFile(path.join(__dirname, 'styles.css')); });
 
 app.get('/', (req, res) => {
     res.send(`<!DOCTYPE html>
@@ -149,34 +139,28 @@ app.get('/', (req, res) => {
     <link rel="stylesheet" href="styles.css" />
     
     <style>
-        .light-mode .music-player-card {
-            background-color: #ffffff !important;
-            border-color: #cbd5e1 !important;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
-        }
-        .light-mode .music-text-title {
-            color: #1e293b !important;
-        }
-        .light-mode .music-text-artist {
-            color: #475569 !important;
-        }
-        .light-mode .music-progress-bar-bg {
-            background-color: #e2e8f0 !important;
-        }
-        .light-mode .music-btn-nav {
-            background-color: #f1f5f9 !important;
-            border-color: #cbd5e1 !important;
-            color: #334155 !important;
-        }
-        .light-mode .music-btn-nav:hover {
-            background-color: #e2e8f0 !important;
+        /* Light mode global overrides */
+        .light-mode {
+            background-color: #f8fafc !important;
             color: #0f172a !important;
         }
-        .light-mode .music-playlist-border {
+        .light-mode .music-player-card {
+            background-color: #ffffff !important;
             border-color: #e2e8f0 !important;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05) !important;
         }
+        .light-mode .music-text-title { color: #1e293b !important; }
+        .light-mode .music-text-artist { color: #64748b !important; }
+        .light-mode .music-progress-bar-bg { background-color: #e2e8f0 !important; }
+        .light-mode .music-btn-nav {
+            background-color: #f8fafc !important;
+            border-color: #e2e8f0 !important;
+            color: #475569 !important;
+        }
+        .light-mode .music-btn-nav:hover { background-color: #f1f5f9 !important; color: #0f172a !important; }
+        .light-mode .music-playlist-border { border-color: #e2e8f0 !important; }
         
-        /* Brutalist Toggle Language Switcher */
+        /* Brutalist Language Switcher */
         .lang-btn {
             font-family: 'JetBrains Mono', monospace;
             font-size: 11px;
@@ -212,28 +196,29 @@ app.get('/', (req, res) => {
             color: var(--text-primary);
         }
         .filter-btn.active {
-            background-color: #2ecc71; /* Warna hijau seperti gambar */
+            background-color: #2ecc71; 
             color: #000000;
             border-color: #2ecc71;
             font-weight: bold;
         }
         .light-mode .filter-btn {
-            border-color: #d1d5db;
+            border-color: #cbd5e1;
+            color: #475569;
         }
         .light-mode .filter-btn:hover {
-            border-color: #374151;
-            color: #000000;
+            border-color: #0f172a;
+            color: #0f172a;
         }
-        .scrollbar-hide::-webkit-scrollbar {
-            display: none;
+        .light-mode .filter-btn.active {
+            background-color: #2ecc71;
+            color: #ffffff;
+            border-color: #2ecc71;
         }
-        .scrollbar-hide {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="min-h-screen antialiased bg-[#0f141c]">
+<body class="min-h-screen antialiased bg-[#0f141c] text-white">
     <div id="toast" class="toast">
         <div class="flex items-center gap-3">
             <svg id="toastIcon" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -244,14 +229,14 @@ app.get('/', (req, res) => {
     </div>
 
     <div class="fixed top-6 right-6 z-50">
-        <button id="bioMenuBtn" class="flex items-center justify-center w-12 h-12 rounded-xl bg-[#0f141c] text-slate-400 hover:text-white border border-slate-800/60 shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all active:scale-95 focus:outline-none" aria-label="Open Navigation Menu">
+        <button id="bioMenuBtn" class="flex items-center justify-center w-12 h-12 rounded-xl bg-[#0f141c] light-mode:bg-white text-slate-400 hover:text-white light-mode:hover:text-slate-800 border border-slate-800/60 light-mode:border-slate-200 shadow-xl transition-all active:scale-95 focus:outline-none">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
             </svg>
         </button>
     </div>
 
-    <div id="bioDropdown" class="fixed top-0 right-0 h-full w-72 bg-[#0a0f18] border-l-2 border-[#161f30] transform translate-x-full transition-transform duration-300 ease-in-out z-50 shadow-[-10px_0_30px_rgba(0,0,0,0.5)] flex flex-col p-6 font-['Space_Grotesk']">
+    <div id="bioDropdown" class="fixed top-0 right-0 h-full w-72 bg-[#0a0f18] light-mode:bg-white border-l-2 border-[#161f30] light-mode:border-slate-200 transform translate-x-full transition-transform duration-300 ease-in-out z-50 shadow-2xl flex flex-col p-6 font-['Space_Grotesk']">
         <div class="flex items-center justify-between mb-8">
             <div class="flex gap-0 border border-black p-0.5 bg-[#111]">
                 <button id="lang-id" class="lang-btn active" onclick="setLanguage('id')">ID</button>
@@ -259,7 +244,7 @@ app.get('/', (req, res) => {
             </div>
             
             <div class="flex items-center gap-2">
-                <button id="themeToggle" class="flex items-center justify-center w-8 h-8 rounded-lg transition-all active:scale-95 focus:outline-none border" aria-label="Toggle theme">
+                <button id="themeToggle" class="flex items-center justify-center w-8 h-8 rounded-lg transition-all active:scale-95 focus:outline-none border border-slate-800 light-mode:border-slate-200">
                     <svg id="theme-toggle-dark-icon" class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
                     </svg>
@@ -268,7 +253,7 @@ app.get('/', (req, res) => {
                     </svg>
                 </button>
 
-                <button id="closeMenuBtn" class="text-white hover:text-red-400 transition-colors p-1.5 border border-slate-800 rounded bg-[#111622]">
+                <button id="closeMenuBtn" class="text-white light-mode:text-slate-800 hover:text-red-400 p-1.5 border border-slate-800 light-mode:border-slate-200 rounded bg-[#111622] light-mode:bg-slate-100">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
@@ -276,17 +261,13 @@ app.get('/', (req, res) => {
             </div>
         </div>
 
-        <nav class="flex flex-col gap-5 text-sm font-bold tracking-wider uppercase text-gray-300">
-            <a href="#api" class="menu-link hover:text-yellow-400 transition-colors flex items-center gap-2">HOME</a>
-            <a href="#apiList" class="menu-link hover:text-yellow-400 transition-colors flex items-center gap-2">DOCUMENTATION</a>
-            <a href="#" class="menu-link hover:text-yellow-400 transition-colors flex items-center gap-2">FILE UPLOADER</a>
-            <a href="#" class="menu-link hover:text-yellow-400 transition-colors flex items-center gap-2">PASTEBIN</a>
-            
-            <hr class="border-slate-800 my-2">
-            
-            <a href="#" class="menu-link hover:text-yellow-400 transition-colors flex items-center gap-2 text-xs opacity-80">BUG REPORT</a>
-            <a href="#" class="menu-link hover:text-yellow-400 transition-colors flex items-center gap-2 text-xs opacity-80">PRIVACY POLICY</a>
-            <a href="#" class="menu-link hover:text-yellow-400 transition-colors flex items-center gap-2 text-xs opacity-80">TERMS OF SERVICE</a>
+        <nav class="flex flex-col gap-5 text-sm font-bold tracking-wider uppercase text-gray-300 light-mode:text-slate-600">
+            <a href="#api" class="menu-link hover:text-yellow-400 transition-colors">HOME</a>
+            <a href="#apiList" class="menu-link hover:text-yellow-400 transition-colors">DOCUMENTATION</a>
+            <a href="#" class="menu-link hover:text-yellow-400 transition-colors">FILE UPLOADER</a>
+            <a href="#" class="menu-link hover:text-yellow-400 transition-colors">PASTEBIN</a>
+            <hr class="border-slate-800 light-mode:border-slate-200 my-2">
+            <a href="#" class="menu-link hover:text-yellow-400 transition-colors text-xs opacity-80">BUG REPORT</a>
         </nav>
 
         <div class="mt-8 flex-1 overflow-y-auto">
@@ -332,90 +313,66 @@ app.get('/', (req, res) => {
                     API Explorer<br>& Tester
                 </h1>
                 <p class="font-mono text-[13px] text-gray-300 mb-8 opacity-90 leading-relaxed max-w-sm">
-                    <span class="text-[#00b4d8] font-bold">$</span> Browse, inspect & fire requests<br>against live endpoints._
+                    <span class="text-[#00b4d8] font-bold">$</span> Browse, inspect & fire requests against live endpoints._
                 </p>
 
-                <div class="grid grid-cols-2 gap-4 mb-6">
-                    <div class="bg-slate-800/30 hover:bg-slate-800/50 transition-colors backdrop-blur-md border border-white/10 rounded-2xl p-6">
-                        <div id="totalEndpoints" class="text-4xl font-black mb-2 text-white">0</div>
-                        <div class="font-mono text-xs text-gray-400 font-medium">// Endpoints</div>
+                <div class="grid grid-cols-3 gap-4 mb-6">
+                    <div class="bg-slate-800/30 backdrop-blur-md border border-white/10 rounded-2xl p-4">
+                        <div id="totalEndpoints" class="text-2xl md:text-3xl font-black mb-1 text-white">0</div>
+                        <div class="font-mono text-[10px] text-gray-400 font-medium">// Endpoints</div>
                     </div>
-                    <div class="bg-slate-800/30 hover:bg-slate-800/50 transition-colors backdrop-blur-md border border-white/10 rounded-2xl p-6">
-                        <div class="text-4xl font-black mb-2 text-[#00b4d8]">REST</div>
-                        <div class="font-mono text-xs text-gray-400 font-medium">// Protocol</div>
+                    <div class="bg-slate-800/30 backdrop-blur-md border border-white/10 rounded-2xl p-4">
+                        <div class="text-2xl md:text-3xl font-black mb-1 text-[#00b4d8]">REST</div>
+                        <div class="font-mono text-[10px] text-gray-400 font-medium">// Protocol</div>
+                    </div>
+                    <div class="bg-slate-800/30 backdrop-blur-md border border-white/10 rounded-2xl p-4">
+                        <div id="batteryStatus" class="text-2xl md:text-3xl font-black mb-1 text-yellow-400">...</div>
+                        <div id="batteryLabel" class="font-mono text-[10px] text-gray-400 font-medium">// Baterai</div>
                     </div>
                 </div>
 
-                <div class="flex items-center bg-slate-800/40 backdrop-blur-md border border-white/10 rounded-xl px-4 py-4 mb-6 transition-all hover:bg-slate-800/60">
+                <div class="flex items-center bg-slate-800/40 backdrop-blur-md border border-white/10 rounded-xl px-4 py-4 mb-6">
                     <svg class="w-5 h-5 text-[#00b4d8] mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/>
                     </svg>
                     <div class="font-mono text-[13px] flex-1 truncate text-gray-300">
                         <span class="text-[#00b4d8]">https://api-nanzz.my.id</span>/docs/api/
                     </div>
-                    <svg class="w-4 h-4 text-gray-500 ml-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
-                    </svg>
                 </div>
 
                 <button class="w-full bg-[#00b4d8] hover:bg-[#0096c7] text-black font-bold py-3.5 rounded-xl flex justify-center items-center gap-2 transition-all duration-300 mb-4 shadow-[0_0_15px_rgba(0,180,216,0.4)]">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
                     Request New Feature
                 </button>
-                <div class="grid grid-cols-2 gap-4">
-                    <button class="bg-slate-800/30 hover:bg-slate-800/50 backdrop-blur-md border border-white/10 text-white font-semibold py-3 rounded-xl flex justify-center items-center gap-2 transition-all text-sm">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-                        Channel
-                    </button>
-                    <button class="bg-slate-800/30 hover:bg-slate-800/50 backdrop-blur-md border border-white/10 text-white font-semibold py-3 rounded-xl flex justify-center items-center gap-2 transition-all text-sm">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-                        Group
-                    </button>
-                </div>
             </div>
         </header>
 
         <div class="music-player-card mb-12 max-w-4xl mx-auto bg-[#090e1a] border border-slate-800/80 rounded-2xl p-4 shadow-2xl relative overflow-hidden transition-all duration-300">
             <audio id="audioElement"></audio>
-            
             <div class="flex items-center justify-between gap-4">
                 <div class="flex items-center gap-4 flex-1 min-w-0">
                     <div class="relative w-16 h-16 rounded-xl overflow-hidden bg-black flex-shrink-0 border border-slate-800">
-                        <img id="musicCoverImg" src="" alt="Cover" class="w-full h-full object-cover transition-transform duration-500">
+                        <img id="musicCoverImg" src="" alt="Cover" class="w-full h-full object-cover">
                     </div>
-                    
                     <div class="flex-1 min-w-0">
                         <h3 id="musicTitle" class="music-text-title text-white font-bold text-sm tracking-wider uppercase truncate m-0">Loading...</h3>
                         <p id="musicArtist" class="music-text-artist text-gray-400 text-xs font-semibold tracking-wide truncate mt-0.5">-</p>
-                        
                         <div class="flex items-center gap-2 mt-2">
-                            <span id="currentTime" class="text-[10px] text-gray-500 code-font w-7 text-left">0:00</span>
-                            <div id="progressContainer" class="music-progress-bar-bg flex-1 h-1 bg-slate-800 rounded-full relative cursor-pointer group">
-                                <div id="progressBar" class="h-full bg-blue-600 rounded-full w-0 transition-all duration-300"></div>
+                            <span id="currentTime" class="text-[10px] text-gray-500 code-font">0:00</span>
+                            <div id="progressContainer" class="music-progress-bar-bg flex-1 h-1 bg-slate-800 rounded-full relative cursor-pointer">
+                                <div id="progressBar" class="h-full bg-blue-600 rounded-full w-0"></div>
                             </div>
-                            <span id="totalDuration" class="text-[10px] text-gray-500 code-font w-7 text-right">0:00</span>
+                            <span id="totalDuration" class="text-[10px] text-gray-500 code-font">0:00</span>
                         </div>
                     </div>
                 </div>
-                
                 <div class="flex items-center gap-1.5 flex-shrink-0">
-                    <button id="prevBtn" class="music-btn-nav w-9 h-9 flex items-center justify-center bg-[#0e1629] border border-slate-800 rounded-xl text-gray-400 hover:text-white transition-all active:scale-95">
-                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
-                    </button>
-                    <button id="playBtn" class="music-btn-nav w-10 h-10 flex items-center justify-center bg-[#0e1629] border border-slate-800 rounded-xl text-gray-400 hover:text-white transition-all active:scale-95">
-                        <svg id="playIcon" class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                    </button>
-                    <button id="nextBtn" class="music-btn-nav w-9 h-9 flex items-center justify-center bg-[#0e1629] border border-slate-800 rounded-xl text-gray-400 hover:text-white transition-all active:scale-95">
-                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M16 6h2v12h-2zm-10.5 12l8.5-6-8.5-6z"/></svg>
-                    </button>
-                    <button id="playlistToggleBtn" class="music-btn-nav w-9 h-9 flex items-center justify-center bg-[#0e1629] border border-slate-800 rounded-xl text-gray-400 hover:text-white transition-all active:scale-95">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
-                    </button>
+                    <button id="prevBtn" class="music-btn-nav w-9 h-9 flex items-center justify-center bg-[#0e1629] border border-slate-800 rounded-xl text-gray-400 hover:text-white"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
+                    <button id="playBtn" class="music-btn-nav w-10 h-10 flex items-center justify-center bg-[#0e1629] border border-slate-800 rounded-xl text-gray-400 hover:text-white"><svg id="playIcon" class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+                    <button id="nextBtn" class="music-btn-nav w-9 h-9 flex items-center justify-center bg-[#0e1629] border border-slate-800 rounded-xl text-gray-400 hover:text-white"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M16 6h2v12h-2zm-10.5 12l8.5-6-8.5-6z"/></svg></button>
+                    <button id="playlistToggleBtn" class="music-btn-nav w-9 h-9 flex items-center justify-center bg-[#0e1629] border border-slate-800 rounded-xl text-gray-400 hover:text-white"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg></button>
                 </div>
             </div>
-            
-            <div id="playlistPanel" class="music-playlist-border hidden mt-4 pt-4 border-t border-slate-800/60 max-h-40 overflow-y-auto space-y-1">
-            </div>
+            <div id="playlistPanel" class="music-playlist-border hidden mt-4 pt-4 border-t border-slate-800/60 max-h-40 overflow-y-auto space-y-1"></div>
         </div>
 
         <div class="mb-8">
@@ -423,27 +380,21 @@ app.get('/', (req, res) => {
                 <input 
                     type="text" 
                     id="searchInput" 
-                    placeholder="Cari endpoint berdasarkan nama, path, atau kategori..."
-                    class="search-input w-full px-4 py-3 text-sm rounded-lg focus:outline-none focus:border-blue-500 transition-all code-font bg-slate-900 border border-slate-800 text-white"
+                    placeholder="Cari endpoint..."
+                    class="search-input w-full px-4 py-3 text-sm rounded-lg focus:outline-none transition-all code-font bg-slate-900 light-mode:bg-white border border-slate-800 light-mode:border-slate-300 text-white light-mode:text-slate-900"
                 >
-                <svg class="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                </svg>
             </div>
-            
-            <div id="categoryFilters" class="flex flex-wrap gap-2 mt-4 justify-start overflow-x-auto pb-2 scrollbar-hide">
-            </div>
+            <div id="categoryFilters" class="flex flex-wrap gap-2 mt-4 justify-start overflow-x-auto pb-2 scrollbar-hide"></div>
         </div>
 
         <div id="noResults" class="text-center py-12 hidden">
-            <div class="text-4xl mb-2">🔍</div>
             <h3 id="no-results-title" class="text-sm font-bold mb-1">Endpoint tidak ditemukan</h3>
             <p id="no-results-desc" class="text-xs text-gray-400">Coba gunakan kata kunci lain</p>
         </div>
 
         <div id="apiList" class="space-y-4"></div>
 
-        <footer id="siteFooter" class="mt-12 pt-6 border-t border-gray-700 light-mode:border-gray-300 text-center text-xs text-gray-500">
+        <footer id="siteFooter" class="mt-12 pt-6 border-t border-slate-800 light-mode:border-slate-200 text-center text-xs text-gray-500">
             ${footer}
         </footer>
     </div>
