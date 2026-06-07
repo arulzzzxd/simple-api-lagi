@@ -270,6 +270,47 @@ function copyText(text, type = 'path') {
     });
 }
 
+// BARU: Fungsi Utilitas untuk Copy dari element ID (Membaca Text Real-Time yang Sedang Mengetik)
+function copyFromElement(elementId, type) {
+    const el = document.getElementById(elementId);
+    if (el) {
+        copyText(el.innerText || el.textContent, type);
+    }
+}
+
+// BARU: Mengubah Tampilan URL & cURL Secara Real-Time Saat User Mengetik di Kolom Parameter
+function updateLivePreview(catIdx, epIdx, method, basePath) {
+    const form = document.getElementById(`form-${catIdx}-${epIdx}`);
+    if (!form) return;
+
+    const formData = new FormData(form);
+    const params = new URLSearchParams();
+    for (const [key, value] of formData.entries()) {
+        if (value) params.append(key, value);
+    }
+
+    const queryStr = params.toString();
+    const finalUrl = queryStr ? `${BASE_URL}${basePath}?${queryStr}` : `${BASE_URL}${basePath}`;
+    
+    // Update live text di kontainer HTML
+    const urlContainer = document.getElementById(`live-url-${catIdx}-${epIdx}`);
+    const curlContainer = document.getElementById(`live-curl-${catIdx}-${epIdx}`);
+
+    if (urlContainer) urlContainer.textContent = finalUrl;
+    if (curlContainer) {
+        if (method === 'GET') {
+            curlContainer.textContent = `curl -X GET "${finalUrl}"`;
+        } else {
+            const bodyParams = [];
+            for (const [key, value] of formData.entries()) {
+                if (value) bodyParams.push(`"${key}": "${value}"`);
+            }
+            const dataString = bodyParams.length ? ` -H "Content-Type: application/json" -d '{${bodyParams.join(', ')}}'` : '';
+            curlContainer.textContent = `curl -X ${method} "${BASE_URL}${basePath}"${dataString}`;
+        }
+    }
+}
+
 function toggleCategory(index) {
     const content = document.getElementById(`cat-${index}`);
     const icon = document.getElementById(`cat-icon-${index}`);
@@ -331,7 +372,6 @@ function createMediaPreview(url, contentType, originalUrl = '') {
     return `<div class="w-full">${previewHtml}<div class="flex gap-2 mt-3"><button type="button" onclick="copyText('${originalUrl || url}', 'Media URL')" class="${btnClass}">📋 Copy URL</button><a href="${url}" download class="${btnClass}">📥 Download</a></div></div>`;
 }
 
-// Eksekusi Request Lengkap dengan Utilitas Tombol Copy Multi-Fungsi Berdasarkan Response Real-Time
 async function executeRequest(e, catIdx, epIdx, method, path) {
     e.preventDefault();
     if (isRequestInProgress) {
@@ -362,7 +402,6 @@ async function executeRequest(e, catIdx, epIdx, method, path) {
         if (value) params.append(key, value);
     }
 
-    // GENERATE LIVE URL REQUEST DAN CURL COMMAND LENGKAP SAAT DIEKSEKUSI
     const fullPath = `${BASE_URL}${path.split('?')[0]}?${params.toString()}`;
     let curlCommand = `curl -X ${method} "${fullPath}"`;
     if (method !== 'GET') {
@@ -409,7 +448,6 @@ async function executeRequest(e, catIdx, epIdx, method, path) {
         const actionContainer = document.createElement('div');
         actionContainer.className = "flex flex-wrap gap-2 mb-3 border-b border-white/10 light-mode:border-slate-200 pb-3";
 
-        // Tombol Salin URL Request Hasil Eksekusi
         const copyUrlBtn = document.createElement('button');
         copyUrlBtn.type = "button";
         copyUrlBtn.className = btnStyle;
@@ -417,7 +455,6 @@ async function executeRequest(e, catIdx, epIdx, method, path) {
         copyUrlBtn.onclick = () => copyText(fullPath, "URL Request");
         actionContainer.appendChild(copyUrlBtn);
 
-        // Tombol Salin cURL Command Hasil Eksekusi
         const copyCurlBtn = document.createElement('button');
         copyCurlBtn.type = "button";
         copyCurlBtn.className = btnStyle;
@@ -425,7 +462,6 @@ async function executeRequest(e, catIdx, epIdx, method, path) {
         copyCurlBtn.onclick = () => copyText(curlCommand, "cURL Command");
         actionContainer.appendChild(copyCurlBtn);
 
-        // Tombol Salin Teks Data Response (Khusus Non-Media)
         if (!isMedia) {
             const copyResponseBtn = document.createElement('button');
             copyResponseBtn.type = "button";
@@ -596,20 +632,20 @@ function loadApis() {
                     <div class="mb-4">
                         <div class="flex items-center justify-between mb-2">
                             <h4 class="font-bold text-[11px] uppercase tracking-wider text-slate-400 light-mode:text-slate-600 code-font">ENDPOINT / REQUEST URL</h4>
-                            <button onclick="copyText('${BASE_URL}${path}', 'URL')" class="px-3 py-1 bg-white/5 hover:bg-white/10 light-mode:bg-slate-200 light-mode:hover:bg-slate-300 border border-white/10 light-mode:border-slate-300 rounded-lg text-[10px] transition-all active:scale-95 code-font text-slate-300 light-mode:text-slate-800">Copy URL</button>
+                            <button type="button" onclick="copyFromElement('live-url-${catIdx}-${epIdx}', 'URL')" class="px-3 py-1 bg-white/5 hover:bg-white/10 light-mode:bg-slate-200 light-mode:hover:bg-slate-300 border border-white/10 light-mode:border-slate-300 rounded-lg text-[10px] transition-all active:scale-95 code-font text-slate-300 light-mode:text-slate-800">Copy URL</button>
                         </div>
                         <div class="bg-[#0b1322]/60 light-mode:bg-slate-200/60 border border-white/5 light-mode:border-slate-300 px-4 py-3 rounded-xl backdrop-blur-sm shadow-inner">
-                            <code class="code-font text-xs text-cyan-400 light-mode:text-cyan-700 font-medium break-all">${BASE_URL}${path}</code>
+                            <code id="live-url-${catIdx}-${epIdx}" class="code-font text-xs text-cyan-400 light-mode:text-cyan-700 font-medium break-all">${BASE_URL}${path}</code>
                         </div>
                     </div>
 
                     <div class="mb-4">
                         <div class="flex items-center justify-between mb-2">
                             <h4 class="font-bold text-[11px] uppercase tracking-wider text-slate-400 light-mode:text-slate-600 code-font">cURL Command</h4>
-                            <button onclick="copyText('curl -X ${method} &quot;${BASE_URL}${path}&quot;', 'cURL')" class="px-3 py-1 bg-white/5 hover:bg-white/10 light-mode:bg-slate-200 light-mode:hover:bg-slate-300 border border-white/10 light-mode:border-slate-300 rounded-lg text-[10px] transition-all active:scale-95 code-font text-slate-300 light-mode:text-slate-800">Copy cURL</button>
+                            <button type="button" onclick="copyFromElement('live-curl-${catIdx}-${epIdx}', 'cURL')" class="px-3 py-1 bg-white/5 hover:bg-white/10 light-mode:bg-slate-200 light-mode:hover:bg-slate-300 border border-white/10 light-mode:border-slate-300 rounded-lg text-[10px] transition-all active:scale-95 code-font text-slate-300 light-mode:text-slate-800">Copy cURL</button>
                         </div>
                         <div class="bg-[#0b1322]/60 light-mode:bg-slate-200/60 border border-white/5 light-mode:border-slate-300 px-4 py-3 rounded-xl backdrop-blur-sm shadow-inner">
-                            <code class="code-font text-xs text-slate-300 light-mode:text-slate-700 block overflow-x-auto whitespace-pre">curl -X ${method} "${BASE_URL}${path}"</code>
+                            <code id="live-curl-${catIdx}-${epIdx}" class="code-font text-xs text-slate-300 light-mode:text-slate-700 block overflow-x-auto whitespace-pre">curl -X ${method} "${BASE_URL}${path}"</code>
                         </div>
                     </div>`;
 
@@ -622,12 +658,13 @@ function loadApis() {
                 if (item.params) {
                     Object.keys(item.params).forEach(paramName => {
                         const isRequired = !queryParams.has(paramName) || queryParams.get(paramName) === '';
+                        // Ditambahkan listener oninput untuk memperbarui teks URL & cURL secara live saat diketik
                         html += `
                             <div>
                                 <label class="block text-xs font-semibold text-slate-300 light-mode:text-slate-700 mb-1.5 code-font">
                                     ${paramName} ${isRequired ? '<span class="text-red-500">*</span>' : ''}
                                 </label>
-                                <input type="text" name="${paramName}" class="w-full px-3 py-2 rounded-lg bg-black/40 light-mode:bg-white border border-white/10 light-mode:border-slate-300 text-white light-mode:text-slate-900 focus:outline-none focus:border-cyan-500 code-font text-sm" placeholder="${item.params[paramName]}" ${isRequired ? 'required' : ''}>
+                                <input type="text" name="${paramName}" oninput="updateLivePreview(${catIdx}, ${epIdx}, '${method}', '${path}')" class="w-full px-3 py-2 rounded-lg bg-black/40 light-mode:bg-white border border-white/10 light-mode:border-slate-300 text-white light-mode:text-slate-900 focus:outline-none focus:border-cyan-500 code-font text-sm" placeholder="${item.params[paramName]}" ${isRequired ? 'required' : ''}>
                             </div>`;
                     });
                 }
