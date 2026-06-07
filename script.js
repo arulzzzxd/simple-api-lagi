@@ -264,9 +264,9 @@ function showToast(message, isError = false) {
 
 function copyText(text, type = 'path') {
     navigator.clipboard.writeText(text).then(() => {
-        showToast(`${type} copied to clipboard!`);
+        showToast(`${type} berhasil disalin ke papan klip!`);
     }).catch(() => {
-        showToast('Failed to copy', true);
+        showToast('Gagal menyalin text', true);
     });
 }
 
@@ -331,7 +331,7 @@ function createMediaPreview(url, contentType, originalUrl = '') {
     return `<div class="w-full">${previewHtml}<div class="flex gap-2 mt-3"><button type="button" onclick="copyText('${originalUrl || url}', 'Media URL')" class="${btnClass}">📋 Copy URL</button><a href="${url}" download class="${btnClass}">📥 Download</a></div></div>`;
 }
 
-// Fitur Baru: Eksekusi Request Lengkap dengan Utilitas Tombol Copy Multi-Fungsi
+// Eksekusi Request Lengkap dengan Utilitas Tombol Copy Multi-Fungsi Berdasarkan Response Real-Time
 async function executeRequest(e, catIdx, epIdx, method, path) {
     e.preventDefault();
     if (isRequestInProgress) {
@@ -362,7 +362,7 @@ async function executeRequest(e, catIdx, epIdx, method, path) {
         if (value) params.append(key, value);
     }
 
-    // 1. GENERATE FULL URL REQUEST DAN CURL COMMAND LENGKAP
+    // GENERATE LIVE URL REQUEST DAN CURL COMMAND LENGKAP SAAT DIEKSEKUSI
     const fullPath = `${BASE_URL}${path.split('?')[0]}?${params.toString()}`;
     let curlCommand = `curl -X ${method} "${fullPath}"`;
     if (method !== 'GET') {
@@ -387,7 +387,6 @@ async function executeRequest(e, catIdx, epIdx, method, path) {
         let rawResponseText = "";
         let isMedia = false;
 
-        // 2. RENDER KONTEN BERDASARKAN TYPE RESPONSE
         if (contentType?.includes("application/json")) {
             const data = await response.json();
             rawResponseText = JSON.stringify(data, null, 2);
@@ -402,7 +401,6 @@ async function executeRequest(e, catIdx, epIdx, method, path) {
             responseContent.innerHTML = `<pre id="raw-text-${catIdx}-${epIdx}" class="code-font text-sm overflow-auto">${rawResponseText}</pre>`;
         }
 
-        // 3. STRUKTUR DAN ATUR UTILITY TOMBOL COPY LENGKAP
         const isLightMode = body.classList.contains('light-mode');
         const btnStyle = isLightMode 
             ? 'px-2.5 py-1 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded text-[11px] font-semibold transition-colors code-font border border-black/5'
@@ -411,7 +409,7 @@ async function executeRequest(e, catIdx, epIdx, method, path) {
         const actionContainer = document.createElement('div');
         actionContainer.className = "flex flex-wrap gap-2 mb-3 border-b border-white/10 light-mode:border-slate-200 pb-3";
 
-        // Tombol Salin URL Request Lengkap
+        // Tombol Salin URL Request Hasil Eksekusi
         const copyUrlBtn = document.createElement('button');
         copyUrlBtn.type = "button";
         copyUrlBtn.className = btnStyle;
@@ -419,7 +417,7 @@ async function executeRequest(e, catIdx, epIdx, method, path) {
         copyUrlBtn.onclick = () => copyText(fullPath, "URL Request");
         actionContainer.appendChild(copyUrlBtn);
 
-        // Tombol Salin cURL Command
+        // Tombol Salin cURL Command Hasil Eksekusi
         const copyCurlBtn = document.createElement('button');
         copyCurlBtn.type = "button";
         copyCurlBtn.className = btnStyle;
@@ -427,7 +425,7 @@ async function executeRequest(e, catIdx, epIdx, method, path) {
         copyCurlBtn.onclick = () => copyText(curlCommand, "cURL Command");
         actionContainer.appendChild(copyCurlBtn);
 
-        // Tombol Salin Teks Data Response (Hanya untuk non-media file)
+        // Tombol Salin Teks Data Response (Khusus Non-Media)
         if (!isMedia) {
             const copyResponseBtn = document.createElement('button');
             copyResponseBtn.type = "button";
@@ -437,9 +435,7 @@ async function executeRequest(e, catIdx, epIdx, method, path) {
             actionContainer.appendChild(copyResponseBtn);
         }
 
-        // Sisipkan panel tombol tepat di bagian atas output content
         responseContent.insertBefore(actionContainer, responseContent.firstChild);
-
         showToast(i18n[currentLang].toastRequestSuccess);
     } catch (error) {
         responseContent.innerHTML = `<pre class="text-red-400 code-font text-sm">Error: ${error.message}</pre>`;
@@ -483,7 +479,6 @@ function filterByCategory(catName) {
     performSearch();
 }
 
-// OPTIMASI: Menggunakan Pencarian Tersinkronisasi Frame Rate (Mencegah Lagging CPU)
 function performSearch() {
     const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
     const noResults = document.getElementById('noResults');
@@ -597,13 +592,24 @@ function loadApis() {
                 </button>
                 <div id="ep-${catIdx}-${epIdx}" class="hidden bg-slate-950/40 light-mode:bg-slate-50/50 px-4 py-4 border-t border-white/10 light-mode:border-slate-200">
                     <p class="text-xs mb-4 ${isLightMode ? 'text-slate-700' : 'opacity-80'}">${item.desc}</p>
+                    
                     <div class="mb-4">
                         <div class="flex items-center justify-between mb-2">
-                            <h4 class="font-bold text-[11px] uppercase tracking-wider text-slate-400 light-mode:text-slate-600">Endpoint</h4>
-                            <button onclick="copyText('${BASE_URL}${path}', 'URL')" class="px-2 py-1 bg-white/10 hover:bg-white/20 light-mode:bg-slate-200 light-mode:hover:bg-slate-300 border border-white/10 light-mode:border-slate-300 rounded text-[10px] transition-colors code-font light-mode:text-slate-800">Copy URL</button>
+                            <h4 class="font-bold text-[11px] uppercase tracking-wider text-slate-400 light-mode:text-slate-600 code-font">ENDPOINT / REQUEST URL</h4>
+                            <button onclick="copyText('${BASE_URL}${path}', 'URL')" class="px-3 py-1 bg-white/5 hover:bg-white/10 light-mode:bg-slate-200 light-mode:hover:bg-slate-300 border border-white/10 light-mode:border-slate-300 rounded-lg text-[10px] transition-all active:scale-95 code-font text-slate-300 light-mode:text-slate-800">Copy URL</button>
                         </div>
-                        <div class="bg-black/40 light-mode:bg-slate-200/60 border border-white/10 light-mode:border-slate-300 px-3 py-2 rounded-lg">
-                            <code class="code-font text-xs text-cyan-300 light-mode:text-cyan-700 font-semibold">${path}</code>
+                        <div class="bg-[#0b1322]/60 light-mode:bg-slate-200/60 border border-white/5 light-mode:border-slate-300 px-4 py-3 rounded-xl backdrop-blur-sm shadow-inner">
+                            <code class="code-font text-xs text-cyan-400 light-mode:text-cyan-700 font-medium break-all">${BASE_URL}${path}</code>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <h4 class="font-bold text-[11px] uppercase tracking-wider text-slate-400 light-mode:text-slate-600 code-font">cURL Command</h4>
+                            <button onclick="copyText('curl -X ${method} &quot;${BASE_URL}${path}&quot;', 'cURL')" class="px-3 py-1 bg-white/5 hover:bg-white/10 light-mode:bg-slate-200 light-mode:hover:bg-slate-300 border border-white/10 light-mode:border-slate-300 rounded-lg text-[10px] transition-all active:scale-95 code-font text-slate-300 light-mode:text-slate-800">Copy cURL</button>
+                        </div>
+                        <div class="bg-[#0b1322]/60 light-mode:bg-slate-200/60 border border-white/5 light-mode:border-slate-300 px-4 py-3 rounded-xl backdrop-blur-sm shadow-inner">
+                            <code class="code-font text-xs text-slate-300 light-mode:text-slate-700 block overflow-x-auto whitespace-pre">curl -X ${method} "${BASE_URL}${path}"</code>
                         </div>
                     </div>`;
 
