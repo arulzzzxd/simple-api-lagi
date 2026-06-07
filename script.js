@@ -331,6 +331,7 @@ function createMediaPreview(url, contentType, originalUrl = '') {
     return `<div class="w-full">${previewHtml}<div class="flex gap-2 mt-3"><button type="button" onclick="copyText('${originalUrl || url}', 'Media URL')" class="${btnClass}">📋 Copy URL</button><a href="${url}" download class="${btnClass}">📥 Download</a></div></div>`;
 }
 
+// Fitur Baru: Eksekusi Request Lengkap dengan Utilitas Tombol Copy Multi-Fungsi
 async function executeRequest(e, catIdx, epIdx, method, path) {
     e.preventDefault();
     if (isRequestInProgress) {
@@ -361,7 +362,20 @@ async function executeRequest(e, catIdx, epIdx, method, path) {
         if (value) params.append(key, value);
     }
 
+    // 1. GENERATE FULL URL REQUEST DAN CURL COMMAND LENGKAP
     const fullPath = `${BASE_URL}${path.split('?')[0]}?${params.toString()}`;
+    let curlCommand = `curl -X ${method} "${fullPath}"`;
+    if (method !== 'GET') {
+        curlCommand = `curl -X ${method} "${BASE_URL}${path.split('?')[0]}" `;
+        const bodyParams = [];
+        for (const [key, value] of formData.entries()) {
+            if (value) bodyParams.push(`"${key}": "${value}"`);
+        }
+        if (bodyParams.length) {
+            curlCommand += `-H "Content-Type: application/json" -d '{${bodyParams.join(', ')}}'`;
+        }
+    }
+
     responseDiv.classList.remove('hidden');
     responseContent.innerHTML = '<div class="spinner mx-auto"></div>';
 
@@ -370,20 +384,65 @@ async function executeRequest(e, catIdx, epIdx, method, path) {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
         const contentType = response.headers.get("content-type");
+        let rawResponseText = "";
+        let isMedia = false;
+
+        // 2. RENDER KONTEN BERDASARKAN TYPE RESPONSE
         if (contentType?.includes("application/json")) {
             const data = await response.json();
-            responseContent.innerHTML = `<pre class="code-font text-sm overflow-auto text-cyan-500 light-mode:text-cyan-700">${JSON.stringify(data, null, 2)}</pre>`;
+            rawResponseText = JSON.stringify(data, null, 2);
+            responseContent.innerHTML = `<pre id="raw-text-${catIdx}-${epIdx}" class="code-font text-sm overflow-auto text-cyan-400">${rawResponseText}</pre>`;
         } else if (contentType?.startsWith("image/") || contentType?.startsWith("video/") || contentType?.startsWith("audio/") || contentType?.includes("application/pdf")) {
+            isMedia = true;
             const blob = await response.blob();
             const url = URL.createObjectURL(blob);
             responseContent.innerHTML = createMediaPreview(url, contentType, fullPath);
         } else {
-            const text = await response.text();
-            responseContent.innerHTML = `<pre class="code-font text-sm overflow-auto">${text}</pre>`;
+            rawResponseText = await response.text();
+            responseContent.innerHTML = `<pre id="raw-text-${catIdx}-${epIdx}" class="code-font text-sm overflow-auto">${rawResponseText}</pre>`;
         }
+
+        // 3. STRUKTUR DAN ATUR UTILITY TOMBOL COPY LENGKAP
+        const isLightMode = body.classList.contains('light-mode');
+        const btnStyle = isLightMode 
+            ? 'px-2.5 py-1 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded text-[11px] font-semibold transition-colors code-font border border-black/5'
+            : 'px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-white rounded text-[11px] font-semibold transition-colors code-font border border-white/5';
+
+        const actionContainer = document.createElement('div');
+        actionContainer.className = "flex flex-wrap gap-2 mb-3 border-b border-white/10 light-mode:border-slate-200 pb-3";
+
+        // Tombol Salin URL Request Lengkap
+        const copyUrlBtn = document.createElement('button');
+        copyUrlBtn.type = "button";
+        copyUrlBtn.className = btnStyle;
+        copyUrlBtn.innerHTML = "🔗 Copy URL Request";
+        copyUrlBtn.onclick = () => copyText(fullPath, "URL Request");
+        actionContainer.appendChild(copyUrlBtn);
+
+        // Tombol Salin cURL Command
+        const copyCurlBtn = document.createElement('button');
+        copyCurlBtn.type = "button";
+        copyCurlBtn.className = btnStyle;
+        copyCurlBtn.innerHTML = "💻 Copy cURL";
+        copyCurlBtn.onclick = () => copyText(curlCommand, "cURL Command");
+        actionContainer.appendChild(copyCurlBtn);
+
+        // Tombol Salin Teks Data Response (Hanya untuk non-media file)
+        if (!isMedia) {
+            const copyResponseBtn = document.createElement('button');
+            copyResponseBtn.type = "button";
+            copyResponseBtn.className = btnStyle;
+            copyResponseBtn.innerHTML = "📋 Copy Response";
+            copyResponseBtn.onclick = () => copyText(rawResponseText, "Response");
+            actionContainer.appendChild(copyResponseBtn);
+        }
+
+        // Sisipkan panel tombol tepat di bagian atas output content
+        responseContent.insertBefore(actionContainer, responseContent.firstChild);
+
         showToast(i18n[currentLang].toastRequestSuccess);
     } catch (error) {
-        responseContent.innerHTML = `<pre class="text-red-500 code-font text-sm">Error: ${error.message}</pre>`;
+        responseContent.innerHTML = `<pre class="text-red-400 code-font text-sm">Error: ${error.message}</pre>`;
         showToast(i18n[currentLang].toastRequestFailed, true);
     } finally {
         isRequestInProgress = false;
