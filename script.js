@@ -565,7 +565,7 @@ function loadApis() {
                 <div id="cat-${catIdx}" class="hidden">`;
         
         category.items.forEach((item, epIdx) => {
-            const method = 'GET';
+            const method = item.methods && item.methods.length ? item.methods[0] : 'GET';
             const pathParts = item.path.split('?');
             const path = pathParts[0];
             const queryParams = new URLSearchParams(pathParts[1] || '');
@@ -629,6 +629,21 @@ function loadApis() {
                                 <button type="button" onclick="clearResponse(${catIdx}, ${epIdx})" class="px-6 py-2 ${isLightMode ? 'bg-gray-300 hover:bg-gray-400 border-gray-400' : 'bg-gray-700 hover:bg-gray-600 border-gray-600'} border rounded-lg font-semibold text-sm transition-colors">${i18n[currentLang].btnClear}</button>
                             </div>
                         </form>
+
+                        <div id="response-${catIdx}-${epIdx}" class="hidden mt-6 space-y-3">
+                            <div id="url-section-${catIdx}-${epIdx}" class="hidden">
+                                <h5 class="text-xs font-bold mb-1 ${isLightMode ? 'text-gray-700' : 'text-gray-300'}">Request URL</h5>
+                                <div class="${isLightMode ? 'bg-gray-200 border-gray-300 text-gray-800' : 'bg-gray-900 border-gray-700 text-gray-300'} border p-2 rounded text-xs break-all code-font" id="url-command-${catIdx}-${epIdx}"></div>
+                            </div>
+                            <div id="curl-section-${catIdx}-${epIdx}" class="hidden">
+                                <h5 class="text-xs font-bold mb-1 ${isLightMode ? 'text-gray-700' : 'text-gray-300'}">cURL</h5>
+                                <div class="${isLightMode ? 'bg-gray-200 border-gray-300 text-gray-800' : 'bg-gray-900 border-gray-700 text-gray-300'} border p-2 rounded text-xs break-all code-font" id="curl-command-${catIdx}-${epIdx}"></div>
+                            </div>
+                            <div>
+                                <h5 class="text-xs font-bold mb-1 ${isLightMode ? 'text-gray-700' : 'text-gray-300'}">Response</h5>
+                                <div class="${isLightMode ? 'bg-gray-200 border-gray-300 text-gray-800' : 'bg-gray-900 border-gray-700 text-gray-300'} border p-3 rounded-lg min-h-[100px] overflow-x-auto relative" id="response-content-${catIdx}-${epIdx}"></div>
+                            </div>
+                        </div>
                     </div>`;
             } else {
                 html += `<div class="px-4 py-3 status-warning border rounded-lg text-sm">${i18n[currentLang].endpointNotAvailable}</div>`;
@@ -640,6 +655,7 @@ function loadApis() {
     apiList.innerHTML = html;
     allApiElements = Array.from(document.querySelectorAll('.api-item'));
 }
+
 
 function performSearch() {
     const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
