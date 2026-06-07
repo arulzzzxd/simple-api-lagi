@@ -634,24 +634,24 @@ function loadApis() {
                             
                             <div id="url-section-${catIdx}-${epIdx}" class="hidden">
                                 <div class="flex items-center justify-between mb-1.5">
-                                    <h5 class="text-xs font-bold ${isLightMode ? 'text-gray-700' : 'text-gray-300'}">Request URL</h5>
-                                    <button onclick="copyText(document.getElementById('url-command-${catIdx}-${epIdx}').innerText, 'Request URL')" class="px-2 py-1 ${isLightMode ? 'bg-gray-200 hover:bg-gray-300' : 'bg-gray-800 hover:bg-gray-700'} rounded text-[10px] transition-colors">Copy</button>
+                                    <h5 class="text-xs font-bold ${isLightMode ? 'text-gray-700' : 'text-gray-300'}">🌐 URL Request</h5>
+                                    <button onclick="copyText(document.getElementById('url-command-${catIdx}-${epIdx}').innerText, 'Request URL')" class="px-2 py-1 ${isLightMode ? 'bg-gray-200 hover:bg-gray-300' : 'bg-gray-800 hover:bg-gray-700'} rounded text-[10px] transition-colors">Copy Url</button>
                                 </div>
                                 <div class="${isLightMode ? 'bg-gray-200 border-gray-300 text-gray-800' : 'bg-gray-900 border-gray-700 text-gray-300'} border p-2 rounded text-xs break-all code-font" id="url-command-${catIdx}-${epIdx}"></div>
                             </div>
 
                             <div id="curl-section-${catIdx}-${epIdx}" class="hidden">
                                 <div class="flex items-center justify-between mb-1.5">
-                                    <h5 class="text-xs font-bold ${isLightMode ? 'text-gray-700' : 'text-gray-300'}">cURL</h5>
-                                    <button onclick="copyText(document.getElementById('curl-command-${catIdx}-${epIdx}').innerText, 'cURL')" class="px-2 py-1 ${isLightMode ? 'bg-gray-200 hover:bg-gray-300' : 'bg-gray-800 hover:bg-gray-700'} rounded text-[10px] transition-colors">Copy</button>
+                                    <h5 class="text-xs font-bold ${isLightMode ? 'text-gray-700' : 'text-gray-300'}">📟 cURL Command</h5>
+                                    <button onclick="copyText(document.getElementById('curl-command-${catIdx}-${epIdx}').innerText, 'cURL')" class="px-2 py-1 ${isLightMode ? 'bg-gray-200 hover:bg-gray-300' : 'bg-gray-800 hover:bg-gray-700'} rounded text-[10px] transition-colors">Copy Curl</button>
                                 </div>
                                 <div class="${isLightMode ? 'bg-gray-200 border-gray-300 text-gray-800' : 'bg-gray-900 border-gray-700 text-gray-300'} border p-2 rounded text-xs break-all code-font" id="curl-command-${catIdx}-${epIdx}"></div>
                             </div>
 
                             <div>
                                 <div class="flex items-center justify-between mb-1.5">
-                                    <h5 class="text-xs font-bold ${isLightMode ? 'text-gray-700' : 'text-gray-300'}">Response</h5>
-                                    <button onclick="copyText(document.getElementById('response-content-${catIdx}-${epIdx}').innerText, 'Response')" class="px-2 py-1 ${isLightMode ? 'bg-gray-200 hover:bg-gray-300' : 'bg-gray-800 hover:bg-gray-700'} rounded text-[10px] transition-colors">Copy</button>
+                                    <h5 class="text-xs font-bold ${isLightMode ? 'text-gray-700' : 'text-gray-300'}">📄 Response</h5>
+                                    <button onclick="copyText(document.getElementById('response-content-${catIdx}-${epIdx}').innerText, 'Response')" class="px-2 py-1 ${isLightMode ? 'bg-gray-200 hover:bg-gray-300' : 'bg-gray-800 hover:bg-gray-700'} rounded text-[10px] transition-colors">Copy Response</button>
                                 </div>
                                 <div class="${isLightMode ? 'bg-gray-200 border-gray-300 text-gray-800' : 'bg-gray-900 border-gray-700 text-gray-300'} border p-3 rounded-lg min-h-[100px] overflow-x-auto relative" id="response-content-${catIdx}-${epIdx}"></div>
                             </div>
