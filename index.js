@@ -189,6 +189,45 @@ app.get('/', (req, res) => {
             color: #000000;
             box-shadow: 2px 2px 0px #000000;
         }
+
+        /* Filter Buttons Style */
+        .filter-btn {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: normal;
+            padding: 6px 12px;
+            border: 1px solid var(--border-color);
+            background-color: transparent;
+            color: var(--text-secondary);
+            transition: all 0.2s ease;
+            border-radius: 4px;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+        .filter-btn:hover {
+            border-color: var(--text-primary);
+            color: var(--text-primary);
+        }
+        .filter-btn.active {
+            background-color: #2ecc71; /* Warna hijau seperti gambar */
+            color: #000000;
+            border-color: #2ecc71;
+            font-weight: bold;
+        }
+        .light-mode .filter-btn {
+            border-color: #d1d5db;
+        }
+        .light-mode .filter-btn:hover {
+            border-color: #374151;
+            color: #000000;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
     </style>
 </head>
 <body class="min-h-screen antialiased">
@@ -360,6 +399,9 @@ app.get('/', (req, res) => {
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                 </svg>
             </div>
+            
+            <div id="categoryFilters" class="flex flex-wrap gap-2 mt-4 justify-start md:justify-center overflow-x-auto pb-2 scrollbar-hide">
+                </div>
         </div>
 
         <div id="noResults" class="text-center py-12 hidden">
