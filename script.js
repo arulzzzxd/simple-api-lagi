@@ -19,13 +19,13 @@ const bgLightSource = 'https://cdn.pixabay.com/video/2019/03/28/22373-328940142_
 
 // Pemetaan Ikon Kategori (SVG Kuning)
 const categoryIcons = {
-    'ai': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-yellow-400">...</svg>',
-    'download': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-yellow-400">...</svg>',
-    'search': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-yellow-400">...</svg>',
+    'ai': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-yellow-400"><path d="M12 2c-.55 0-1 .45-1 1v1H9c-.55 0-1 .45-1 1v1H6c-.55 0-1 .45-1 1v2H3c-.55 0-1 .45-1 1v4c0 .55.45 1 1 1h2v2c0 .55.45 1 1 1h2v1c0 .55.45 1 1 1h2v1c0 .55.45 1 1 1s1-.45 1-1v-1h2c.55 0 1-.45 1-1v-1h2c.55 0 1-.45 1-1v-2h2c.55 0 1-.45 1-1v-4c0-.55-.45-1-1-1h-2V9c0-.55-.45-1-1-1h-2V7c0-.55-.45-1-1-1h-2V4c0-.55-.45-1-1-1h-1V3c0-.55-.45-1-1-1zm0 4c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6 2.69-6 6-6z"/></svg>',
+    'download': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-yellow-400"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>',
+    'search': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-yellow-400"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>',
     'islam': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-yellow-400"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg>',
     'tools': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-yellow-400"><path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.5 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z"/></svg>',
     'random': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-yellow-400"><path d="M16 17.01V10h-2v7.01h-3L15 21l4-3.99h-3zM9 3L5 6.99h3V14h2V6.99h3L9 3z"/></svg>',
-    'default': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-yellow-400">...</svg>'
+    'default': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-yellow-400"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>'
 };
 
 // Penampung teks multibahasa
@@ -412,30 +412,8 @@ function filterByCategory(catName) {
 }
 
 function loadApis() {
-    const apiListDiv = document.getElementById('apiList');
-    apiListDiv.innerHTML = ''; // Bersihkan dulu
-
-    if (!apiData || apiData.length === 0) {
-        document.getElementById('noResults').classList.remove('hidden');
-        return;
-    }
-
-    apiData.forEach(api => {
-        const apiCard = document.createElement('div');
-        apiCard.className = 'glass-card p-4 rounded-xl border border-white/10 hover:border-yellow-400/50 transition-all';
-        apiCard.innerHTML = `
-            <div class="flex justify-between items-center">
-                <div>
-                    <h4 class="font-bold text-white text-sm">${api.name.toUpperCase()}</h4>
-                    <p class="text-xs text-gray-400 uppercase">${api.category}</p>
-                </div>
-                <a href="${api.path}" target="_blank" class="text-xs bg-yellow-500/20 text-yellow-400 px-3 py-1 rounded-full border border-yellow-500/30">TEST</a>
-            </div>
-        `;
-        apiListDiv.appendChild(apiCard);
-    });
-    document.getElementById('noResults').classList.add('hidden');
-}
+    const apiList = document.getElementById('apiList');
+    if (!apiList || !apiData || !apiData.categories) return;
 
     const isLightMode = body.classList.contains('light-mode');
     totalEndpoints = 0;
