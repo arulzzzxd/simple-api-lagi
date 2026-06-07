@@ -53,30 +53,26 @@ for (const category of endpointDirs) {
 
 function getEndpointsFromRouter(category, file) {
   const endpoints = [];
-  const route = require(path.join(apiPath, category, file));
-  const subRouter = route.stack ? route : route.router || route;
+  const fullPath = path.join(apiPath, category, file);
+  
+  // Hapus cache agar perubahan terbaca saat server restart
+  delete require.cache[require.resolve(fullPath)];
+  const route = require(fullPath);
+  
+  // Mendukung export router langsung atau object dengan properti 'router'
+  const subRouter = route.router || route;
+  
   if (!subRouter || !subRouter.stack) return endpoints;
+
   subRouter.stack.forEach(layer => {
     if (layer.route) {
       const methods = Object.keys(layer.route.methods).map(m => m.toUpperCase());
-      let params = {};
-      if (layer.route.stack && layer.route.stack.length) {
-        layer.route.stack.forEach(mw => {
-          const fnString = mw.handle.toString();
-          [...fnString.matchAll(/req\.query\.([a-zA-Z0-9_]+)/g)].forEach(match => {
-            params[match[1]] = "";
-          });
-          [...fnString.matchAll(/req\.body\.([a-zA-Z0-9_]+)/g)].forEach(match => {
-            params[match[1]] = "";
-          });
-        });
-      }
       endpoints.push({
         name: `/${category}/${file.replace(/\.js$/,"")}`,
         path: `/api/${category}/${file.replace(/\.js$/,"")}`,
-        desc: `/${category}/${file.replace(/\.js$/,"")}`,
+        desc: `Endpoint: ${layer.route.path}`,
         status: "ready",
-        params,
+        params: {}, // Jika Anda ingin deteksi otomatis, gunakan regex di sini
         methods
       });
     }
