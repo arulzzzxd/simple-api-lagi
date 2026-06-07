@@ -1,34 +1,166 @@
-<!DOCTYPE html>
-<html lang="id">
+const express = require('express');
+const path = require('path');
+const fs = require('fs');
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+app.use(express.static(path.join(__dirname)));
+app.use(express.json());
+
+/*
+For setting API name etc
+*/
+const title = "API Arulz-XD";
+const favicon = "https://arulz-uploader.vercel.app/files/C5VYmq.jpg";
+const logo = "https://arulz-uploader.vercel.app/files/SnhJe3.png";
+const headertitle = "NANZZA PI";
+const headerdescription = "v2.0 • REST Documentation";
+const footer = "© Arulz-XD";
+
+// === KONFIGURASI PLAYLIST BANYAK MUSIK ===
+const playlist = [
+  {
+    title: "PAMIT KERJO",
+    artist: "NDX. AKA",
+    cover: "https://raw.githubusercontent.com/upload-file-lab/fileupload7/main/uploads/1764494355026.jpeg",
+    url: "https://files.catbox.moe/gfuwnv.mp3"
+  },
+  {
+    title: "TANPO HUBUNGAN",
+    artist: "LA TASYA",
+    cover: "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=300&auto=format&fit=crop",
+    url: "https://files.catbox.moe/xd5oq3.mp3"
+  },
+  {
+    title: "DJ CIDRO 2",
+    artist: "TIDAK DIKETAHUI",
+    cover: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=300&auto=format&fit=crop",
+    url: "https://files.catbox.moe/u30w9k.mp3"
+  }
+];
+
+const router = express.Router();
+const apiPath = path.join(__dirname, 'api');
+const endpointDirs = fs.readdirSync(apiPath).filter(f => fs.statSync(path.join(apiPath, f)).isDirectory());
+
+for (const category of endpointDirs) {
+  const categoryPath = path.join(apiPath, category);
+  const files = fs.readdirSync(categoryPath).filter(f => f.endsWith('.js'));
+  for (const file of files) {
+    const routeName = path.basename(file, '.js');
+    const route = require(path.join(categoryPath, file));
+    router.use(`/${category}/${routeName}`, route);
+  }
+}
+
+function getEndpointsFromRouter(category, file) {
+  const endpoints = [];
+  const route = require(path.join(apiPath, category, file));
+  const subRouter = route.stack ? route : route.router || route;
+  if (!subRouter || !subRouter.stack) return endpoints;
+  subRouter.stack.forEach(layer => {
+    if (layer.route) {
+      const methods = Object.keys(layer.route.methods).map(m => m.toUpperCase());
+      let params = {};
+      if (layer.route.stack && layer.route.stack.length) {
+        layer.route.stack.forEach(mw => {
+          const fnString = mw.handle.toString();
+          [...fnString.matchAll(/req\.query\.([a-zA-Z0-9_]+)/g)].forEach(match => {
+            params[match[1]] = "";
+          });
+          [...fnString.matchAll(/req\.body\.([a-zA-Z0-9_]+)/g)].forEach(match => {
+            params[match[1]] = "";
+          });
+        });
+      }
+      endpoints.push({
+        name: `/${category}/${file.replace(/\.js$/,"")}`,
+        path: `/api/${category}/${file.replace(/\.js$/,"")}`,
+        desc: `/${category}/${file.replace(/\.js$/,"")}`,
+        status: "ready",
+        params,
+        methods
+      });
+    }
+  });
+  return endpoints;
+}
+
+router.get('/apilist', (req, res) => {
+  const categories = [];
+
+  for (const category of endpointDirs) {
+    const files = fs.readdirSync(path.join(apiPath, category)).filter(f => f.endsWith('.js'));
+    const endpoints = [];
+    for (const file of files) {
+      endpoints.push(...getEndpointsFromRouter(category, file));
+    }
+    if (endpoints.length) {
+      categories.push({
+        name: `${category.toUpperCase()}`,
+        items: endpoints
+      });
+    }
+  }
+
+  categories.push({
+    name: "OTHER",
+    items: [
+      {
+        name: "/apilist",
+        path: "/api/apilist",
+        desc: "/apilist",
+        status: "ready",
+        params: {},
+        methods: ["GET"]
+      }
+    ]
+  });
+
+  res.json({ categories });
+});
+
+app.use('/api', router);
+
+app.get('/script.js', (req, res) => {
+  res.sendFile(path.join(__dirname, 'script.js'));
+});
+app.get('/linkbio.json', (req, res) => {
+  res.sendFile(path.join(__dirname, 'linkbio.json'));
+});
+app.get('/styles.css', (req, res) => {
+  res.sendFile(path.join(__dirname, 'styles.css'));
+});
+
+app.get('/', (req, res) => {
+    res.send(`<!DOCTYPE html>
+<html lang="en" class="notranslate" translate="no">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>API Arulz-XD</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet">
+    <meta charset="UTF-8" />
+    <meta name="google" content="notranslate" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>${title}</title>
+    <link id="faviconLink" rel="icon" type="image/x-icon" href="${favicon}">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
     
     <style>
         :root {
-            --font-sans: 'Plus Jakarta Sans', sans-serif;
-            --font-mono: 'JetBrains Mono', monospace;
+            --teal-primary: #00bcd4;
+            --teal-dark: #006064;
         }
         body {
-            font-family: var(--font-sans);
-            background-color: #0b0f19;
-            color: #f8fafc;
+            font-family: 'Space Grotesk', sans-serif;
+            background-color: #030a16;
+            color: #ffffff;
             transition: background-color 0.3s, color 0.3s;
-            overflow-x: hidden;
-        }
-        body.light-mode {
-            background-color: #f1f5f9;
-            color: #0f172a;
         }
         .code-font {
-            font-family: var(--font-mono);
+            font-family: 'JetBrains Mono', monospace;
         }
-        .video-bg-container {
+        
+        /* Video Background */
+        #video-bg-container {
             position: fixed;
             top: 0;
             left: 0;
@@ -37,262 +169,314 @@
             z-index: -2;
             overflow: hidden;
         }
-        .video-bg-container video {
-            min-width: 100%;
-            min-height: 100%;
-            width: auto;
-            height: auto;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+        #bg-video {
+            width: 100%;
+            height: 100%;
             object-fit: cover;
-            opacity: 0.15;
+            transition: opacity 0.5s ease-in-out;
         }
-        body.light-mode .video-bg-container video {
-            opacity: 0.25;
-        }
-        .overlay-bg {
+        #video-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             z-index: -1;
-            background: radial-gradient(circle at top right, rgba(20, 30, 55, 0.6), transparent),
-                        radial-gradient(circle at bottom left, rgba(10, 15, 30, 0.8), #0b0f19);
+            background: linear-gradient(to right, rgba(3,10,22,0.95) 50%, rgba(3,10,22,0.4) 50%);
+            transition: background 0.3s ease;
         }
-        body.light-mode .overlay-bg {
-            background: radial-gradient(circle at top right, rgba(219, 234, 254, 0.5), transparent),
-                        radial-gradient(circle at bottom left, rgba(241, 245, 249, 0.8), #f1f5f9);
+        
+        /* Light Mode Adjustments */
+        body.light-mode {
+            background-color: #f0f4f8;
+            color: #0f172a;
         }
+        body.light-mode #video-overlay {
+            background: linear-gradient(to right, rgba(240,244,248,0.95) 50%, rgba(240,244,248,0.3) 50%);
+        }
+
+        /* Glassmorphism Cards */
         .glass-card {
-            background: rgba(15, 23, 42, 0.45);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
         body.light-mode .glass-card {
-            background: rgba(255, 255, 255, 0.75);
+            background: rgba(15, 23, 42, 0.04);
             border: 1px solid rgba(15, 23, 42, 0.08);
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03);
         }
+
+        /* Battery Styling preserved from original */
+        .battery-container {
+            width: 28px;
+            height: 14px;
+            border: 1.5px solid currentColor;
+            border-radius: 3px;
+            padding: 1px;
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .battery-level {
+            height: 100%;
+            border-radius: 1px;
+            transition: width 0.3s, background-color 0.3s;
+        }
+        .battery-tip {
+            width: 2px;
+            height: 6px;
+            background-color: currentColor;
+            position: absolute;
+            right: -3px;
+            top: 50%;
+            transform: translateY(-50%);
+            border-radius: 0 1px 1px 0;
+        }
+        
+        /* Language switcher brutalist */
+        .lang-btn {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: bold;
+            padding: 3px 10px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background-color: rgba(0,0,0,0.4);
+            color: #ffffff;
+        }
+        .lang-btn.active {
+            background-color: #00bcd4;
+            color: #000000;
+        }
+        
         .filter-btn {
-            padding: 0.35rem 0.85rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            font-family: var(--font-mono);
-            text-transform: uppercase;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            background: rgba(255, 255, 255, 0.05);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            padding: 6px 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.02);
             color: #94a3b8;
-            cursor: pointer;
-            transition: all 0.2s ease;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        .filter-btn.active {
+            background-color: #00bcd4;
+            color: #000000;
+            border-color: #00bcd4;
+            font-weight: bold;
         }
         body.light-mode .filter-btn {
-            border: 1px solid rgba(15, 23, 42, 0.1);
-            background: rgba(0, 0, 0, 0.03);
+            border-color: rgba(0,0,0,0.1);
+            background: rgba(0,0,0,0.02);
             color: #475569;
         }
-        .filter-btn.active, .filter-btn:hover {
-            background: #14b8a6;
+        body.light-mode .filter-btn.active {
+            background-color: #00bcd4;
             color: #000000;
-            border-color: #14b8a6;
-            box-shadow: 0 0 12px rgba(20, 184, 166, 0.4);
         }
-        .status-ready { background: rgba(16, 185, 129, 0.15); color: #10b981; border-color: rgba(16, 185, 129, 0.3); }
-        .status-update { background: rgba(59, 130, 246, 0.15); color: #3b82f6; border-color: rgba(59, 130, 246, 0.3); }
-        .status-error { background: rgba(239, 68, 68, 0.15); color: #ef4444; border-color: rgba(239, 68, 68, 0.3); }
-        .status-warning { background: rgba(245, 158, 11, 0.15); color: #f59e0b; border-color: rgba(245, 158, 11, 0.3); }
-        
-        /* Toast Notification Styling */
-        .toast-box {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            transform: translateY(150%);
-            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            z-index: 9999;
-        }
-        .toast-box.show { transform: translateY(0); }
-        
-        /* Media Player disk rotation styling */
-        .music-rotate { animation: spin 12s linear infinite; }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-        
-        .spinner {
-            width: 24px;
-            height: 24px;
-            border: 3px solid rgba(20, 184, 166, 0.2);
-            border-top-color: #14b8a6;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-        .local-spinner {
-            display: none;
-            width: 14px;
-            height: 14px;
-            border: 2px solid rgba(0,0,0,0.2);
-            border-top-color: currentColor;
-            border-radius: 50%;
-            animation: spin 0.6s linear infinite;
-        }
-        .local-spinner.active { display: inline-block; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="p-4 md:p-8 min-h-screen">
+<body class="min-h-screen antialiased relative">
 
-    <div class="video-bg-container">
-        <video id="bg-video" autoplay loop muted playsinline src="https://cdn.pixabay.com/video/2020/02/24/32773-393278239_tiny.mp4"></video>
+    <div id="video-bg-container">
+        <video autoplay loop muted playsinline id="bg-video">
+            <source src="" type="video/mp4">
+        </video>
     </div>
-    <div class="overlay-bg"></div>
+    <div id="video-overlay"></div>
 
-    <header class="max-w-2xl mx-auto mb-6 flex items-center justify-between glass-card p-4 rounded-2xl relative">
-        <div class="flex items-center gap-3">
-            <img id="logoImg" src="https://arulz-uploader.vercel.app/files/SnhJe3.png" alt="Logo" class="w-10 h-10 rounded-xl object-cover border border-white/10 shadow-md">
-            <div>
-                <h1 id="headerTitle" class="text-sm font-bold tracking-tight uppercase text-white light-mode:text-gray-900 leading-tight">API Explorer <br>& Tester</h1>
-                <p id="headerDescription" class="text-[10px] text-gray-400 light-mode:text-gray-600 code-font mt-0.5">$ Browse, inspect & fire requests<br>against live endpoints._</p>
-            </div>
-        </div>
-        
-        <div class="flex items-center gap-2">
-            <div class="flex bg-black/40 light-mode:bg-gray-200/60 rounded-lg p-0.5 border border-white/5 light-mode:border-gray-300">
-                <button onclick="setLanguage('id')" id="lang-id" class="px-2 py-1 text-[10px] font-bold rounded-md transition-all cursor-pointer opacity-50 [&.active]:opacity-100 [&.active]:bg-teal-500 [&.active]:text-black active">ID</button>
-                <button onclick="setLanguage('en')" id="lang-en" class="px-2 py-1 text-[10px] font-bold rounded-md transition-all cursor-pointer opacity-50 [&.active]:opacity-100 [&.active]:bg-teal-500 [&.active]:text-black">EN</button>
-            </div>
-            
-            <button id="themeToggle" class="flex items-center justify-center w-8 h-8 rounded-lg bg-slate-900 text-white transition-all active:scale-95 focus:outline-none border border-slate-800 cursor-pointer">
-                <svg id="theme-toggle-dark-icon" class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 00-1.414 0l-.707.707a1 1 0 001.414 1.414l.707-.707a1 1 0 000-1.414zM5.05 14.95l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zm-2.12-10.607a1 1 0 010 1.414l-.707.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zm11.314 2.12a1 1 0 101.414-1.414l-.707-.707a1 1 0 10-1.414 1.414l.707.707zm-10.606 0a1 1 0 001.414 1.414l.707-.707a1 1 0 00-1.414-1.414l-.707.707z"></path></svg>
-                <svg id="theme-toggle-light-icon" class="w-4 h-4 text-indigo-600 hidden" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
-            </button>
-            
-            <button id="bioMenuBtn" class="flex items-center justify-center w-8 h-8 rounded-lg bg-teal-500 text-black font-bold text-xs shadow-md transition-all active:scale-95 cursor-pointer">BIO</button>
-        </div>
-    </header>
+    <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-slate-900 border border-slate-800 text-white px-4 py-3 rounded-xl shadow-lg flex items-center gap-2">
+        <svg id="toastIcon" class="w-5 h-5 text-cyan-400" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+        </svg>
+        <span id="toastMessage" class="text-sm font-medium">Action completed</span>
+    </div>
 
-    <section class="max-w-2xl mx-auto mb-6 grid grid-cols-3 gap-3">
-        <div id="batteryContainer" class="glass-card p-3 rounded-xl flex flex-col justify-between relative overflow-hidden">
-            <span id="stat-battery-title" class="text-[10px] uppercase font-bold tracking-wider text-gray-400 block mb-2">Baterai</span>
-            <div class="flex items-baseline gap-1 mt-1 z-10">
-                <span id="batteryPercentage" class="text-xl font-black code-font text-white light-mode:text-gray-900">--%</span>
-                <span id="batteryStatus" class="text-[9px] code-font text-gray-400 uppercase">Checking</span>
-            </div>
-            <div class="w-full h-1 bg-white/10 rounded-full mt-3 overflow-hidden relative">
-                <div id="batteryLevel" class="h-full bg-teal-500 rounded-full transition-all duration-500" style="width: 0%"></div>
-            </div>
-        </div>
-        
-        <div class="glass-card p-3 rounded-xl flex flex-col justify-between">
-            <span id="stat-endpoints-title" class="text-[10px] uppercase font-bold tracking-wider text-gray-400 block mb-2">Total Endpoint</span>
-            <div class="mt-1">
-                <span id="totalEndpoints" class="text-xl font-black code-font text-teal-400">0</span>
-                <span class="text-[9px] code-font text-gray-400 block uppercase mt-1">Endpoints Active</span>
-            </div>
-        </div>
-
-        <div class="glass-card p-3 rounded-xl flex flex-col justify-between">
-            <span id="stat-categories-title" class="text-[10px] uppercase font-bold tracking-wider text-gray-400 block mb-2">Total Kategori</span>
-            <div class="mt-1">
-                <span id="totalCategories" class="text-xl font-black code-font text-purple-400">REST</span>
-                <span class="text-[9px] code-font text-gray-400 block uppercase mt-1">Structured Group</span>
-            </div>
-        </div>
-    </section>
-
-    <div class="max-w-2xl mx-auto mb-6 glass-card p-4 rounded-2xl">
-        <div class="relative">
-            <input 
-                type="text" 
-                id="searchInput" 
-                placeholder="Cari endpoint berdasarkan nama, path, atau kategori..." 
-                class="w-full bg-black/40 light-mode:bg-white text-sm px-4 py-3 pl-4 pr-10 rounded-xl border border-white/10 light-mode:border-gray-300 focus:outline-none focus:border-teal-500 transition-all code-font text-white light-mode:text-black placeholder-gray-400 light-mode:placeholder-gray-500"
-            >
-            <svg class="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+    <div class="fixed top-6 right-6 z-50 flex items-center gap-3">
+        <button id="themeToggle" class="flex items-center justify-center w-12 h-12 rounded-xl bg-slate-900/60 backdrop-blur border border-white/10 text-cyan-400 shadow-lg hover:scale-105 transition-all">
+            <svg id="theme-toggle-dark-icon" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
             </svg>
+            <svg id="theme-toggle-light-icon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path>
+            </svg>
+        </button>
+        <button id="bioMenuBtn" class="flex items-center justify-center w-12 h-12 rounded-xl bg-slate-900/60 backdrop-blur border border-white/10 text-cyan-400 shadow-lg hover:scale-105 transition-all">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+        </button>
+    </div>
+
+    <div id="bioDropdown" class="fixed top-0 right-0 h-full w-72 bg-slate-950/95 border-l border-white/10 transform translate-x-full transition-transform duration-300 ease-in-out z-50 shadow-2xl flex flex-col p-6">
+        <div class="flex items-center justify-between mb-8">
+            <div class="flex gap-0 border border-white/10 p-0.5 bg-black/40 rounded-md overflow-hidden">
+                <button id="lang-id" class="lang-btn active" onclick="setLanguage('id')">ID</button>
+                <button id="lang-en" class="lang-btn" onclick="setLanguage('en')">EN</button>
+            </div>
+            <button id="closeMenuBtn" class="text-white hover:text-cyan-400 transition-colors p-1.5 border border-white/10 rounded-lg bg-slate-900">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
         </div>
+        <nav class="flex flex-col gap-4 text-xs font-bold tracking-widest text-slate-400 uppercase">
+            <a href="#api" class="hover:text-cyan-400 transition-colors">HOME</a>
+            <a href="#apiList" class="hover:text-cyan-400 transition-colors">DOCUMENTATION</a>
+            <hr class="border-white/10 my-2">
+        </nav>
+        <div class="mt-8 flex-1 overflow-y-auto">
+            <h3 class="text-[10px] font-bold tracking-widest text-slate-500 uppercase mb-3 code-font">DYNAMIC LINK BIO</h3>
+            <div id="socialContainer" class="flex flex-col gap-2">
+                <div id="socialLoading" class="text-center py-2"><p class="text-xs text-slate-600">Loading...</p></div>
+            </div>
+        </div>
+    </div>
+    <div id="menuOverlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-40"></div>
+
+    <div class="max-w-7xl mx-auto px-4 lg:px-8 py-12 grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
         
-        <div id="categoryFilters" class="flex flex-wrap gap-2 mt-4 justify-start overflow-x-auto pb-1 scrollbar-hide"></div>
-    </div>
-
-    <div id="noResults" class="text-center py-12 hidden glass-card rounded-2xl max-w-2xl mx-auto mb-6">
-        <div class="text-4xl mb-2">🔍</div>
-        <h3 id="no-results-title" class="text-sm font-bold mb-1">Endpoint tidak ditemukan</h3>
-        <p id="no-results-desc" class="text-xs text-gray-400">Coba gunakan kata kunci lain</p>
-    </div>
-
-    <main id="apiList" class="space-y-4 max-w-2xl mx-auto mb-32"></main>
-
-    <div id="toast" class="toast-box glass-card px-4 py-3 rounded-xl border border-teal-500/30 flex items-center gap-3 text-sm font-semibold text-white light-mode:text-gray-900 shadow-xl">
-        <svg id="toastIcon" class="w-5 h-5 text-teal-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"></svg>
-        <span id="toastMessage">Permintaan sukses dilakukan!</span>
-    </div>
-
-    <section class="fixed bottom-4 left-4 right-4 max-w-2xl mx-auto glass-card rounded-2xl p-3 border border-white/10 shadow-2xl z-40">
-        <div class="flex items-center justify-between gap-4">
-            <div class="flex items-center gap-3 min-w-0">
-                <img id="musicCoverImg" src="https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=150" alt="Cover" class="w-10 h-10 rounded-lg object-cover border border-white/10 transition-transform duration-500 music-rotate">
-                <div class="min-w-0">
-                    <h4 id="musicTitle" class="text-xs font-bold text-white light-mode:text-gray-900 truncate uppercase tracking-wider">Loading Audio...</h4>
-                    <p id="musicArtist" class="text-[10px] text-gray-400 light-mode:text-gray-500 code-font truncate mt-0.5">Please wait</p>
+        <div class="space-y-8 lg:sticky lg:top-12">
+            <div class="flex items-start gap-4">
+                <div class="w-14 h-14 bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 rounded-xl flex items-center justify-center shadow-[0_0_15px_rgba(6,182,212,0.15)] flex-shrink-0">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <h2 class="text-xl font-bold tracking-widest text-white uppercase">${headertitle}</h2>
+                        <div class="flex items-center gap-1.5 text-slate-400 code-font text-xs" id="batteryApplet">
+                            <span id="batteryPercentage">0%</span>
+                            <div id="batteryContainer" class="battery-container">
+                                <div id="batteryLevel" class="battery-level bg-cyan-400" style="width: 0%"></div>
+                                <div class="battery-tip"></div>
+                            </div>
+                            <span id="batteryStatus" class="text-[10px] opacity-60 hidden md:inline">Mendeteksi...</span>
+                        </div>
+                    </div>
+                    <p class="text-xs text-cyan-400/80 mt-0.5 code-font">${headerdescription}</p>
                 </div>
             </div>
+
+            <div class="space-y-3">
+                <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight">
+                    API Explorer <br>& Tester
+                </h1>
+                <p id="mainDescription" class="text-sm text-cyan-400/70 code-font max-w-lg leading-relaxed">
+                    $ Browse, inspect & fire requests against live endpoints._
+                </p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="glass-card rounded-xl p-5 relative overflow-hidden group">
+                    <span id="totalEndpoints" class="text-3xl md:text-4xl font-bold text-white block">0</span>
+                    <span id="stat-endpoints-title" class="text-xs text-cyan-400 code-font block mt-2">// Endpoints</span>
+                    <svg class="w-8 h-8 text-cyan-400/20 absolute right-4 bottom-4 transition-transform group-hover:scale-110" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 8a6 6 0 01-7.743 5.743L10 14l-1 1-1 1H6v-2l2-2 1-1V9.757A6 6 0 1118 8zm-3.449 1.422A3.998 3.998 0 0012 7.5a1 1 0 000 2c.454 0 .866.244 1.086.637a1 1 0 101.465-1.365z" clip-rule="evenodd"/>
+                    </svg>
+                </div>
+                <div class="glass-card rounded-xl p-5 relative overflow-hidden">
+                    <span class="text-3xl md:text-4xl font-bold text-cyan-400 block">REST</span>
+                    <span id="stat-categories-title" class="text-xs text-slate-400 code-font block mt-2">// Protocol</span>
+                    <span class="text-[10px] text-slate-500 absolute right-4 bottom-4 code-font">v2.0</span>
+                </div>
+            </div>
+
+            <div class="glass-card rounded-xl p-3 flex items-center gap-3 border border-cyan-500/20">
+                <svg class="w-5 h-5 text-cyan-400 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                </svg>
+                <span class="text-xs text-slate-300 code-font truncate flex-1 select-all">https://api-nanzz.my.id/docs/api/</span>
+                <svg class="w-4 h-4 text-slate-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg>
+            </div>
+
+            <button class="w-full bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-bold py-3.5 px-6 rounded-xl transition-all shadow-[0_4px_20px_rgba(6,182,212,0.3)] flex items-center justify-center gap-2 text-sm uppercase tracking-wider">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                Request New Feature
+            </button>
+
+            <div class="glass-card rounded-2xl p-4 relative overflow-hidden transition-all">
+                <audio id="audioElement"></audio>
+                <div class="flex items-center justify-between gap-4">
+                    <div class="flex items-center gap-3 flex-1 min-w-0">
+                        <img id="musicCoverImg" src="" alt="Cover" class="w-12 h-12 rounded-lg object-cover bg-black flex-shrink-0 border border-white/10">
+                        <div class="flex-1 min-w-0">
+                            <h3 id="musicTitle" class="text-white font-bold text-xs truncate uppercase tracking-wider">Loading...</h3>
+                            <p id="musicArtist" class="text-slate-400 text-[10px] truncate mt-0.5">-</p>
+                            <div class="flex items-center gap-2 mt-1">
+                                <span id="currentTime" class="text-[9px] text-slate-500 code-font">0:00</span>
+                                <div id="progressContainer" class="flex-1 h-1 bg-slate-800 rounded-full relative cursor-pointer">
+                                    <div id="progressBar" class="h-full bg-cyan-400 rounded-full w-0"></div>
+                                </div>
+                                <span id="totalDuration" class="text-[9px] text-slate-500 code-font">0:00</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-1 flex-shrink-0">
+                        <button id="prevBtn" class="w-8 h-8 flex items-center justify-center bg-white/5 border border-white/5 rounded-lg text-slate-400 hover:text-white transition-all"><svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
+                        <button id="playBtn" class="w-9 h-9 flex items-center justify-center bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 rounded-lg hover:bg-cyan-500/30 transition-all"><svg id="playIcon" class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+                        <button id="nextBtn" class="w-8 h-8 flex items-center justify-center bg-white/5 border border-white/5 rounded-lg text-slate-400 hover:text-white transition-all"><svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M16 6h2v12h-2zm-10.5 12l8.5-6-8.5-6z"/></svg></button>
+                        <button id="playlistToggleBtn" class="w-8 h-8 flex items-center justify-center bg-white/5 border border-white/5 rounded-lg text-slate-400 hover:text-white transition-all"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+                    </div>
+                </div>
+                <div id="playlistPanel" class="hidden mt-3 pt-3 border-t border-white/5 max-h-32 overflow-y-auto space-y-1 scrollbar-hide"></div>
+            </div>
+        </div>
+        
+        <div class="space-y-6 lg:border-l lg:border-white/5 lg:pl-8">
+            <div class="flex items-center justify-between">
+                <h2 class="text-xs font-bold uppercase tracking-widest text-cyan-400 code-font">// Endpoints Hub</h2>
+                <div class="flex items-center gap-1 bg-cyan-500/10 border border-cyan-500/30 rounded-full px-2.5 py-1 text-[10px] text-cyan-400 font-bold uppercase tracking-wider">
+                    <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></span>
+                    Online
+                </div>
+            </div>
+
+            <div class="relative">
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    placeholder="Cari endpoint..."
+                    class="w-full px-4 py-3 pl-11 text-xs code-font rounded-xl bg-slate-900/50 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 transition-all shadow-inner"
+                >
+                <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+            </div>
             
-            <div class="flex items-center gap-3 flex-shrink-0">
-                <button id="prevBtn" class="p-1 text-gray-400 hover:text-white transition-colors cursor-pointer" title="Previous Track">
-                    <svg class="w-4 h-4 fill-currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
-                </button>
-                <button id="playBtn" class="w-8 h-8 rounded-full bg-teal-500 text-black flex items-center justify-center shadow-md transition-transform active:scale-90 cursor-pointer" title="Play / Pause">
-                    <svg id="playIcon" class="w-4 h-4 fill-currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                </button>
-                <button id="nextBtn" class="p-1 text-gray-400 hover:text-white transition-colors cursor-pointer" title="Next Track">
-                    <svg class="w-4 h-4 fill-currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6z"/></svg>
-                </button>
-                <button id="playlistToggleBtn" class="p-1 text-gray-400 hover:text-teal-400 transition-colors cursor-pointer" title="Toggle Playlist">
-                    <svg class="w-4 h-4 fill-currentColor" viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h12v2H4z"/></svg>
-                </button>
-            </div>
-        </div>
+            <div id="categoryFilters" class="flex flex-wrap gap-1.5 overflow-x-auto pb-1 scrollbar-hide"></div>
 
-        <audio id="audioElement" preload="auto" class="hidden"></audio>
-
-        <div id="progressContainer" class="w-full h-1 bg-white/10 light-mode:bg-gray-300 rounded-full mt-2.5 cursor-pointer relative overflow-hidden">
-            <div id="progressBar" class="h-full bg-gradient-to-r from-teal-400 to-cyan-400 rounded-full transition-all duration-100" style="width: 0%"></div>
-        </div>
-        <div class="flex justify-between items-center text-[9px] text-gray-500 code-font mt-1">
-            <span id="currentTime">0:00</span>
-            <span id="totalDuration">0:00</span>
-        </div>
-
-        <div id="playlistPanel" class="hidden mt-3 max-h-32 overflow-y-auto pt-2 border-t border-white/10 light-mode:border-gray-200 space-y-1 pr-1"></div>
-    </section>
-
-    <div id="menuOverlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 hidden transition-opacity duration-300"></div>
-
-    <aside id="bioDropdown" class="fixed top-0 right-0 h-full w-64 glass-card border-l border-white/10 shadow-2xl z-50 p-6 flex flex-col justify-between translate-x-full transition-transform duration-300 ease-in-out">
-        <div>
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="font-black text-sm tracking-widest text-teal-400 uppercase code-font">Social Connect</h3>
-                <button id="closeMenuBtn" class="w-6 h-6 rounded-md flex items-center justify-center bg-white/5 text-gray-400 hover:text-white transition-colors text-xs font-bold cursor-pointer">×</button>
-            </div>
-            
-            <div id="socialLoading" class="text-center py-8">
-                <div class="spinner mx-auto mb-2"></div>
-                <p class="text-[10px] text-gray-400 code-font">Loading links...</p>
-            </div>
-            
-            <div id="socialError" class="text-center py-6 hidden">
-                <p class="text-xs text-red-400">Failed to load social bio</p>
+            <div id="noResults" class="text-center py-16 hidden class-card rounded-xl border border-dashed border-white/10">
+                <div class="text-3xl mb-2">🔍</div>
+                <h3 id="no-results-title" class="text-xs font-bold mb-1">Endpoint tidak ditemukan</h3>
+                <p id="no-results-desc" class="text-[11px] text-slate-500">Coba gunakan kata kunci lain</p>
             </div>
 
-            <div id="socialContainer" class="space-y-2.5"></div>
+            <div id="apiList" class="space-y-4"></div>
+
+            <footer id="siteFooter" class="pt-8 border-t border-white/5 text-center text-[10px] text-slate-600 code-font uppercase tracking-widest">
+                ${footer}
+            </footer>
         </div>
+        
+    </div>
 
-        <footer id="siteFooter" class="pt-4 border-t border-white/10 text-center text-[10px] text-gray-500 code-font uppercase tracking-wider">© Arulz-XD</footer>
-    </aside>
-
-    <script src="script.js"></script>
+<script class="notranslate" translate="no">
+    window.musicPlaylist = ${JSON.stringify(playlist)};
+</script>
+<script src="script.js"></script>
 </body>
 </html>
+    `);
+});
+
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+  });
+}
+
+module.exports = app;
