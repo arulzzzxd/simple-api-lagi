@@ -412,11 +412,30 @@ function filterByCategory(catName) {
 }
 
 function loadApis() {
-    const apiList = document.getElementById('apiList');
-    if (!apiData || !apiData.categories) {
-        apiList.innerHTML = '<p class="text-center">No API data loaded.</p>';
+    const apiListDiv = document.getElementById('apiList');
+    apiListDiv.innerHTML = ''; // Bersihkan dulu
+
+    if (!apiData || apiData.length === 0) {
+        document.getElementById('noResults').classList.remove('hidden');
         return;
     }
+
+    apiData.forEach(api => {
+        const apiCard = document.createElement('div');
+        apiCard.className = 'glass-card p-4 rounded-xl border border-white/10 hover:border-yellow-400/50 transition-all';
+        apiCard.innerHTML = `
+            <div class="flex justify-between items-center">
+                <div>
+                    <h4 class="font-bold text-white text-sm">${api.name.toUpperCase()}</h4>
+                    <p class="text-xs text-gray-400 uppercase">${api.category}</p>
+                </div>
+                <a href="${api.path}" target="_blank" class="text-xs bg-yellow-500/20 text-yellow-400 px-3 py-1 rounded-full border border-yellow-500/30">TEST</a>
+            </div>
+        `;
+        apiListDiv.appendChild(apiCard);
+    });
+    document.getElementById('noResults').classList.add('hidden');
+}
 
     const isLightMode = body.classList.contains('light-mode');
     totalEndpoints = 0;
