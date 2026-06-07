@@ -12,20 +12,16 @@ let activeCategory = 'all';
 const themeToggleBtn = document.getElementById('themeToggle');
 const body = document.body;
 
+// Video Background Logic
+const videoBg = document.getElementById('bg-video');
+const bgDarkSource = 'https://cdn.pixabay.com/video/2020/02/24/32773-393278239_tiny.mp4'; // Tema Gelap (Penyu bawah laut)
+const bgLightSource = 'https://cdn.pixabay.com/video/2019/03/28/22373-328940142_tiny.mp4'; // Tema Terang (Awan/Langit)
+
 // Pemetaan Ikon Kategori (SVG Kuning)
 const categoryIcons = {
     'ai': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-yellow-400"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73A2 2 0 1 1 12 2zm-2 10a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm4 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/></svg>',
     'download': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-yellow-400"><path d="M12 16l-5-5h3V4h4v7h3l-5 5zm9 4H3v-2h18v2z"/></svg>',
     'search': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-yellow-400"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>',
-    'image': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-yellow-400"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>',
-    'tools': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-yellow-400"><path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.1L9 6 6 9 1.8 4.7C.5 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z"/></svg>',
-    'maker': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-yellow-400"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>',
-    'stalker': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-yellow-400"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>',
-    'canvas': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-yellow-400"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>',
-    'security': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-yellow-400"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>',
-    'news': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-yellow-400"><path d="M21 3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 16H5V5h14v14zm-9-2h8v-2h-8v2zm0-4h8v-2h-8v2zm0-4h8V7h-8v2zm-4 8h2v-8H6v8z"/></svg>',
-    'random': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-yellow-400"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg>',
-    'islam': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-yellow-400"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg>',
     'default': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-yellow-400"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>'
 };
 
@@ -35,13 +31,13 @@ const i18n = {
         searchPlaceholder: "Cari endpoint berdasarkan nama, path, atau kategori...",
         noResultsTitle: "Endpoint tidak ditemukan",
         noResultsDesc: "Coba gunakan kata kunci lain",
-        batteryTitle: "Baterai Anda",
+        batteryTitle: "Baterai",
         endpointsTitle: "Total Endpoint",
         categoriesTitle: "Total Kategori",
-        batteryDetecting: "Mendeteksi...",
-        batteryCharging: "Mengisi Daya",
+        batteryDetecting: "Mendeteksi",
+        batteryCharging: "Mengisi",
         batteryFull: "Penuh",
-        batteryDischarging: "Menguras Daya",
+        batteryDischarging: "Sisa",
         batteryLeft: "tersisa",
         endpointsCount: "endpoints",
         btnExecute: "Eksekusi",
@@ -57,13 +53,13 @@ const i18n = {
         searchPlaceholder: "Search endpoints by name, path, or category...",
         noResultsTitle: "No endpoints found",
         noResultsDesc: "Try a different search term",
-        batteryTitle: "Your Battery",
+        batteryTitle: "Battery",
         endpointsTitle: "Total Endpoints",
         categoriesTitle: "Total Categories",
-        batteryDetecting: "Detecting...",
+        batteryDetecting: "Detecting",
         batteryCharging: "Charging",
-        batteryFull: "Fully charged",
-        batteryDischarging: "Discharging",
+        batteryFull: "Full",
+        batteryDischarging: "Left",
         batteryLeft: "left",
         endpointsCount: "endpoints",
         btnExecute: "Execute",
@@ -89,11 +85,13 @@ function initTheme() {
         themeToggleDarkIcon?.classList.add('hidden');
         themeToggleLightIcon?.classList.remove('hidden');
         themeToggleBtn.className = "flex items-center justify-center w-8 h-8 rounded-lg bg-white text-black transition-all active:scale-95 focus:outline-none border border-slate-200 shadow-sm";
+        if (videoBg) videoBg.src = bgLightSource;
     } else {
         body.classList.remove('light-mode');
         themeToggleDarkIcon?.classList.remove('hidden');
         themeToggleLightIcon?.classList.add('hidden');
         themeToggleBtn.className = "flex items-center justify-center w-8 h-8 rounded-lg bg-slate-900 text-white transition-all active:scale-95 focus:outline-none border border-slate-800";
+        if (videoBg) videoBg.src = bgDarkSource;
     }
     
     updateSocialBadges();
@@ -109,12 +107,22 @@ function toggleTheme() {
         themeToggleLightIcon?.classList.add('hidden');
         themeToggleBtn.className = "flex items-center justify-center w-8 h-8 rounded-lg bg-slate-900 text-white transition-all active:scale-95 focus:outline-none border border-slate-800";
         currentTheme = 'dark';
+        if (videoBg) {
+            videoBg.src = bgDarkSource;
+            videoBg.load();
+            videoBg.play();
+        }
     } else {
         body.classList.add('light-mode');
         themeToggleDarkIcon?.classList.add('hidden');
         themeToggleLightIcon?.classList.remove('hidden');
         themeToggleBtn.className = "flex items-center justify-center w-8 h-8 rounded-lg bg-white text-black transition-all active:scale-95 focus:outline-none border border-slate-200 shadow-sm";
         currentTheme = 'light';
+        if (videoBg) {
+            videoBg.src = bgLightSource;
+            videoBg.load();
+            videoBg.play();
+        }
     }
     
     localStorage.setItem('theme', currentTheme);
@@ -134,7 +142,6 @@ function setLanguage(lang) {
     document.getElementById('no-results-desc').textContent = i18n[lang].noResultsDesc;
     document.getElementById('stat-battery-title').textContent = i18n[lang].batteryTitle;
     document.getElementById('stat-endpoints-title').textContent = i18n[lang].endpointsTitle;
-    document.getElementById('stat-categories-title').textContent = i18n[lang].categoriesTitle;
     
     if (batteryMonitor) {
         window.dispatchEvent(new Event('batteryupdate-hook'));
@@ -218,13 +225,11 @@ function initBatteryDetection() {
 }
 
 function cleanupBatteryMonitor() {
-    if (batteryMonitor) {
-        batteryMonitor = null;
-    }
+    if (batteryMonitor) batteryMonitor = null;
 }
 
 function updateTotalEndpoints() { document.getElementById('totalEndpoints').textContent = totalEndpoints; }
-function updateTotalCategories() { document.getElementById('totalCategories').textContent = totalCategories; }
+function updateTotalCategories() { document.getElementById('totalCategories').textContent = 'REST'; }
 
 function showToast(message, isError = false) {
     const toast = document.getElementById('toast');
@@ -268,11 +273,6 @@ function toggleEndpoint(catIdx, epIdx) {
     const icon = document.getElementById(`ep-icon-${catIdx}-${epIdx}`);
     content.classList.toggle('hidden');
     icon.style.transform = content.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(180deg)';
-}
-
-function isMediaFile(url) {
-    const mediaExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.mp4', '.webm', '.mp3', '.pdf'];
-    return mediaExtensions.some(ext => url.toLowerCase().includes(ext) || url.toLowerCase().startsWith('data:'));
 }
 
 function getContentType(url, contentType) {
@@ -422,13 +422,12 @@ function loadApis() {
     
     updateTotalEndpoints();
     updateTotalCategories();
-    renderCategoryFilters(); // Menyiapkan tombol kategori
+    renderCategoryFilters(); 
     
     let html = '';
     apiData.categories.forEach((category, catIdx) => {
         const catNameLower = category.name.toLowerCase();
         
-        // Memilih ikon yang cocok
         let iconSvg = categoryIcons.default;
         for (const [key, svg] of Object.entries(categoryIcons)) {
             if (catNameLower.includes(key)) {
@@ -439,16 +438,14 @@ function loadApis() {
 
         html += `
         <div class="category-group fade-in" data-category="${catNameLower}">
-            <div class="${isLightMode ? 'bg-white border-gray-300' : 'bg-[#111111] border-slate-800'} border rounded-xl overflow-hidden card-hover">
-                <button onclick="toggleCategory(${catIdx})" class="w-full px-4 py-4 flex items-center justify-between ${isLightMode ? 'hover:bg-gray-100' : 'hover:bg-[#1a1a1a]'} transition-colors">
+            <div class="${isLightMode ? 'bg-white/80 border-gray-300 backdrop-blur-md' : 'bg-black/40 border-white/10 backdrop-blur-md'} border rounded-xl overflow-hidden card-hover">
+                <button onclick="toggleCategory(${catIdx})" class="w-full px-4 py-4 flex items-center justify-between ${isLightMode ? 'hover:bg-gray-100/50' : 'hover:bg-white/5'} transition-colors">
                     <div class="flex items-center gap-4">
-                        
-                        <div class="w-12 h-12 flex items-center justify-center bg-[#0a0a0a] rounded-lg border border-slate-800 shadow-sm flex-shrink-0">
+                        <div class="w-12 h-12 flex items-center justify-center bg-black/40 rounded-lg border border-white/10 shadow-sm flex-shrink-0">
                             ${iconSvg}
                         </div>
-                        
                         <div class="text-left">
-                            <h3 class="font-bold text-sm tracking-widest gray-gradient-text uppercase">${category.name}</h3>
+                            <h3 class="font-bold text-sm tracking-widest text-white light-mode:text-gray-900 uppercase">${category.name}</h3>
                             <p class="text-[11px] code-font ${isLightMode ? 'text-gray-500' : 'text-gray-400'}">${category.items.length} ${i18n[currentLang].endpointsCount}</p>
                         </div>
                     </div>
@@ -466,29 +463,29 @@ function loadApis() {
             let statusClass = item.status === 'update' ? 'status-update' : (item.status === 'error' ? 'status-error' : 'status-ready');
 
             html += `
-            <div class="api-item border-t ${isLightMode ? 'border-gray-200' : 'border-slate-800/50'}" 
+            <div class="api-item border-t ${isLightMode ? 'border-gray-200' : 'border-white/10'}" 
                 data-method="${method}" data-path="${path}" data-alias="${item.name.toLowerCase()}" data-description="${item.desc.toLowerCase()}" data-category="${category.name.toLowerCase()}">
-                <button onclick="toggleEndpoint(${catIdx}, ${epIdx})" class="w-full px-4 py-3 flex items-center justify-between ${isLightMode ? 'hover:bg-gray-50' : 'hover:bg-[#1a1a1a]/50'} transition-colors">
+                <button onclick="toggleEndpoint(${catIdx}, ${epIdx})" class="w-full px-4 py-3 flex items-center justify-between ${isLightMode ? 'hover:bg-gray-50/50' : 'hover:bg-white/5'} transition-colors">
                     <div class="flex items-center gap-3 flex-1 min-w-0">
-                        <span class="${isLightMode ? 'bg-gray-200 text-gray-800' : 'bg-gray-800 text-white'} px-2 py-1 rounded text-[10px] flex-shrink-0 code-font font-bold">${method}</span>
+                        <span class="${isLightMode ? 'bg-gray-200 text-gray-800' : 'bg-white/10 text-white border border-white/10'} px-2 py-1 rounded text-[10px] flex-shrink-0 code-font font-bold">${method}</span>
                         <div class="text-left flex-1 min-w-0">
-                            <p class="code-font font-semibold text-[13px] truncate">${path}</p>
+                            <p class="code-font font-semibold text-[13px] text-white light-mode:text-gray-900 truncate">${path}</p>
                             <div class="flex items-center gap-2 mt-1">
                                 <p class="text-xs ${isLightMode ? 'text-gray-600' : 'text-gray-400'} truncate">${item.name}</p>
-                                <span class="px-1.5 py-0.5 text-[9px] rounded-sm ${statusClass} flex-shrink-0 uppercase tracking-wider">${item.status || 'ready'}</span>
+                                <span class="px-1.5 py-0.5 text-[9px] rounded-sm ${statusClass} flex-shrink-0 uppercase tracking-wider border border-white/10">${item.status || 'ready'}</span>
                             </div>
                         </div>
                     </div>
                 </button>
-                <div id="ep-${catIdx}-${epIdx}" class="hidden ${isLightMode ? 'bg-gray-50' : 'bg-[#0f141c]'} px-4 py-4 border-t ${isLightMode ? 'border-gray-200' : 'border-slate-800/50'}">
-                    <p class="${isLightMode ? 'text-gray-600' : 'text-gray-400'} mb-4 text-xs">${item.desc}</p>
+                <div id="ep-${catIdx}-${epIdx}" class="hidden ${isLightMode ? 'bg-gray-50/80' : 'bg-black/50'} px-4 py-4 border-t ${isLightMode ? 'border-gray-200' : 'border-white/10'}">
+                    <p class="${isLightMode ? 'text-gray-600' : 'text-gray-300'} mb-4 text-xs">${item.desc}</p>
                     <div class="mb-4">
                         <div class="flex items-center justify-between mb-2">
                             <h4 class="font-bold text-[11px] uppercase tracking-wider ${isLightMode ? 'text-gray-500' : 'text-gray-400'}">Endpoint</h4>
-                            <button onclick="copyText('${BASE_URL}${path}', 'URL')" class="px-2 py-1 ${isLightMode ? 'bg-gray-200 hover:bg-gray-300' : 'bg-gray-800 hover:bg-gray-700'} rounded text-[10px] transition-colors code-font">Copy URL</button>
+                            <button onclick="copyText('${BASE_URL}${path}', 'URL')" class="px-2 py-1 ${isLightMode ? 'bg-gray-200 hover:bg-gray-300 text-black' : 'bg-white/10 hover:bg-white/20 text-white'} rounded text-[10px] transition-colors code-font">Copy URL</button>
                         </div>
-                        <div class="${isLightMode ? 'bg-white border-gray-300' : 'bg-[#0a0a0a] border-slate-800'} border px-3 py-2 rounded-lg">
-                            <code class="code-font text-xs ${isLightMode ? 'text-gray-800' : 'text-yellow-400'}">${path}</code>
+                        <div class="${isLightMode ? 'bg-white border-gray-300' : 'bg-black/60 border-white/10'} border px-3 py-2 rounded-lg">
+                            <code class="code-font text-xs ${isLightMode ? 'text-gray-800' : 'text-teal-400'}">${path}</code>
                         </div>
                     </div>`;
 
@@ -506,29 +503,29 @@ function loadApis() {
                                 <label class="block text-xs font-medium ${isLightMode ? 'text-gray-700' : 'text-gray-300'} mb-1.5 code-font">
                                     ${paramName} ${isRequired ? '<span class="text-red-500">*</span>' : ''}
                                 </label>
-                                <input type="text" name="${paramName}" class="search-input w-full px-3 py-2 rounded-lg focus:outline-none focus:border-yellow-500 code-font text-sm bg-black" placeholder="${item.params[paramName]}" ${isRequired ? 'required' : ''}>
+                                <input type="text" name="${paramName}" class="search-input w-full px-3 py-2 rounded-lg focus:outline-none focus:border-teal-500 code-font text-sm ${isLightMode ? 'bg-white text-black' : 'bg-black/60 text-white border-white/10'}" placeholder="${item.params[paramName]}" ${isRequired ? 'required' : ''}>
                             </div>`;
                     });
                 }
                 html += `
                             </div>
                             <div class="flex gap-3">
-                                <button type="submit" class="px-5 py-2 bg-yellow-500 hover:bg-yellow-400 text-black rounded-md font-bold text-xs transition-all flex items-center justify-center">EKSEKUSI</button>
-                                <button type="button" onclick="clearResponse(${catIdx}, ${epIdx})" class="px-5 py-2 bg-transparent border border-gray-600 hover:border-gray-400 text-gray-300 rounded-md font-bold text-xs transition-colors">BERSIHKAN</button>
+                                <button type="submit" class="px-5 py-2 bg-gradient-to-r from-teal-400 to-cyan-500 hover:from-teal-300 hover:to-cyan-400 text-black rounded-md font-bold text-xs transition-all flex items-center justify-center">EKSEKUSI</button>
+                                <button type="button" onclick="clearResponse(${catIdx}, ${epIdx})" class="px-5 py-2 bg-transparent border border-gray-500 hover:border-gray-300 text-gray-300 rounded-md font-bold text-xs transition-colors">BERSIHKAN</button>
                             </div>
                         </form>
 
                         <div id="response-${catIdx}-${epIdx}" class="hidden mt-6 space-y-4">
                             <div>
                                 <h5 class="text-[11px] uppercase tracking-wider font-bold mb-2 ${isLightMode ? 'text-gray-500' : 'text-gray-400'}">Response</h5>
-                                <div class="${isLightMode ? 'bg-white border-gray-300' : 'bg-[#0a0a0a] border-slate-800'} border p-3 rounded-lg min-h-[100px] overflow-x-auto" id="response-content-${catIdx}-${epIdx}"></div>
+                                <div class="${isLightMode ? 'bg-white border-gray-300' : 'bg-black/60 border-white/10'} border p-3 rounded-lg min-h-[100px] overflow-x-auto" id="response-content-${catIdx}-${epIdx}"></div>
                             </div>
                         </div>
                     </div>`;
             } else {
-                html += `<div class="px-4 py-3 status-warning border rounded-lg text-xs">${i18n[currentLang].endpointNotAvailable}</div>`;
+                html += `<div class="px-4 py-3 status-warning border border-yellow-500/30 rounded-lg text-xs bg-yellow-500/10">${i18n[currentLang].endpointNotAvailable}</div>`;
             }
-            html += `</div></div>`;
+            html += `</div></div></div>`;
         });
         html += `</div></div></div>`;
     });
@@ -544,7 +541,6 @@ function performSearch() {
     document.querySelectorAll('.category-group').forEach(category => {
         const catName = category.dataset.category;
         
-        // Logika penyaringan tombol kategori baru
         if (activeCategory !== 'all' && catName !== activeCategory) {
             category.classList.add('hidden');
             return;
@@ -648,8 +644,8 @@ function initMultiMusicPlayer() {
         playlist.forEach((track, idx) => {
             const isActive = idx === currentTrackIdx;
             const itemBtn = document.createElement('button');
-            itemBtn.className = `w-full text-left px-3 py-2 text-xs rounded-xl flex items-center justify-between transition-all ${isActive ? 'bg-yellow-500/10 border border-yellow-500/30 text-yellow-500 font-bold' : 'hover:bg-slate-800/40 text-gray-400'}`;
-            itemBtn.innerHTML = `<div class="flex items-center gap-2 truncate"><span class="opacity-50 text-[10px] code-font">${String(idx + 1).padStart(2, '0')}</span><span class="truncate">${track.title} <span class="opacity-60 font-normal">- ${track.artist}</span></span></div>${isActive ? '<span class="text-[9px] tracking-wider text-yellow-500 bg-yellow-500/10 px-1.5 py-0.5 rounded animate-pulse font-bold">PLAYING</span>' : ''}`;
+            itemBtn.className = `w-full text-left px-3 py-2 text-xs rounded-xl flex items-center justify-between transition-all ${isActive ? 'bg-teal-500/20 border border-teal-500/30 text-teal-400 font-bold' : 'hover:bg-white/5 text-gray-400'}`;
+            itemBtn.innerHTML = `<div class="flex items-center gap-2 truncate"><span class="opacity-50 text-[10px] code-font">${String(idx + 1).padStart(2, '0')}</span><span class="truncate">${track.title} <span class="opacity-60 font-normal">- ${track.artist}</span></span></div>${isActive ? '<span class="text-[9px] tracking-wider text-teal-400 bg-teal-500/20 px-1.5 py-0.5 rounded animate-pulse font-bold border border-teal-500/30">PLAYING</span>' : ''}`;
             itemBtn.addEventListener('click', () => {
                 loadTrack(idx);
                 audio.play().catch(e => console.log(e));
@@ -706,6 +702,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (closeMenuBtn) closeMenuBtn.addEventListener('click', closeSidebarMenu);
         menuOverlay.addEventListener('click', closeSidebarMenu);
         bioDropdown.addEventListener('click', (e) => { e.stopPropagation(); });
+        themeToggleBtn.addEventListener('click', toggleTheme);
     }
     
     fetch('/api/apilist')
@@ -715,11 +712,9 @@ document.addEventListener('DOMContentLoaded', function() {
             loadApis();
         })
         .catch(err => {
-            document.getElementById('apiList').innerHTML = `<div class="text-center p-8 bg-red-900/20 border border-red-700 rounded-lg"><div class="text-4xl mb-4">⚠️</div><h3 class="font-bold text-lg mb-2">Failed to load API data</h3></div>`;
+            document.getElementById('apiList').innerHTML = `<div class="text-center p-8 bg-red-900/20 border border-red-700 rounded-lg"><div class="text-4xl mb-4">⚠️</div><h3 class="font-bold text-lg mb-2 text-white">Failed to load API data</h3></div>`;
         });
 });
-
-themeToggleBtn.addEventListener('click', toggleTheme);
 
 let searchTimeout;
 document.getElementById('searchInput').addEventListener('input', function() {
