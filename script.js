@@ -12,6 +12,11 @@ let activeCategory = 'all';
 const themeToggleBtn = document.getElementById('themeToggle');
 const body = document.body;
 
+// === URL GIF LOGO (Silakan ubah ke link GIF Anda sendiri) ===
+const GIF_LOGO_DARK = "https://media.giphy.com/media/26tn33aiTi1jIGsO4/giphy.gif"; 
+const GIF_LOGO_LIGHT = "https://media.giphy.com/media/11ISwbgCxEzMyY/giphy.gif";
+// ==========================================================
+
 // Pemetaan Ikon Kategori (SVG Kuning)
 const categoryIcons = {
     'ai': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-yellow-400"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73A2 2 0 1 1 12 2zm-2 10a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm4 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/></svg>',
@@ -83,6 +88,7 @@ function initTheme() {
     
     const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
     const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
+    const dynamicLogo = document.getElementById('dynamicLogo');
     
     if (savedTheme === 'light') {
         body.classList.add('light-mode');
@@ -96,12 +102,18 @@ function initTheme() {
         themeToggleBtn.className = "flex items-center justify-center w-8 h-8 rounded-lg bg-slate-900 text-white transition-all active:scale-95 focus:outline-none border border-slate-800";
     }
     
+    // Inisiasi logo pertama kali
+    if (dynamicLogo) {
+        dynamicLogo.src = savedTheme === 'light' ? GIF_LOGO_LIGHT : GIF_LOGO_DARK;
+    }
+    
     updateSocialBadges();
 }
 
 function toggleTheme() {
     const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
     const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
+    const dynamicLogo = document.getElementById('dynamicLogo');
     
     if (body.classList.contains('light-mode')) {
         body.classList.remove('light-mode');
@@ -109,12 +121,14 @@ function toggleTheme() {
         themeToggleLightIcon?.classList.add('hidden');
         themeToggleBtn.className = "flex items-center justify-center w-8 h-8 rounded-lg bg-slate-900 text-white transition-all active:scale-95 focus:outline-none border border-slate-800";
         currentTheme = 'dark';
+        if(dynamicLogo) dynamicLogo.src = GIF_LOGO_DARK; 
     } else {
         body.classList.add('light-mode');
         themeToggleDarkIcon?.classList.add('hidden');
         themeToggleLightIcon?.classList.remove('hidden');
         themeToggleBtn.className = "flex items-center justify-center w-8 h-8 rounded-lg bg-white text-black transition-all active:scale-95 focus:outline-none border border-slate-200 shadow-sm";
         currentTheme = 'light';
+        if(dynamicLogo) dynamicLogo.src = GIF_LOGO_LIGHT;
     }
     
     localStorage.setItem('theme', currentTheme);
@@ -132,13 +146,6 @@ function setLanguage(lang) {
     document.getElementById('searchInput').placeholder = i18n[lang].searchPlaceholder;
     document.getElementById('no-results-title').textContent = i18n[lang].noResultsTitle;
     document.getElementById('no-results-desc').textContent = i18n[lang].noResultsDesc;
-    document.getElementById('stat-battery-title').textContent = i18n[lang].batteryTitle;
-    document.getElementById('stat-endpoints-title').textContent = i18n[lang].endpointsTitle;
-    document.getElementById('stat-categories-title').textContent = i18n[lang].categoriesTitle;
-    
-    if (batteryMonitor) {
-        window.dispatchEvent(new Event('batteryupdate-hook'));
-    }
     
     if (apiData) loadApis();
 }
@@ -157,74 +164,7 @@ function updateSocialBadges() {
     });
 }
 
-function initBatteryDetection() {
-    const batteryLevelElement = document.getElementById('batteryLevel');
-    const batteryPercentageElement = document.getElementById('batteryPercentage');
-    const batteryStatusElement = document.getElementById('batteryStatus');
-    const batteryContainer = document.getElementById('batteryContainer');
-    
-    if ('getBattery' in navigator) {
-        navigator.getBattery().then(function(battery) {
-            function updateBatteryInfo() {
-                const level = battery.level * 100;
-                const isCharging = battery.charging;
-                const roundedLevel = Math.round(level);
-                const isLightMode = body.classList.contains('light-mode');
-                
-                batteryPercentageElement.textContent = `${roundedLevel}%`;
-                batteryLevelElement.style.width = `${level}%`;
-                
-                if (level > 60) {
-                    batteryLevelElement.className = 'battery-level ' + (isLightMode ? 'bg-green-600' : 'bg-green-500');
-                } else if (level > 20) {
-                    batteryLevelElement.className = 'battery-level ' + (isLightMode ? 'bg-yellow-600' : 'bg-yellow-500');
-                } else {
-                    batteryLevelElement.className = 'battery-level ' + (isLightMode ? 'bg-red-600' : 'bg-red-500');
-                }
-                
-                if (isCharging) {
-                    batteryContainer.classList.add('charging');
-                    batteryStatusElement.textContent = i18n[currentLang].batteryCharging;
-                    batteryLevelElement.classList.add('battery-charging');
-                } else {
-                    batteryContainer.classList.remove('charging');
-                    batteryLevelElement.classList.remove('battery-charging');
-                    
-                    if (battery.dischargingTime === Infinity) {
-                        batteryStatusElement.textContent = i18n[currentLang].batteryFull;
-                    } else {
-                        batteryStatusElement.textContent = i18n[currentLang].batteryDischarging;
-                    }
-                }
-            }
-            
-            updateBatteryInfo();
-            battery.addEventListener('levelchange', updateBatteryInfo);
-            battery.addEventListener('chargingchange', updateBatteryInfo);
-            window.addEventListener('batteryupdate-hook', updateBatteryInfo);
-            batteryMonitor = battery;
-            
-        }).catch(function() { fallbackBattery(); });
-    } else {
-        fallbackBattery();
-    }
-    
-    function fallbackBattery() {
-        batteryStatusElement.textContent = 'Simulated';
-        batteryPercentageElement.textContent = '85%';
-        batteryLevelElement.style.width = '85%';
-        batteryLevelElement.className = 'battery-level bg-green-500';
-    }
-}
-
-function cleanupBatteryMonitor() {
-    if (batteryMonitor) {
-        batteryMonitor = null;
-    }
-}
-
 function updateTotalEndpoints() { document.getElementById('totalEndpoints').textContent = totalEndpoints; }
-function updateTotalCategories() { document.getElementById('totalCategories').textContent = totalCategories; }
 
 function showToast(message, isError = false) {
     const toast = document.getElementById('toast');
@@ -421,14 +361,12 @@ function loadApis() {
     apiData.categories.forEach(category => { totalEndpoints += category.items.length; });
     
     updateTotalEndpoints();
-    updateTotalCategories();
-    renderCategoryFilters(); // Menyiapkan tombol kategori
+    renderCategoryFilters();
     
     let html = '';
     apiData.categories.forEach((category, catIdx) => {
         const catNameLower = category.name.toLowerCase();
         
-        // Memilih ikon yang cocok
         let iconSvg = categoryIcons.default;
         for (const [key, svg] of Object.entries(categoryIcons)) {
             if (catNameLower.includes(key)) {
@@ -528,7 +466,7 @@ function loadApis() {
             } else {
                 html += `<div class="px-4 py-3 status-warning border rounded-lg text-xs">${i18n[currentLang].endpointNotAvailable}</div>`;
             }
-            html += `</div></div>`;
+            html += `</div></div></div>`;
         });
         html += `</div></div></div>`;
     });
@@ -544,7 +482,6 @@ function performSearch() {
     document.querySelectorAll('.category-group').forEach(category => {
         const catName = category.dataset.category;
         
-        // Logika penyaringan tombol kategori baru
         if (activeCategory !== 'all' && catName !== activeCategory) {
             category.classList.add('hidden');
             return;
@@ -687,7 +624,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const savedLang = localStorage.getItem('lang') || 'id';
     
     initTheme();
-    initBatteryDetection();
     loadLinkBio();
     initMultiMusicPlayer();
     setLanguage(savedLang);
@@ -726,5 +662,3 @@ document.getElementById('searchInput').addEventListener('input', function() {
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(performSearch, 300);
 });
-
-window.addEventListener('beforeunload', cleanupBatteryMonitor);
