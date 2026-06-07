@@ -86,7 +86,16 @@ function getEndpointsFromRouter(category, file) {
   return endpoints;
 }
 
+// Tambahkan variabel cache di luar fungsi
+let cachedApiList = null;
+
 router.get('/apilist', (req, res) => {
+  // 1. Jika data cache sudah ada, langsung kirimkan datanya (Sangat Cepat)
+  if (cachedApiList) {
+    return res.json({ categories: cachedApiList });
+  }
+
+  // 2. Jika belum ada, proses membaca folder seperti biasa
   const categories = [];
 
   for (const category of endpointDirs) {
@@ -117,8 +126,12 @@ router.get('/apilist', (req, res) => {
     ]
   });
 
+  // 3. Simpan hasilnya ke variabel cache sebelum dikirim
+  cachedApiList = categories;
+
   res.json({ categories });
 });
+
 
 app.use('/api', router);
 
