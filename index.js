@@ -80,38 +80,28 @@ function getEndpointsFromRouter(category, file) {
   return endpoints;
 }
 
-router.get('/apilist', (req, res) => {
-  const categories = [];
-
-  for (const category of endpointDirs) {
-    const files = fs.readdirSync(path.join(apiPath, category)).filter(f => f.endsWith('.js'));
-    const endpoints = [];
-    for (const file of files) {
-      endpoints.push(...getEndpointsFromRouter(category, file));
-    }
-    if (endpoints.length) {
-      categories.push({
-        name: `${category.toUpperCase()}`,
-        items: endpoints
-      });
-    }
-  }
-
-  categories.push({
-    name: "OTHER",
-    items: [
-      {
-        name: "/apilist",
-        path: "/api/apilist",
-        desc: "/apilist",
-        status: "ready",
-        params: {},
-        methods: ["GET"]
-      }
-    ]
-  });
-
-  res.json({ categories });
+app.get('/api/apilist', (req, res) => {
+    let endpoints = [];
+    
+    // Scan ulang folder api
+    const categories = fs.readdirSync(apiPath);
+    categories.forEach(category => {
+        const catPath = path.join(apiPath, category);
+        if (fs.statSync(catPath).isDirectory()) {
+            const files = fs.readdirSync(catPath);
+            files.forEach(file => {
+                if (file.endsWith('.js')) {
+                    endpoints.push({
+                        category: category,
+                        name: file.replace('.js', ''),
+                        path: `/api/${category}/${file.replace('.js', '')}`
+                    });
+                }
+            });
+        }
+    });
+    
+    res.json(endpoints);
 });
 
 app.use('/api', router);
