@@ -10,10 +10,10 @@ app.use(express.json());
 /*
 For setting API name etc
 */
-const title = "NANZZAPI - REST Documentation";
+const title = "API-ARULZXD - REST";
 const favicon = "https://arulz-uploader.vercel.app/files/C5VYmq.jpg";
 const logo = "https://arulz-uploader.vercel.app/files/SnhJe3.png";
-const headertitle = "API Explorer & Tester";
+const headertitle = "API Arulz-XD";
 const headerdescription = "Browse, inspect & fire requests against live endpoints._";
 const footer = "© Arulz-XD";
 
@@ -347,17 +347,33 @@ app.get('/', (req, res) => {
 
             <div class="glass-panel max-w-3xl mx-auto mt-4 p-3 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-3 border border-white/20">
                 <div class="flex items-center gap-2 text-sm text-cyan-400 light-mode:text-cyan-700 code-font">
-                    <span>🔗</span> <span class="underline break-all font-semibold">https://api-nanzz.my.id/docs/api/</span>
+                    <span>🔗</span> <span class="underline break-all font-semibold">https://simple-api-lagi.vercel.app/</span>
                 </div>
-                <button class="w-full sm:w-auto px-6 py-2 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs uppercase rounded-lg shadow transition-all active:scale-95 light-mode:bg-cyan-600 light-mode:hover:bg-cyan-500 light-mode:text-white">
-                    + Request New Feature
-                </button>
-            </div>
-            
-            <div class="flex justify-center gap-4 mt-4 max-w-3xl mx-auto">
-                <button class="flex-1 glass-panel py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-white/10 light-mode:hover:bg-slate-100 transition-colors light-mode:text-slate-700">💬 Channel</button>
-                <button class="flex-1 glass-panel py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-white/10 light-mode:hover:bg-slate-100 transition-colors light-mode:text-slate-700">👥 Group</button>
-            </div>
+                <div class="social-badge flex flex-col gap-3 mt-4">
+    <a href="https://wa.me/6285122629940?text=Halo%20Arulz,%20saya%20ingin%20request%20fitur%20baru%20:" 
+       target="_blank" 
+       class="block w-full">
+        <div class="px-4 py-2 rounded-xl text-xs font-bold transition-colors text-center border bg-slate-900/40 text-slate-200 hover:bg-slate-800/60 border-white/10">
+            ✨ Request New Feature
+        </div>
+    </a>
+
+    <a href="https://wa.me/6285122629940?text=Halo%20Arulz,%20boleh%20minta%20link%20Channel%20kamu%3F" 
+       target="_blank" 
+       class="block w-full">
+        <div class="px-4 py-2 rounded-xl text-xs font-bold transition-colors text-center border bg-slate-900/40 text-slate-200 hover:bg-slate-800/60 border-white/10">
+            📢 Join Our Channel
+        </div>
+    </a>
+
+    <a href="https://wa.me/6285122629940?text=Halo%20Arulz,%20boleh%20minta%20link%20Group%20kamu%3F" 
+       target="_blank" 
+       class="block w-full">
+        <div class="px-4 py-2 rounded-xl text-xs font-bold transition-colors text-center border bg-slate-900/40 text-slate-200 hover:bg-slate-800/60 border-white/10">
+            👥 Join Our Group
+        </div>
+    </a>
+</div>
 
             <div class="music-player-card glass-panel mt-8 max-w-2xl mx-auto rounded-2xl p-4 shadow-2xl relative overflow-hidden border border-white/10">
                 <audio id="audioElement"></audio>
