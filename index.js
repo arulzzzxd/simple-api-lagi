@@ -146,27 +146,26 @@ app.get('/', (req, res) => {
     <link rel="stylesheet" href="styles.css" />
     
     <style>
-        /* Smooth Transition untuk Theme Toggle */
+        /* Menggunakan background solid & tipis blur agar super ringan */
         body {
-            transition: background 0.4s ease, color 0.4s ease;
+            transition: background 0.25s ease, color 0.25s ease;
         }
 
-        /* Glassmorphism Styles dengan kontras tinggi */
         .glass-panel {
-            background: rgba(15, 23, 42, 0.65);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.3s ease;
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            will-change: transform, opacity;
         }
         
         .light-mode .glass-panel {
-            background: rgba(255, 255, 255, 0.75);
+            background: rgba(255, 255, 255, 0.9);
             border: 1px solid rgba(15, 23, 42, 0.12);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03);
         }
 
-        /* Perbaikan Kontras Tulisan Mode Terang */
+        /* Perbaikan Kontras Tulisan & Komponen Mode Terang */
         .light-mode {
             color: #0f172a !important;
         }
@@ -179,7 +178,7 @@ app.get('/', (req, res) => {
         .light-mode #no-results-title { color: #0f172a !important; }
 
         .light-mode .music-player-card {
-            background: rgba(255, 255, 255, 0.8) !important;
+            background: rgba(255, 255, 255, 0.85) !important;
             border-color: rgba(0, 0, 0, 0.12) !important;
         }
         .light-mode .music-text-title { color: #0f172a !important; }
@@ -217,7 +216,6 @@ app.get('/', (req, res) => {
         .filter-btn {
             font-family: 'JetBrains Mono', monospace;
             font-size: 11px;
-            font-weight: normal;
             padding: 6px 12px;
             border: 1px solid rgba(255,255,255,0.2);
             background: rgba(255,255,255,0.05);
