@@ -3,7 +3,6 @@ let isRequestInProgress = false;
 let apiData = null;
 let currentTheme = 'dark';
 let currentLang = 'id';
-let allApiElements = [];
 let totalEndpoints = 0;
 let totalCategories = 0;
 let batteryMonitor = null;
@@ -12,12 +11,10 @@ let activeCategory = 'all';
 const themeToggleBtn = document.getElementById('themeToggle');
 const body = document.body;
 
-// Video Background Logic
 const videoBg = document.getElementById('bg-video');
-const bgDarkSource = 'https://cdn.pixabay.com/video/2020/02/24/32773-393278239_tiny.mp4'; // Tema Gelap (Penyu bawah laut)
-const bgLightSource = 'https://cdn.pixabay.com/video/2019/03/28/22373-328940142_tiny.mp4'; // Tema Terang (Awan/Langit)
+const bgDarkSource = 'https://cdn.pixabay.com/video/2020/02/24/32773-393278239_tiny.mp4'; 
+const bgLightSource = 'https://cdn.pixabay.com/video/2019/03/28/22373-328940142_tiny.mp4'; 
 
-// Pemetaan Ikon Kategori (SVG Kuning)
 const categoryIcons = {
     'ai': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-yellow-400"><path d="M12 2c-.55 0-1 .45-1 1v1H9c-.55 0-1 .45-1 1v1H6c-.55 0-1 .45-1 1v2H3c-.55 0-1 .45-1 1v4c0 .55.45 1 1 1h2v2c0 .55.45 1 1 1h2v1c0 .55.45 1 1 1h2v1c0 .55.45 1 1 1s1-.45 1-1v-1h2c.55 0 1-.45 1-1v-1h2c.55 0 1-.45 1-1v-2h2c.55 0 1-.45 1-1v-4c0-.55-.45-1-1-1h-2V9c0-.55-.45-1-1-1h-2V7c0-.55-.45-1-1-1h-2V4c0-.55-.45-1-1-1h-1V3c0-.55-.45-1-1-1zm0 4c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6 2.69-6 6-6z"/></svg>',
     'download': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-yellow-400"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>',
@@ -28,7 +25,6 @@ const categoryIcons = {
     'default': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-yellow-400"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>'
 };
 
-// Penampung teks multibahasa
 const i18n = {
     id: {
         searchPlaceholder: "Cari endpoint berdasarkan nama, path, atau kategori...",
@@ -37,16 +33,10 @@ const i18n = {
         batteryTitle: "Baterai",
         endpointsTitle: "Total Endpoint",
         categoriesTitle: "Total Kategori",
-        batteryDetecting: "Mendeteksi",
         batteryCharging: "Mengisi",
         batteryFull: "Penuh",
         batteryDischarging: "Sisa",
-        batteryLeft: "tersisa",
         endpointsCount: "endpoints",
-        btnExecute: "Eksekusi",
-        btnClear: "Bersihkan",
-        toastMediaCopy: "Media URL disalin ke papan klip!",
-        toastMediaFail: "Gagal menyalin URL",
         endpointNotAvailable: "⚠️ Endpoint ini tidak tersedia untuk pengujian",
         toastRequestWait: "Harap tunggu permintaan saat ini selesai",
         toastRequestSuccess: "Permintaan berhasil diselesaikan!",
@@ -59,16 +49,10 @@ const i18n = {
         batteryTitle: "Battery",
         endpointsTitle: "Total Endpoints",
         categoriesTitle: "Total Categories",
-        batteryDetecting: "Detecting",
         batteryCharging: "Charging",
         batteryFull: "Full",
         batteryDischarging: "Left",
-        batteryLeft: "left",
         endpointsCount: "endpoints",
-        btnExecute: "Execute",
-        btnClear: "Clear",
-        toastMediaCopy: "Media URL copied to clipboard!",
-        toastMediaFail: "Failed to copy URL",
         endpointNotAvailable: "⚠️ This endpoint is not available for testing",
         toastRequestWait: "Please wait for current request",
         toastRequestSuccess: "Request completed successfully!",
@@ -79,7 +63,6 @@ const i18n = {
 function initTheme() {
     const savedTheme = localStorage.getItem('theme') || 'dark';
     currentTheme = savedTheme;
-
     const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
     const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
 
@@ -96,7 +79,6 @@ function initTheme() {
         themeToggleBtn.className = "flex items-center justify-center w-8 h-8 rounded-lg bg-slate-900 text-white transition-all active:scale-95 focus:outline-none border border-slate-800";
         if (videoBg) videoBg.src = bgDarkSource;
     }
-
     updateSocialBadges();
 }
 
@@ -110,24 +92,15 @@ function toggleTheme() {
         themeToggleLightIcon?.classList.add('hidden');
         themeToggleBtn.className = "flex items-center justify-center w-8 h-8 rounded-lg bg-slate-900 text-white transition-all active:scale-95 focus:outline-none border border-slate-800";
         currentTheme = 'dark';
-        if (videoBg) {
-            videoBg.src = bgDarkSource;
-            videoBg.load();
-            videoBg.play();
-        }
+        if (videoBg) { videoBg.src = bgDarkSource; videoBg.load(); videoBg.play(); }
     } else {
         body.classList.add('light-mode');
         themeToggleDarkIcon?.classList.add('hidden');
         themeToggleLightIcon?.classList.remove('hidden');
         themeToggleBtn.className = "flex items-center justify-center w-8 h-8 rounded-lg bg-white text-black transition-all active:scale-95 focus:outline-none border border-slate-200 shadow-sm";
         currentTheme = 'light';
-        if (videoBg) {
-            videoBg.src = bgLightSource;
-            videoBg.load();
-            videoBg.play();
-        }
+        if (videoBg) { videoBg.src = bgLightSource; videoBg.load(); videoBg.play(); }
     }
-
     localStorage.setItem('theme', currentTheme);
     updateSocialBadges();
     if (apiData) loadApis();
@@ -146,18 +119,13 @@ function setLanguage(lang) {
     document.getElementById('stat-battery-title').textContent = i18n[lang].batteryTitle;
     document.getElementById('stat-endpoints-title').textContent = i18n[lang].endpointsTitle;
 
-    if (batteryMonitor) {
-        window.dispatchEvent(new Event('batteryupdate-hook'));
-    }
-
+    if (batteryMonitor) { window.dispatchEvent(new Event('batteryupdate-hook')); }
     if (apiData) loadApis();
 }
 
 function updateSocialBadges() {
     const isLightMode = body.classList.contains('light-mode');
-    const socialBadges = document.querySelectorAll('.social-badge > div');
-
-    socialBadges.forEach(badge => {
+    document.querySelectorAll('.social-badge > div').forEach(badge => {
         badge.className = 'px-4 py-2 rounded-lg text-xs font-medium transition-colors text-center border light-mode:border-gray-200 border-slate-800/60';
         if (isLightMode) {
             badge.classList.add('bg-gray-100', 'text-gray-800', 'hover:bg-gray-200');
@@ -199,22 +167,15 @@ function initBatteryDetection() {
                 } else {
                     batteryContainer.classList.remove('charging');
                     batteryLevelElement.classList.remove('battery-charging');
-
-                    if (battery.dischargingTime === Infinity) {
-                        batteryStatusElement.textContent = i18n[currentLang].batteryFull;
-                    } else {
-                        batteryStatusElement.textContent = i18n[currentLang].batteryDischarging;
-                    }
+                    batteryStatusElement.textContent = battery.dischargingTime === Infinity ? i18n[currentLang].batteryFull : i18n[currentLang].batteryDischarging;
                 }
             }
-
             updateBatteryInfo();
             battery.addEventListener('levelchange', updateBatteryInfo);
             battery.addEventListener('chargingchange', updateBatteryInfo);
             window.addEventListener('batteryupdate-hook', updateBatteryInfo);
             batteryMonitor = battery;
-
-        }).catch(function() { fallbackBattery(); });
+        }).catch(fallbackBattery);
     } else {
         fallbackBattery();
     }
@@ -227,10 +188,7 @@ function initBatteryDetection() {
     }
 }
 
-function cleanupBatteryMonitor() {
-    if (batteryMonitor) batteryMonitor = null;
-}
-
+function cleanupBatteryMonitor() { if (batteryMonitor) batteryMonitor = null; }
 function updateTotalEndpoints() { document.getElementById('totalEndpoints').textContent = totalEndpoints; }
 function updateTotalCategories() { document.getElementById('totalCategories').textContent = 'REST'; }
 
@@ -514,7 +472,6 @@ function loadApis() {
                                 <button type="button" onclick="clearResponse(${catIdx}, ${epIdx})" class="px-5 py-2 bg-transparent border border-gray-500 hover:border-gray-300 text-gray-300 rounded-md font-bold text-xs transition-colors">BERSIHKAN</button>
                             </div>
                         </form>
-
                         <div id="response-${catIdx}-${epIdx}" class="hidden mt-6 space-y-4">
                             <div>
                                 <h5 class="text-[11px] uppercase tracking-wider font-bold mb-2 ${isLightMode ? 'text-gray-500' : 'text-gray-400'}">Response</h5>
@@ -530,7 +487,6 @@ function loadApis() {
         html += `</div></div></div>`;
     });
     apiList.innerHTML = html;
-    allApiElements = Array.from(document.querySelectorAll('.api-item'));
 }
 
 function performSearch() {
