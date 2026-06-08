@@ -97,7 +97,6 @@ router.get("/", async (req, res) => {
         let id = get_id(query);
         let videoMeta = null;
 
-        // 1. Cek Pencarian
         if (id) {
             try {
                 videoMeta = await yts({ videoId: id });
@@ -112,18 +111,16 @@ router.get("/", async (req, res) => {
             }
         }
 
-        // Jika pencarian benar-benar zonk dan tidak ada ID yang bisa diproses
         if (!id) {
             return res.status(404).json({
                 status: false,
                 creator: "Arulzxd",
-                message: "Video tidak ditemukan, silakan gunakan kata kunci lain!"
+                message: "Video tidak ditemukan!"
             });
         }
 
         const cleanUrl = "https://youtube.com/watch?v=" + id;
 
-        // 2. Jalankan Engine Converter SaveTube
         const formatSaves = 128;
         const responseSaveTube = await savetube(cleanUrl, formatSaves, "audio");
 
@@ -131,49 +128,47 @@ router.get("/", async (req, res) => {
             return res.status(500).json({
                 status: false,
                 creator: "Arulzxd",
-                message: "Gagal memproses konversi audio dari server pihak ketiga (SaveTube Error)"
+                message: "Gagal memproses konversi dari server pihak ketiga"
             });
         }
 
-        // 3. Ambil Durasi Pas Sesuai Isi Link
+        // --- PROSES PERAPIAN DATA ---
         const durationResult = format_duration(responseSaveTube.durationRaw);
-
-        // Proteksi Penamaan: Menggunakan data YouTube, jika null/blank pindah ke data SaveTube
-        const finalTitle = videoMeta?.title || responseSaveTube.title || "YouTube Audio";
+        const finalTitle = (videoMeta?.title || responseSaveTube.title || "YouTube Audio").trim();
         const cleanTitle = finalTitle.replace(/[/\\?%*:|"<>]/g, '');
+        const formattedViews = videoMeta?.views ? videoMeta.views.toLocaleString('id-ID') : "0";
 
-        // 4. Kembalikan Response Sukses dengan Proteksi Objek (?.)
+        // Response Sukses Tanpa Properti Metadata
         return res.status(200).json({
             status: true,
             creator: "Arulzxd",
             result: {
-                title: finalTitle,
-                duration: durationResult, 
-                thumbnail: videoMeta?.thumbnail || `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
-                youtube_url: cleanUrl,
-                download_url: responseSaveTube.url,
-                filename: `${cleanTitle} (128kbps).mp3`,
-                quality: "128kbps",
-                info: {
+                video: {
+                    id: id,
+                    title: finalTitle,
                     author: videoMeta?.author?.name || "Unknown Channel",
-                    views: videoMeta?.views || 0,
+                    duration: durationResult,
+                    views: formattedViews,
                     uploaded: videoMeta?.ago || "Unknown Date",
+                    thumbnail: videoMeta?.thumbnail || `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
+                    url: cleanUrl
+                },
+                download: {
+                    url: responseSaveTube.url,
+                    filename: `${cleanTitle} (${formatSaves}kbps).mp3`,
+                    quality: `${formatSaves}kbps`,
+                    type: "audio/mp3",
                     seconds_total: responseSaveTube.durationRaw || 0
                 }
-            },
-            metadata: {
-                source: "savetube.vip + yt-search (play mode protected)",
-                timestamp: new Date().toISOString()
             }
         });
 
     } catch (err) {
-        console.error("CRITICAL ERROR IN YTPLAY:", err);
-
+        console.error(err);
         return res.status(500).json({
             status: false,
             creator: "Arulzxd",
-            message: "Terjadi kesalahan fatal pada sistem internal server!",
+            message: "Internal Server Error",
             error: err.message
         });
     }
