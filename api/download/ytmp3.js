@@ -69,7 +69,6 @@ async function savetube(link, quality, value) {
             status: true,
             url: response.data.downloadUrl,
             filename: `${info.title} (${quality}kbps).mp3`,
-            // Ambil durasi murni (dalam detik) dari respons link youtube ini
             durationRaw: info.duration 
         };
     } catch (error) {
@@ -122,18 +121,22 @@ router.get("/", async (req, res) => {
         // 2. Ambil Durasi Pas Sesuai Isi Link
         const durationResult = format_duration(responseSaveTube.durationRaw);
 
-        // 3. Ambil sisa metadata pelengkap (Thumbnail, Author) dari yt-search
-        const searchData = await yts(cleanUrl);
-        const videoMeta = searchData.videos && searchData.videos.length > 0 ? searchData.videos[0] : {};
+        // 3. PERBAIKAN UTAMA: Mencari metadata spesifik berdasarkan objek videoId (Bukan teks string URL)
+        let videoMeta = {};
+        try {
+            videoMeta = await yts({ videoId: id });
+        } catch (e) {
+            console.error("yt-search videoId error:", e.message);
+        }
 
-        // 4. Kembalikan Response Sukses
+        // 4. Kembalikan Response Sukses (Data dijamin sinkron)
         return res.status(200).json({
             status: true,
             creator: "Arulzxd",
             result: {
                 title: videoMeta.title || responseSaveTube.filename.replace(" (128kbps).mp3", ""),
-                duration: durationResult, // <--- DIJAMIN PAS SESUAI LINK (Format Menit:Detik)
-                thumbnail: videoMeta.thumbnail || `https://i.ytimg.com/vi/${id}/mqdefault.jpg`,
+                duration: durationResult, 
+                thumbnail: videoMeta.thumbnail || `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
                 youtube_url: cleanUrl,
                 download_url: responseSaveTube.url,
                 filename: responseSaveTube.filename,
@@ -146,7 +149,7 @@ router.get("/", async (req, res) => {
                 }
             },
             metadata: {
-                source: "savetube.vip + yt-search",
+                source: "savetube.vip + yt-search (fixed id)",
                 timestamp: new Date().toISOString()
             }
         });
