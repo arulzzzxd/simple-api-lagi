@@ -12,18 +12,23 @@ async function ytdownDl(url) {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
           'X-Requested-With': 'XMLHttpRequest',
+          'Origin': 'https://ytdown.to',
+          'Referer': 'https://ytdown.to/',
           'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36'
         }
       }
     );
 
     if (!response.data || response.data.api?.status !== 'ok') {
-      return { status: false, message: 'Gagal mengambil data dari ytdown.' };
+      return { 
+        status: false, 
+        message: 'Gagal mengambil data dari ytdown. Server merespon tidak OK.',
+        debug: response.data 
+      };
     }
 
     const apiData = response.data.api;
     
-    // Struktur respons Audio Only sesuai request
     const result = {
       status: true,
       title: apiData.title || '-',
@@ -35,23 +40,23 @@ async function ytdownDl(url) {
     };
 
     if (Array.isArray(apiData.mediaItems)) {
-      // Filter hanya item yang bertipe Audio
       const audioItems = apiData.mediaItems.filter(item => item.type === 'Audio');
 
-      // TAHAP 2: Menggunakan Promise.all untuk menembak fileUrl secara paralel
+      // TAHAP 2: Menggunakan Promise.all (Dibatasi maks 3 kali polling agar tidak timeout di Vercel)
       const audioPromises = audioItems.map(async (item) => {
         let fileUrl = '';
 
         if (item.mediaUrl) {
           try {
-            // Lakukan polling maksimal 5 kali jika server membutuhkan waktu untuk convert
-            for (let i = 0; i < 5; i++) {
+            for (let i = 0; i < 3; i++) { 
               const fileResponse = await axios.post('https://app.ytdown.to/proxy.php', 
                 new URLSearchParams({ url: item.mediaUrl }), 
                 {
                   headers: {
                     'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
                     'X-Requested-With': 'XMLHttpRequest',
+                    'Origin': 'https://ytdown.to',
+                    'Referer': 'https://ytdown.to/',
                     'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36'
                   }
                 }
@@ -59,21 +64,19 @@ async function ytdownDl(url) {
 
               const fileApiData = fileResponse.data?.api;
 
-              // Pastikan fileUrl sudah siap dan bukan "Waiting..."
               if (fileApiData && fileApiData.fileUrl && fileApiData.fileUrl !== 'Waiting...') {
                 fileUrl = fileApiData.fileUrl;
-                break; // Stop loop jika berhasil mendapatkan link s30.worker03.com
+                break; 
               }
 
-              // Jeda waktu 1.5 detik sebelum hit ulang (polling)
-              await new Promise(resolve => setTimeout(resolve, 1500));
+              // Jeda jeda diturunkan ke 1 detik agar hemat waktu di Vercel
+              await new Promise(resolve => setTimeout(resolve, 1000));
             }
           } catch (err) {
-            fileUrl = '';
+            fileUrl = `Error Fetch: ${err.message}`;
           }
         }
 
-        // Output objek yang sudah disaring bersih tanpa key 'url'
         return {
           quality: item.mediaQuality || '-',
           size: item.mediaFileSize || '-',
@@ -82,7 +85,6 @@ async function ytdownDl(url) {
         };
       });
 
-      // Tunggu hingga seluruh proses mapping selesai
       result.audios = await Promise.all(audioPromises);
     }
 
@@ -91,7 +93,7 @@ async function ytdownDl(url) {
   } catch (e) {
     return {
       status: false,
-      message: e.message
+      message: `Sistem Error: ${e.message}`
     };
   }
 }
@@ -104,17 +106,18 @@ router.get("/", async (req, res) => {
   const url = req.query.url;
 
   if (!url) {
-    return res.status(400).json({
+    return res.status(200).json({ // Diubah ke 200 agar pesan terbaca di UI
       status: false,
-      message: "Parameter 'url' wajib diisi! Contoh: ?url=https://youtu.be/xxxxxx"
+      message: "Parameter 'url' wajib diisi!"
     });
   }
 
   try {
     const result = await ytdownDl(url);
 
+    // Diubah sementara ke status 200 agar log text error-nya muncul di UI kamu!
     if (!result.status) {
-      return res.status(400).json(result);
+      return res.status(200).json(result); 
     }
 
     return res.status(200).json({
@@ -127,11 +130,10 @@ router.get("/", async (req, res) => {
       }
     });
   } catch (error) {
-    return res.status(500).json({
+    return res.status(200).json({ // Diubah ke 200 agar tidak tertutup pesan HTTP 400 global
       status: false,
-      message: "Gagal mengambil audio YouTube",
-      error: error.message,
-      timestamp: new Date().toISOString()
+      message: "Gagal mengambil audio YouTube global",
+      error: error.message
     });
   }
 });
