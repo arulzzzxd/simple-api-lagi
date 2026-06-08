@@ -1,57 +1,57 @@
 const express = require('express');
 const router = express.Router();
-const { youtube } = require('@vreden/youtube_scraper');
+const vreden = require('@vreden/youtube_scraper');
 
-// Endpoint GET /api/download/ytmp3
-router.get("/", async (req, res) => {
-  const url = req.query.url;
+// ======================================================
+// MAIN YTMP3 FUNCTION USING VREDEN SCRAPER
+// ======================================================
+async function ytmp3(url) {
+    // Memanggil fungsi ytmp3 dari library vreden
+    const result = await vreden.ytmp3(url);
 
-  if (!url) {
-    return res.status(400).json({
-      status: false,
-      message: "Parameter 'url' wajib diisi! Contoh: ?url=https://www.youtube.com/watch?v=J1TFFzbCIiM"
-    });
-  }
-
-  try {
-    // Eksekusi scraper langsung menggunakan URL murni
-    const data = await youtube(url.trim());
-
-    if (!data || !data.mp3) {
-      throw new Error("Gagal mengekstrak format MP3 dari video ini.");
+    // Validasi respons dari library
+    if (!result || !result.status) {
+        throw new Error("Gagal mengambil data audio dari YouTube. Pastikan URL benar.");
     }
 
-    return res.status(200).json({
-      status: true,
-      creator: "Arulzxd",
-      result: {
-        title: data.title || "YouTube Audio Download",
-        thumbnail: data.thumbnail || null,
-        uploader: data.author || "Unknown",
-        duration: data.duration || "N/A",
-        viewCount: null,
-        uploadDate: null,
-        type: 'mp3',
-        quality: '128', // Kualitas standar dari hasil stream scraper
-        downloadUrl: data.mp3, // Link download MP3 langsung siap pakai
-        filename: `${(data.title || 'audio').replace(/[/\\?%*:|"<>]/g, '-')}.mp3`
-      },
-      metadata: {
-        source: "YouTube - Vreden Scraper Direct",
-        timestamp: new Date().toISOString()
-      }
-    });
-  } catch (error) {
-    // Log error asli ke console Vercel untuk mempermudah monitoring
-    console.error("LOG ERROR VREDEN_YTMP3:", error.message);
+    // Mengembalikan data sesuai struktur yang rapi
+    return {
+        judul: result.title || "-",
+        durasi: result.duration || "-",
+        ukuran: result.size || "-",
+        quality: "MP3 128kbps", // Umumnya default kualitas library scraper ini
+        download: result.download
+    };
+}
 
-    return res.status(500).json({
-      status: false,
-      message: "Gagal memproses atau mengonversi audio YouTube.",
-      error_detail: error.message,
-      timestamp: new Date().toISOString()
-    });
-  }
+// ======================================================
+// ENDPOINT GET UTAMA
+// ======================================================
+router.get('/', async (req, res) => {
+    const url = req.query.url;
+
+    if (!url) {
+        return res.status(400).json({
+            status: false,
+            error: "Missing 'url' parameter"
+        });
+    }
+
+    try {
+        const result = await ytmp3(url);
+
+        return res.status(200).json({
+            status: true,
+            creator: 'Arulzxd',
+            result
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            status: false,
+            error: error.message || "Terjadi kesalahan pada server."
+        });
+    }
 });
 
 module.exports = router;
