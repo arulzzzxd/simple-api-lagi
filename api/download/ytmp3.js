@@ -3,6 +3,7 @@ const express = require("express");
 
 const router = express.Router();
 
+// Fungsi murni untuk mengambil data mentah dari ytdown
 async function ytdownDl(url) {
   try {
     const response = await axios.post('https://app.ytdown.to/proxy.php', 
@@ -20,67 +21,16 @@ async function ytdownDl(url) {
       return { status: false, message: 'Gagal mengambil data dari ytdown.' };
     }
 
-    const apiData = response.data.api;
-    
-    const result = {
-      status: true,
-      title: apiData.title || '-',
-      id: apiData.id || '-',
-      thumbnail: apiData.imagePreviewUrl || '-',
-      duration: apiData.mediaItems?.[0]?.mediaDuration || '-',
-      channel: apiData.userInfo?.name || '-',
-      audios: []
-    };
-
-    if (Array.isArray(apiData.mediaItems)) {
-      // PERBAIKAN: Menggunakan for...of agar bisa menggunakan await di dalamnya
-      for (const item of apiData.mediaItems) {
-        if (item.type === 'Audio') {
-          let finalDownloadUrl = item.mediaUrl;
-
-          // Mengambil direct link dari properti "fileUrl"
-          try {
-            if (item.mediaUrl) {
-              const resFile = await axios.get(item.mediaUrl, {
-                headers: {
-                  'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36'
-                }
-              });
-              
-              // Jika response memiliki properti fileUrl, gunakan itu
-              if (resFile.data && resFile.data.fileUrl) {
-                finalDownloadUrl = resFile.data.fileUrl;
-              }
-            }
-          } catch (err) {
-            // Jika gagal mengambil fileUrl, fallback/tetap gunakan link asli bawaan
-            console.error("Gagal mendapatkan direct fileUrl:", err.message);
-          }
-
-          result.audios.push({
-            quality: item.mediaQuality || '-',
-            size: item.mediaFileSize || '-',
-            ext: item.mediaExtension || 'M4A',
-            url: finalDownloadUrl // SEKARANG BERISI LINK DL.IAMWORKER.COM
-          });
-        }
-      }
-    }
-
-    return result;
+    return { status: true, data: response.data.api };
 
   } catch (e) {
-    return {
-      status: false,
-      message: e.message
-    };
+    return { status: false, message: e.message };
   }
 }
 
 // ======================================================
-// ENDPOINT GET UTAMA (AUDIO ONLY - DIRECT DOWNLOAD)
+// ENDPOINT GET UTAMA (MENGHASILKAN LINK BYPASS INTERNAL)
 // ======================================================
-
 router.get("/", async (req, res) => {
   const url = req.query.url;
 
@@ -92,10 +42,41 @@ router.get("/", async (req, res) => {
   }
 
   try {
-    const result = await ytdownDl(url);
+    const searchResult = await ytdownDl(url);
 
-    if (!result.status) {
-      return res.status(400).json(result);
+    if (!searchResult.status) {
+      return res.status(400).json(searchResult);
+    }
+
+    const apiData = searchResult.data;
+    const host = req.get('host');
+    const protocol = req.protocol;
+    const baseUrl = req.baseUrl || ''; // Otomatis mendeteksi path mounting router (/api/download/ytmp3)
+
+    const result = {
+      status: true,
+      title: apiData.title || '-',
+      id: apiData.id || '-',
+      thumbnail: apiData.imagePreviewUrl || '-',
+      duration: apiData.mediaItems?.[0]?.mediaDuration || '-',
+      channel: apiData.userInfo?.name || '-',
+      audios: []
+    };
+
+    if (Array.isArray(apiData.mediaItems)) {
+      apiData.mediaItems.forEach(item => {
+        if (item.type === 'Audio') {
+          // PERBAIKAN: Link diubah mengarah ke endpoint /bypass milik kita sendiri
+          const bypassUrl = `${protocol}://${host}${baseUrl}/bypass?fetchUrl=${encodeURIComponent(item.mediaUrl)}`;
+          
+          result.audios.push({
+            quality: item.mediaQuality || '-',
+            size: item.mediaFileSize || '-',
+            ext: item.mediaExtension || 'M4A',
+            url: bypassUrl // User akan menerima link internal yang aman
+          });
+        }
+      });
     }
 
     return res.status(200).json({
@@ -103,7 +84,7 @@ router.get("/", async (req, res) => {
       creator: "Arulzxd",
       result,
       metadata: {
-        source: "YouTube - Ytmp3 (Direct Link)",
+        source: "YouTube - Ytmp3",
         timestamp: new Date().toISOString()
       }
     });
@@ -115,7 +96,41 @@ router.get("/", async (req, res) => {
       timestamp: new Date().toISOString()
     });
   }
-  
+});
+
+// ======================================================
+// ENDPOINT BYPASS (TEMBAK TOKEN FRESH & REDIRECT INSTAN)
+// ======================================================
+router.get("/bypass", async (req, res) => {
+  const fetchUrl = req.query.fetchUrl;
+
+  if (!fetchUrl) {
+    return res.status(400).send("Parameter 'fetchUrl' tidak ditemukan.");
+  }
+
+  try {
+    // Teruskan IP dan User-Agent asli dari perangkat user yang mengklik link
+    const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    const clientUserAgent = req.headers['user-agent'];
+
+    // Ambil fileUrl secara real-time (0 milidetik saat link diklik)
+    const resFile = await axios.get(fetchUrl, {
+      headers: {
+        'User-Agent': clientUserAgent || 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36',
+        'X-Forwarded-For': clientIp,
+        'X-Real-IP': clientIp
+      }
+    });
+
+    if (resFile.data && resFile.data.fileUrl) {
+      // LANGSUNG DOWNLOAD: Alihkan browser user ke link download dl.iamworker.com yang valid
+      return res.redirect(resFile.data.fileUrl);
+    } else {
+      return res.status(400).send("Gagal mendapatkan direct download url dari server worker.");
+    }
+  } catch (error) {
+    return res.status(500).send("Error Passthrough: " + error.message);
+  }
 });
 
 module.exports = router;
