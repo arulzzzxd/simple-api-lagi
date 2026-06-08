@@ -10,11 +10,11 @@ app.use(express.json());
 /*
 For setting API name etc
 */
-const title = "API Arulz-XD";
+const title = "API-ARULZXD - REST";
 const favicon = "https://arulz-uploader.vercel.app/files/C5VYmq.jpg";
 const logo = "https://arulz-uploader.vercel.app/files/SnhJe3.png";
-const headertitle = "REST API ARULZ XD ";
-const headerdescription = "Kumpulan API Endpoint yang mungkin berguna.";
+const headertitle = "API Arulz-XD";
+const headerdescription = "Browse, inspect & fire requests against live endpoints._";
 const footer = "© Arulz-XD";
 
 // === KONFIGURASI PLAYLIST BANYAK MUSIK ===
@@ -146,65 +146,88 @@ app.get('/', (req, res) => {
     <link rel="stylesheet" href="styles.css" />
     
     <style>
-        /* == Unified Light Base for Multi-Themes == */
+        /* Pola Bintik-Bintik Mode Terang (Background Putih, Bintik Abu-abu Lembut) */
+
+    .bg-dots-light {
+
+        background-color: #ffffff;
+
+        background-image: radial-gradient(#e2e8f0 1.5px, transparent 1.5px);
+
+        background-size: 24px 24px;
+
+    }
+
+
+
+    /* Pola Bintik-Bintik Mode Gelap (Background Gelap, Bintik Putih Transparan) */
+
+    .bg-dots-dark {
+
+        background-color: #0f172a; /* atau sesuaikan dengan warna dark mode bawaanmu */
+
+        background-image: radial-gradient(rgba(255, 255, 255, 0.15) 1.5px, transparent 1.5px);
+
+        background-size: 24px 24px;
+
+    }
+
+    
+
+    /* Memastikan perpindahan theme terasa mulus */
+
+    #themeBg {
+
+        transition: background-color 0.3s ease, background-image 0.3s ease;
+
+    }
+        /* Menggunakan background solid & tipis blur agar super ringan */
         body {
             transition: background 0.25s ease, color 0.25s ease;
-            color: #0f172a !important; /* Default dark text for all themes */
         }
 
-        /* Fixed Top Gradient Bar that changes per theme */
-        #themeTopGradient {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 120px; /* Specific area to change gradient as per image description */
-            z-index: 0;
-            transition: background 0.5s ease;
-        }
-
-        /* --- Default Glass Panel (Base style is light) --- */
         .glass-panel {
-            background: rgba(255, 255, 255, 0.9) !important;
+            background: rgba(15, 23, 42, 0.75);
             backdrop-filter: blur(4px);
             -webkit-backdrop-filter: blur(4px);
-            border: 1px solid rgba(15, 23, 42, 0.12) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08);
             will-change: transform, opacity;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03) !important;
+        }
+        
+        .light-mode .glass-panel {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(15, 23, 42, 0.12);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03);
         }
 
-        /* --- Core Element Colors for Base Light Look --- */
-        #mainTitle { color: #0f172a !important; }
-        #mainDescription { color: #334155 !important; }
-        #stat-battery-title,
-        #stat-endpoints-title,
-        #stat-categories-title { color: #475569 !important; }
-        #siteFooter { color: #64748b !important; border-color: rgba(0,0,0,0.1); }
-        #no-results-title { color: #0f172a !important; }
+        /* Perbaikan Kontras Tulisan & Komponen Mode Terang */
+        .light-mode {
+            color: #0f172a !important;
+        }
+        .light-mode #mainTitle { color: #0f172a !important; }
+        .light-mode #mainDescription { color: #334155 !important; }
+        .light-mode #stat-battery-title,
+        .light-mode #stat-endpoints-title,
+        .light-mode #stat-categories-title { color: #475569 !important; }
+        .light-mode #siteFooter { color: #64748b !important; border-color: rgba(0,0,0,0.1); }
+        .light-mode #no-results-title { color: #0f172a !important; }
 
-        /* Music Player Core in Light Look */
-        .music-player-card {
+        .light-mode .music-player-card {
             background: rgba(255, 255, 255, 0.85) !important;
             border-color: rgba(0, 0, 0, 0.12) !important;
         }
-        .music-text-title { color: #0f172a !important; }
-        .music-text-artist { color: #475569 !important; }
-        .music-progress-bar-bg { background-color: rgba(0,0,0,0.1) !important; }
+        .light-mode .music-text-title { color: #0f172a !important; }
+        .light-mode .music-text-artist { color: #475569 !important; }
+        .light-mode .music-progress-bar-bg { background-color: rgba(0,0,0,0.1) !important; }
         
-        .music-btn-nav {
+        .light-mode .music-btn-nav {
             background-color: rgba(255, 255, 255, 0.9) !important;
             border-color: rgba(0,0,0,0.12) !important;
             color: #1e293b !important;
         }
-        .music-btn-nav:hover {
+        .light-mode .music-btn-nav:hover {
             background-color: #f1f5f9 !important;
             color: #0f172a !important;
-        }
-
-        /* Social Badges Core Light Look */
-        .social-badge > div {
-            px-4 py-2 rounded-xl text-xs font-bold transition-colors text-center border
-            bg-white/80 text-slate-900 hover:bg-slate-100 border-black/10 shadow-sm
         }
         
         /* Brutalist Toggle Language Switcher */
@@ -214,13 +237,13 @@ app.get('/', (req, res) => {
             font-weight: bold;
             padding: 3px 10px;
             border: 2px solid #000000;
-            background-color: #ffffff;
-            color: #000000;
+            background-color: #1a1a1a;
+            color: #ffffff;
             transition: all 0.15s ease;
         }
         .lang-btn.active {
-            background-color: #0f172a;
-            color: #ffffff;
+            background-color: #06b6d4;
+            color: #000000;
             box-shadow: 2px 2px 0px #000000;
         }
 
@@ -229,55 +252,37 @@ app.get('/', (req, res) => {
             font-family: 'JetBrains Mono', monospace;
             font-size: 11px;
             padding: 6px 12px;
-            border: 1px solid rgba(0,0,0,0.15);
-            background: rgba(0,0,0,0.04);
-            color: #334155;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.05);
+            color: #e2e8f0;
             transition: all 0.2s ease;
             border-radius: 8px;
             white-space: nowrap;
             cursor: pointer;
         }
         .filter-btn:hover {
-            background: rgba(0,0,0,0.08);
+            background: rgba(255,255,255,0.15);
         }
         .filter-btn.active {
-            background-color: #0f172a !important;
-            color: #ffffff !important;
-            border-color: #0f172a !important;
+            background-color: #06b6d4 !important;
+            color: #000000 !important;
+            border-color: #06b6d4 !important;
             font-weight: bold;
         }
-
-        /* --- THEME VARIATIONS (Backgrounds and Top Gradients) --- */
-        /* Change overall bg and fixed top gradient */
-        
-        /* Biru (Asli) - Base Lightish Blue */
-        .theme-biru { background-color: #f0f9ff; }
-        .theme-biru #themeTopGradient { background: linear-gradient(to right, #7dd3fc, #0ea5e9); }
-        
-        /* Merah - Lightish Red-Pink like target image */
-        .theme-merah { background-color: #fff1f2; }
-        .theme-merah #themeTopGradient { background: linear-gradient(to right, #fecdd3, #ec4899); }
-        
-        /* Kuning - Lightish Orange/Amber */
-        .theme-kuning { background-color: #fffbeb; }
-        .theme-kuning #themeTopGradient { background: linear-gradient(to right, #fde68a, #f59e0b); }
-        
-        /* Hijau - Lightish Emerald/Teal */
-        .theme-hijau { background-color: #ecfdf5; }
-        .theme-hijau #themeTopGradient { background: linear-gradient(to right, #a7f3d0, #10b981); }
-        
-        /* Ungu - Lightish Violet/Indigo */
-        .theme-ungu { background-color: #f5f3ff; }
-        .theme-ungu #themeTopGradient { background: linear-gradient(to right, #ddd6fe, #8b5cf6); }
-
+        .light-mode .filter-btn {
+            border-color: rgba(0,0,0,0.15);
+            background: rgba(0,0,0,0.04);
+            color: #334155;
+        }
+        .light-mode .filter-btn:hover {
+            background: rgba(0,0,0,0.08);
+        }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="min-h-screen antialiased text-slate-900 relative theme-biru">
-
-    <div id="themeTopGradient"></div>
-
+<body class="min-h-screen antialiased bg-[#030712] text-slate-100 relative">
+<div id="themeBg" class="fixed inset-0 -z-10 bg-dots-dark"></div>
     <div id="toast" class="toast z-50">
         <div class="flex items-center gap-3">
             <svg id="toastIcon" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -288,27 +293,31 @@ app.get('/', (req, res) => {
     </div>
 
     <div class="fixed top-6 right-6 z-40">
-        <button id="bioMenuBtn" class="flex items-center justify-center w-12 h-12 rounded-xl glass-panel text-slate-700 hover:text-slate-900 shadow-lg transition-all active:scale-95 focus:outline-none">
+        <button id="bioMenuBtn" class="flex items-center justify-center w-12 h-12 rounded-xl glass-panel text-slate-300 hover:text-white shadow-lg transition-all active:scale-95 focus:outline-none light-mode:text-slate-700 light-mode:hover:text-slate-900">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
             </svg>
         </button>
     </div>
 
-    <div id="bioDropdown" class="fixed top-0 right-0 h-full w-72 bg-white/95 backdrop-blur-lg border-l border-slate-200 transform translate-x-full transition-transform duration-300 ease-in-out z-50 shadow-2xl flex flex-col p-6 font-['Space_Grotesk'] overflow-y-auto">
-        
+    <div id="bioDropdown" class="fixed top-0 right-0 h-full w-72 bg-[#08111e]/95 backdrop-blur-lg border-l border-white/10 transform translate-x-full transition-transform duration-300 ease-in-out z-50 shadow-2xl flex flex-col p-6 font-['Space_Grotesk'] light-mode:bg-white/95 light-mode:border-slate-200">
         <div class="flex items-center justify-between mb-8">
-            <div class="flex gap-0 border border-black p-0.5 bg-white">
+            <div class="flex gap-0 border border-black p-0.5 bg-[#111]">
                 <button id="lang-id" class="lang-btn active" onclick="setLanguage('id')">ID</button>
                 <button id="lang-en" class="lang-btn" onclick="setLanguage('en')">EN</button>
             </div>
             
             <div class="flex items-center gap-2">
-                <div class="flex items-center justify-center w-8 h-8 border border-slate-300 bg-slate-100 rounded-lg">
-                    <div id="currentThemeIcon" class="w-4 h-4 rounded-full bg-cyan-400"></div>
-                </div>
+                <button id="themeToggle" class="flex items-center justify-center w-8 h-8 rounded-lg transition-all active:scale-95 focus:outline-none border border-white/20 bg-slate-900/50 text-white light-mode:bg-slate-100 light-mode:border-slate-300 light-mode:text-slate-900">
+                    <svg id="theme-toggle-dark-icon" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
+                    </svg>
+                    <svg id="theme-toggle-light-icon" class="w-4 h-4 hidden" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path>
+                    </svg>
+                </button>
 
-                <button id="closeMenuBtn" class="text-slate-700 hover:text-red-500 transition-colors p-1.5 border border-slate-300 rounded bg-slate-100">
+                <button id="closeMenuBtn" class="text-white hover:text-red-400 transition-colors p-1.5 border border-white/10 rounded bg-slate-900/40 light-mode:text-slate-700 light-mode:bg-slate-100 light-mode:border-slate-300 light-mode:hover:text-red-500">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
@@ -316,68 +325,21 @@ app.get('/', (req, res) => {
             </div>
         </div>
 
-        <nav class="flex flex-col gap-5 text-sm font-bold tracking-wider uppercase text-slate-700">
-            <a href="#api" class="menu-link hover:text-cyan-700 transition-colors flex items-center gap-2">HOME</a>
-            <a href="#apiList" class="menu-link hover:text-cyan-700 transition-colors flex items-center gap-2">DOCUMENTATION</a>
-            <a href="#" class="menu-link hover:text-cyan-700 transition-colors flex items-center gap-2">FILE UPLOADER</a>
-            <a href="#" class="menu-link hover:text-cyan-700 transition-colors flex items-center gap-2">PASTEBIN</a>
-            <hr class="border-slate-200 my-2">
-            <a href="#" class="menu-link hover:text-cyan-700 transition-colors flex items-center gap-2 text-xs opacity-80">BUG REPORT</a>
-            <a href="#" class="menu-link hover:text-cyan-700 transition-colors flex items-center gap-2 text-xs opacity-80">PRIVACY POLICY</a>
+        <nav class="flex flex-col gap-5 text-sm font-bold tracking-wider uppercase text-gray-300 light-mode:text-slate-700">
+            <a href="#api" class="menu-link hover:text-cyan-400 transition-colors flex items-center gap-2">HOME</a>
+            <a href="#apiList" class="menu-link hover:text-cyan-400 transition-colors flex items-center gap-2">DOCUMENTATION</a>
+            <a href="#" class="menu-link hover:text-cyan-400 transition-colors flex items-center gap-2">FILE UPLOADER</a>
+            <a href="#" class="menu-link hover:text-cyan-400 transition-colors flex items-center gap-2">PASTEBIN</a>
+            <hr class="border-white/10 my-2 light-mode:border-slate-200">
+            <a href="#" class="menu-link hover:text-cyan-400 transition-colors flex items-center gap-2 text-xs opacity-80">BUG REPORT</a>
+            <a href="#" class="menu-link hover:text-cyan-400 transition-colors flex items-center gap-2 text-xs opacity-80">PRIVACY POLICY</a>
         </nav>
 
-        <div class="mt-8">
-            <h3 id="themeTitle" class="text-sm font-bold uppercase tracking-wider text-slate-500 mb-5">Tema</h3>
-            <div id="themeListContainer" class="flex flex-col gap-4">
-                
-                <button type="button" onclick="setTheme('biru')" class="theme-option flex gap-3 p-1 rounded-lg hover:bg-slate-100 transition-colors">
-                    <div class="w-16 h-8 rounded-full bg-cyan-500 border border-black shadow-inner flex-shrink-0"></div>
-                    <div class="text-left flex-1">
-                        <h4 id="themeTitle_biru" class="text-sm font-bold">Biru (Asli)</h4>
-                        <p id="themeDesc_biru" class="text-xs text-slate-600 font-semibold mt-0.5">Ubah gradasi area atas</p>
-                    </div>
-                </button>
-
-                <button type="button" onclick="setTheme('merah')" class="theme-option flex gap-3 p-1 rounded-lg hover:bg-slate-100 transition-colors">
-                    <div class="w-16 h-8 rounded-full bg-pink-500 border border-black shadow-inner flex-shrink-0"></div>
-                    <div class="text-left flex-1">
-                        <h4 id="themeTitle_merah" class="text-sm font-bold">Merah</h4>
-                        <p id="themeDesc_merah" class="text-xs text-slate-600 font-semibold mt-0.5">Ubah gradasi area atas</p>
-                    </div>
-                </button>
-
-                <button type="button" onclick="setTheme('kuning')" class="theme-option flex gap-3 p-1 rounded-lg hover:bg-slate-100 transition-colors">
-                    <div class="w-16 h-8 rounded-full bg-amber-500 border border-black shadow-inner flex-shrink-0"></div>
-                    <div class="text-left flex-1">
-                        <h4 id="themeTitle_kuning" class="text-sm font-bold">Kuning</h4>
-                        <p id="themeDesc_kuning" class="text-xs text-slate-600 font-semibold mt-0.5">Ubah gradasi area atas</p>
-                    </div>
-                </button>
-
-                <button type="button" onclick="setTheme('hijau')" class="theme-option flex gap-3 p-1 rounded-lg hover:bg-slate-100 transition-colors">
-                    <div class="w-16 h-8 rounded-full bg-emerald-500 border border-black shadow-inner flex-shrink-0"></div>
-                    <div class="text-left flex-1">
-                        <h4 id="themeTitle_hijau" class="text-sm font-bold">Hijau</h4>
-                        <p id="themeDesc_hijau" class="text-xs text-slate-600 font-semibold mt-0.5">Ubah gradasi area atas</p>
-                    </div>
-                </button>
-
-                <button type="button" onclick="setTheme('ungu')" class="theme-option flex gap-3 p-1 rounded-lg hover:bg-slate-100 transition-colors">
-                    <div class="w-16 h-8 rounded-full bg-violet-500 border border-black shadow-inner flex-shrink-0"></div>
-                    <div class="text-left flex-1">
-                        <h4 id="themeTitle_ungu" class="text-sm font-bold">Ungu</h4>
-                        <p id="themeDesc_ungu" class="text-xs text-slate-600 font-semibold mt-0.5">Ubah gradasi area atas</p>
-                    </div>
-                </button>
-
-            </div>
-        </div>
-
-        <div class="mt-8 flex-1">
-            <h3 class="text-[10px] font-bold tracking-widest uppercase mb-3 text-slate-500 code-font">DYNAMIC LINK BIO</h3>
+        <div class="mt-8 flex-1 overflow-y-auto">
+            <h3 class="text-[10px] font-bold tracking-widest uppercase mb-3 text-slate-400 light-mode:text-slate-500 code-font">DYNAMIC LINK BIO</h3>
             <div id="socialContainer" class="flex flex-col gap-2">
-                <div id="socialLoading" class="text-center py-2 w-full"><p class="text-xs text-slate-500">Loading...</p></div>
-                <div id="socialError" class="text-center py-2 w-full hidden"><p class="text-[10px] text-red-500">Link bio tidak tersedia.</p></div>
+                <div id="socialLoading" class="text-center py-2 w-full"><p class="text-xs text-slate-400">Loading...</p></div>
+                <div id="socialError" class="text-center py-2 w-full hidden"><p class="text-[10px] text-red-400">Link bio tidak tersedia.</p></div>
             </div>
         </div>
     </div>
@@ -387,96 +349,98 @@ app.get('/', (req, res) => {
     <div class="max-w-5xl mx-auto px-4 py-8 relative z-10">
         <header id="api" class="mb-12 text-center">
             <div class="flex items-center justify-center gap-3 mb-2">
-                <span class="bg-cyan-100 text-cyan-700 border border-cyan-300 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest animate-pulse">● ONLINE</span>
+                <span class="bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest animate-pulse light-mode:bg-cyan-100 light-mode:text-cyan-700">● ONLINE</span>
             </div>
             <h1 id="mainTitle" class="text-5xl md:text-6xl font-black mb-4 tracking-tight font-['Space_Grotesk'] text-white">${headertitle}</h1>
             <p id="mainDescription" class="text-md md:text-lg font-medium tracking-wide text-slate-300 max-w-xl mx-auto">${headerdescription}</p>
             
             <div class="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto">
                 <div class="glass-panel flex flex-col items-center justify-center p-4 rounded-xl shadow-lg">
-                    <span id="stat-battery-title" class="text-xs font-bold uppercase tracking-wider text-slate-600">Baterai Anda</span>
+                    <span id="stat-battery-title" class="text-xs font-bold uppercase tracking-wider text-slate-400">Baterai Anda</span>
                     <div class="flex items-center gap-3 mt-2">
-                        <div id="batteryContainer" class="battery-container border border-slate-400">
-                            <div id="batteryLevel" class="battery-level bg-green-500" style="width: 0%"></div>
+                        <div id="batteryContainer" class="battery-container border border-white/20 light-mode:border-slate-400">
+                            <div id="batteryLevel" class="battery-level bg-green-400" style="width: 0%"></div>
                             <div class="battery-tip"></div>
                         </div>
                         <div class="text-left">
-                            <span id="batteryPercentage" class="text-lg font-bold block leading-none text-slate-900">0%</span>
-                            <span id="batteryStatus" class="text-[10px] uppercase text-slate-500 font-medium">Mendeteksi...</span>
+                            <span id="batteryPercentage" class="text-lg font-bold block leading-none light-mode:text-slate-900">0%</span>
+                            <span id="batteryStatus" class="text-[10px] uppercase text-slate-400 light-mode:text-slate-500 font-medium">Mendeteksi...</span>
                         </div>
                     </div>
                 </div>
                 
                 <div class="glass-panel flex flex-col items-center justify-center p-4 rounded-xl shadow-lg">
-                    <span id="stat-endpoints-title" class="text-xs font-bold uppercase tracking-wider text-slate-600">Total Endpoint</span>
-                    <span id="totalEndpoints" class="text-3xl font-black text-cyan-600 mt-1">0</span>
+                    <span id="stat-endpoints-title" class="text-xs font-bold uppercase tracking-wider text-slate-400">Total Endpoint</span>
+                    <span id="totalEndpoints" class="text-3xl font-black text-cyan-400 mt-1 light-mode:text-cyan-600">0</span>
                 </div>
                 
                 <div class="glass-panel flex flex-col items-center justify-center p-4 rounded-xl shadow-lg">
-                    <span id="stat-categories-title" class="text-xs font-bold uppercase tracking-wider text-slate-600">Total Kategori</span>
-                    <span id="totalCategories" class="text-3xl font-black text-cyan-600 mt-1">0</span>
+                    <span id="stat-categories-title" class="text-xs font-bold uppercase tracking-wider text-slate-400">Total Kategori</span>
+                    <span id="totalCategories" class="text-3xl font-black text-cyan-400 mt-1 light-mode:text-cyan-600">0</span>
                 </div>
             </div>
 
-            <div class="glass-panel max-w-3xl mx-auto mt-4 p-3 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-3 border border-slate-300 shadow">
-    <div class="flex items-center gap-2 text-sm text-cyan-700 code-font">
+            <div class="glass-panel max-w-3xl mx-auto mt-4 p-3 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-3 border border-white/20">
+    <div class="flex items-center gap-2 text-sm text-cyan-400 light-mode:text-cyan-700 code-font">
         <span>🔗</span> <span class="underline break-all font-semibold">https://simple-api-lagi.vercel.app/</span>
     </div>
+    <!-- Tombol Request Feature yang Sudah Diperbaiki -->
     <a href="https://wa.me/6285122629940?text=Halo%20Arulz,%20saya%20ingin%20request%20fitur%20baru%20di%20REST%20API%20:" 
        target="_blank" 
-       class="w-full sm:w-auto px-6 py-2 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs uppercase rounded-lg shadow transition-all active:scale-95 text-center flex items-center justify-center">
+       class="w-full sm:w-auto px-6 py-2 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs uppercase rounded-lg shadow transition-all active:scale-95 light-mode:bg-cyan-600 light-mode:hover:bg-cyan-500 light-mode:text-white text-center flex items-center justify-center">
         + Request New Feature
     </a>
 </div>
 
+<!-- Tombol Channel & Group yang Sudah Diperbaiki -->
 <div class="flex justify-center gap-4 mt-4 max-w-3xl mx-auto">
     <a href="https://wa.me/6285122629940?text=Halo%20Arulz,%20boleh%20minta%20link%20Channel%20kamu%3F" 
        target="_blank" 
-       class="flex-1 glass-panel py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-slate-100 transition-colors text-slate-700 text-center block">
+       class="flex-1 glass-panel py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-white/10 light-mode:hover:bg-slate-100 transition-colors light-mode:text-slate-700 text-center block">
        💬 Channel
     </a>
     <a href="https://wa.me/6285122629940?text=Halo%20Arulz,%20boleh%20minta%20link%20Group%20kamu%3F" 
        target="_blank" 
-       class="flex-1 glass-panel py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-slate-100 transition-colors text-slate-700 text-center block">
+       class="flex-1 glass-panel py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-white/10 light-mode:hover:bg-slate-100 transition-colors light-mode:text-slate-700 text-center block">
        👥 Group
     </a>
 </div>
 
-            <div class="music-player-card glass-panel mt-8 max-w-2xl mx-auto rounded-2xl p-4 shadow-2xl relative overflow-hidden border border-slate-200">
+            <div class="music-player-card glass-panel mt-8 max-w-2xl mx-auto rounded-2xl p-4 shadow-2xl relative overflow-hidden border border-white/10">
                 <audio id="audioElement"></audio>
                 <div class="flex items-center justify-between gap-4">
                     <div class="flex items-center gap-4 flex-1 min-w-0">
-                        <div class="relative w-16 h-16 rounded-xl overflow-hidden bg-black flex-shrink-0 border border-slate-200/50">
+                        <div class="relative w-16 h-16 rounded-xl overflow-hidden bg-black flex-shrink-0 border border-white/10">
                             <img id="musicCoverImg" src="" alt="Cover" class="w-full h-full object-cover transition-transform duration-500">
                         </div>
                         <div class="flex-1 min-w-0 text-left">
-                            <h3 id="musicTitle" class="music-text-title text-slate-950 font-bold text-sm tracking-wider uppercase truncate m-0">Loading...</h3>
-                            <p id="musicArtist" class="music-text-artist text-slate-600 text-xs font-semibold tracking-wide truncate mt-0.5">-</p>
+                            <h3 id="musicTitle" class="music-text-title text-white font-bold text-sm tracking-wider uppercase truncate m-0">Loading...</h3>
+                            <p id="musicArtist" class="music-text-artist text-slate-400 text-xs font-semibold tracking-wide truncate mt-0.5">-</p>
                             <div class="flex items-center gap-2 mt-2">
-                                <span id="currentTime" class="text-[10px] text-slate-500 code-font w-7 text-left">0:00</span>
-                                <div id="progressContainer" class="music-progress-bar-bg flex-1 h-1 bg-black/10 rounded-full relative cursor-pointer group">
-                                    <div id="progressBar" class="h-full bg-cyan-600 rounded-full w-0 transition-all duration-300"></div>
+                                <span id="currentTime" class="text-[10px] text-slate-400 light-mode:text-slate-500 code-font w-7 text-left">0:00</span>
+                                <div id="progressContainer" class="music-progress-bar-bg flex-1 h-1 bg-white/10 rounded-full relative cursor-pointer group">
+                                    <div id="progressBar" class="h-full bg-cyan-400 rounded-full w-0 transition-all duration-300"></div>
                                 </div>
-                                <span id="totalDuration" class="text-[10px] text-slate-500 code-font w-7 text-right">0:00</span>
+                                <span id="totalDuration" class="text-[10px] text-slate-400 light-mode:text-slate-500 code-font w-7 text-right">0:00</span>
                             </div>
                         </div>
                     </div>
                     <div class="flex items-center gap-1.5 flex-shrink-0">
-                        <button id="prevBtn" class="music-btn-nav w-9 h-9 flex items-center justify-center glass-panel rounded-xl transition-all active:scale-95 text-slate-700 hover:text-slate-950 hover:bg-slate-100">
+                        <button id="prevBtn" class="music-btn-nav w-9 h-9 flex items-center justify-center glass-panel rounded-xl text-slate-300 hover:text-white transition-all active:scale-95">
                             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
                         </button>
-                        <button id="playBtn" class="music-btn-nav w-10 h-10 flex items-center justify-center glass-panel rounded-xl transition-all active:scale-95 text-slate-700 hover:text-slate-950 hover:bg-slate-100">
+                        <button id="playBtn" class="music-btn-nav w-10 h-10 flex items-center justify-center glass-panel rounded-xl text-slate-300 hover:text-white transition-all active:scale-95">
                             <svg id="playIcon" class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                         </button>
-                        <button id="nextBtn" class="music-btn-nav w-9 h-9 flex items-center justify-center glass-panel rounded-xl transition-all active:scale-95 text-slate-700 hover:text-slate-950 hover:bg-slate-100">
+                        <button id="nextBtn" class="music-btn-nav w-9 h-9 flex items-center justify-center glass-panel rounded-xl text-slate-300 hover:text-white transition-all active:scale-95">
                             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M16 6h2v12h-2zm-10.5 12l8.5-6-8.5-6z"/></svg>
                         </button>
-                        <button id="playlistToggleBtn" class="music-btn-nav w-9 h-9 flex items-center justify-center glass-panel rounded-xl transition-all active:scale-95 text-slate-700 hover:text-slate-950 hover:bg-slate-100">
+                        <button id="playlistToggleBtn" class="music-btn-nav w-9 h-9 flex items-center justify-center glass-panel rounded-xl text-slate-300 hover:text-white transition-all active:scale-95">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
                         </button>
                     </div>
                 </div>
-                <div id="playlistPanel" class="music-playlist-border hidden mt-4 pt-4 border-t border-slate-200 max-h-40 overflow-y-auto space-y-1"></div>
+                <div id="playlistPanel" class="music-playlist-border hidden mt-4 pt-4 border-t border-white/10 max-h-40 overflow-y-auto space-y-1 light-mode:border-slate-200"></div>
             </div>
         </header>
 
@@ -486,9 +450,9 @@ app.get('/', (req, res) => {
                     type="text" 
                     id="searchInput" 
                     placeholder="Cari endpoint berdasarkan nama, path, atau kategori..."
-                    class="search-input w-full px-4 py-3 text-sm rounded-xl focus:outline-none transition-all code-font glass-panel text-slate-900 placeholder-slate-500 focus:border-cyan-600 shadow"
+                    class="search-input w-full px-4 py-3 text-sm rounded-xl focus:outline-none focus:border-cyan-500 transition-all code-font glass-panel border border-white/10 text-white placeholder-slate-400 light-mode:text-slate-900 light-mode:placeholder-slate-500 light-mode:focus:border-cyan-600"
                 >
-                <svg class="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                 </svg>
             </div>
@@ -497,13 +461,13 @@ app.get('/', (req, res) => {
 
         <div id="noResults" class="text-center py-12 hidden">
             <div class="text-4xl mb-2">🔍</div>
-            <h3 id="no-results-title" class="text-sm font-bold mb-1 text-slate-900">Endpoint tidak ditemukan</h3>
-            <p id="no-results-desc" class="text-xs text-slate-500">Coba gunakan kata kunci lain</p>
+            <h3 id="no-results-title" class="text-sm font-bold mb-1 text-white">Endpoint tidak ditemukan</h3>
+            <p id="no-results-desc" class="text-xs text-slate-400 light-mode:text-slate-500">Coba gunakan kata kunci lain</p>
         </div>
 
         <div id="apiList" class="space-y-4"></div>
 
-        <footer id="siteFooter" class="mt-12 pt-6 border-t border-slate-200 text-center text-xs text-slate-500">
+        <footer id="siteFooter" class="mt-12 pt-6 border-t border-white/10 text-center text-xs text-slate-500">
             ${footer}
         </footer>
     </div>
