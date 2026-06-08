@@ -147,22 +147,39 @@ app.get('/', (req, res) => {
     
     <style>
         /* Pola Bintik-Bintik Mode Terang (Background Putih, Bintik Abu-abu Lembut) */
+
     .bg-dots-light {
+
         background-color: #ffffff;
+
         background-image: radial-gradient(#e2e8f0 1.5px, transparent 1.5px);
+
         background-size: 24px 24px;
+
     }
 
+
+
     /* Pola Bintik-Bintik Mode Gelap (Background Gelap, Bintik Putih Transparan) */
+
     .bg-dots-dark {
+
         background-color: #0f172a; /* atau sesuaikan dengan warna dark mode bawaanmu */
+
         background-image: radial-gradient(rgba(255, 255, 255, 0.15) 1.5px, transparent 1.5px);
+
         background-size: 24px 24px;
+
     }
+
     
+
     /* Memastikan perpindahan theme terasa mulus */
+
     #themeBg {
+
         transition: background-color 0.3s ease, background-image 0.3s ease;
+
     }
         /* Menggunakan background solid & tipis blur agar super ringan */
         body {
@@ -313,14 +330,10 @@ app.get('/', (req, res) => {
             <a href="#apiList" class="menu-link hover:text-cyan-400 transition-colors flex items-center gap-2">DOCUMENTATION</a>
             <a href="#" class="menu-link hover:text-cyan-400 transition-colors flex items-center gap-2">FILE UPLOADER</a>
             <a href="#" class="menu-link hover:text-cyan-400 transition-colors flex items-center gap-2">PASTEBIN</a>
-            <hr class="border-white/10 my-1 light-mode:border-slate-200">
-            
-            <a href="https://wa.me/6285122629940" target="_blank" class="menu-link hover:text-green-400 transition-colors flex items-center gap-2 text-xs text-green-400">💬 WHATSAPP OWNER</a>
-            <a href="https://t.me/arulzxd" target="_blank" class="menu-link hover:text-blue-400 transition-colors flex items-center gap-2 text-xs text-blue-400">✈️ TELEGRAM OWNER</a>
-            
-            <hr class="border-white/10 my-1 light-mode:border-slate-200">
+            <hr class="border-white/10 my-2 light-mode:border-slate-200">
             <a href="#" class="menu-link hover:text-cyan-400 transition-colors flex items-center gap-2 text-xs opacity-80">BUG REPORT</a>
-            <a href="#" class="menu-link hover:text-cyan-400 transition-colors flex items-center gap-2 text-xs opacity-80">PRIVACY POLICY</a>
+            <a href="https://wa.me/6285122629940" target="_blank" class="menu-link hover:text-cyan-400 transition-colors flex items-center gap-2 text-xs opacity-80">OWNER (WHATSAPP)</a>
+            <a href="https://t.me/Arulzxd" target="_blank" class="menu-link hover:text-cyan-400 transition-colors flex items-center gap-2 text-xs opacity-80">OWNER (TELEGRAM)</a>
         </nav>
 
         <div class="mt-8 flex-1 overflow-y-auto">
