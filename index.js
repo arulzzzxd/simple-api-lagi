@@ -147,39 +147,22 @@ app.get('/', (req, res) => {
     
     <style>
         /* Pola Bintik-Bintik Mode Terang (Background Putih, Bintik Abu-abu Lembut) */
-
     .bg-dots-light {
-
         background-color: #ffffff;
-
         background-image: radial-gradient(#e2e8f0 1.5px, transparent 1.5px);
-
         background-size: 24px 24px;
-
     }
-
-
 
     /* Pola Bintik-Bintik Mode Gelap (Background Gelap, Bintik Putih Transparan) */
-
     .bg-dots-dark {
-
         background-color: #0f172a; /* atau sesuaikan dengan warna dark mode bawaanmu */
-
         background-image: radial-gradient(rgba(255, 255, 255, 0.15) 1.5px, transparent 1.5px);
-
         background-size: 24px 24px;
-
     }
-
     
-
     /* Memastikan perpindahan theme terasa mulus */
-
     #themeBg {
-
         transition: background-color 0.3s ease, background-image 0.3s ease;
-
     }
         /* Menggunakan background solid & tipis blur agar super ringan */
         body {
@@ -330,7 +313,12 @@ app.get('/', (req, res) => {
             <a href="#apiList" class="menu-link hover:text-cyan-400 transition-colors flex items-center gap-2">DOCUMENTATION</a>
             <a href="#" class="menu-link hover:text-cyan-400 transition-colors flex items-center gap-2">FILE UPLOADER</a>
             <a href="#" class="menu-link hover:text-cyan-400 transition-colors flex items-center gap-2">PASTEBIN</a>
-            <hr class="border-white/10 my-2 light-mode:border-slate-200">
+            <hr class="border-white/10 my-1 light-mode:border-slate-200">
+            
+            <a href="https://wa.me/6285122629940" target="_blank" class="menu-link hover:text-green-400 transition-colors flex items-center gap-2 text-xs text-green-400">💬 WHATSAPP OWNER</a>
+            <a href="https://t.me/arulzxd" target="_blank" class="menu-link hover:text-blue-400 transition-colors flex items-center gap-2 text-xs text-blue-400">✈️ TELEGRAM OWNER</a>
+            
+            <hr class="border-white/10 my-1 light-mode:border-slate-200">
             <a href="#" class="menu-link hover:text-cyan-400 transition-colors flex items-center gap-2 text-xs opacity-80">BUG REPORT</a>
             <a href="#" class="menu-link hover:text-cyan-400 transition-colors flex items-center gap-2 text-xs opacity-80">PRIVACY POLICY</a>
         </nav>
@@ -384,7 +372,6 @@ app.get('/', (req, res) => {
     <div class="flex items-center gap-2 text-sm text-cyan-400 light-mode:text-cyan-700 code-font">
         <span>🔗</span> <span class="underline break-all font-semibold">https://simple-api-lagi.vercel.app/</span>
     </div>
-    <!-- Tombol Request Feature yang Sudah Diperbaiki -->
     <a href="https://wa.me/6285122629940?text=Halo%20Arulz,%20saya%20ingin%20request%20fitur%20baru%20di%20REST%20API%20:" 
        target="_blank" 
        class="w-full sm:w-auto px-6 py-2 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs uppercase rounded-lg shadow transition-all active:scale-95 light-mode:bg-cyan-600 light-mode:hover:bg-cyan-500 light-mode:text-white text-center flex items-center justify-center">
@@ -392,7 +379,6 @@ app.get('/', (req, res) => {
     </a>
 </div>
 
-<!-- Tombol Channel & Group yang Sudah Diperbaiki -->
 <div class="flex justify-center gap-4 mt-4 max-w-3xl mx-auto">
     <a href="https://wa.me/6285122629940?text=Halo%20Arulz,%20boleh%20minta%20link%20Channel%20kamu%3F" 
        target="_blank" 
