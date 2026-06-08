@@ -22,7 +22,6 @@ async function ytdownDl(url) {
 
     const apiData = response.data.api;
     
-    // Struktur respons Audio Only
     const result = {
       status: true,
       title: apiData.title || '-',
@@ -34,16 +33,38 @@ async function ytdownDl(url) {
     };
 
     if (Array.isArray(apiData.mediaItems)) {
-      apiData.mediaItems.forEach(item => {
+      // PERBAIKAN: Menggunakan for...of agar bisa menggunakan await di dalamnya
+      for (const item of apiData.mediaItems) {
         if (item.type === 'Audio') {
+          let finalDownloadUrl = item.mediaUrl;
+
+          // Mengambil direct link dari properti "fileUrl"
+          try {
+            if (item.mediaUrl) {
+              const resFile = await axios.get(item.mediaUrl, {
+                headers: {
+                  'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36'
+                }
+              });
+              
+              // Jika response memiliki properti fileUrl, gunakan itu
+              if (resFile.data && resFile.data.fileUrl) {
+                finalDownloadUrl = resFile.data.fileUrl;
+              }
+            }
+          } catch (err) {
+            // Jika gagal mengambil fileUrl, fallback/tetap gunakan link asli bawaan
+            console.error("Gagal mendapatkan direct fileUrl:", err.message);
+          }
+
           result.audios.push({
             quality: item.mediaQuality || '-',
             size: item.mediaFileSize || '-',
             ext: item.mediaExtension || 'M4A',
-            url: item.mediaUrl
+            url: finalDownloadUrl // SEKARANG BERISI LINK DL.IAMWORKER.COM
           });
         }
-      });
+      }
     }
 
     return result;
@@ -57,11 +78,10 @@ async function ytdownDl(url) {
 }
 
 // ======================================================
-// ENDPOINT GET UTAMA (AUDIO ONLY)
+// ENDPOINT GET UTAMA (AUDIO ONLY - DIRECT DOWNLOAD)
 // ======================================================
 
 router.get("/", async (req, res) => {
-  // Menggunakan req.query.url sesuai permintaan
   const url = req.query.url;
 
   if (!url) {
@@ -83,7 +103,7 @@ router.get("/", async (req, res) => {
       creator: "Arulzxd",
       result,
       metadata: {
-        source: "YouTube - Ytmp3",
+        source: "YouTube - Ytmp3 (Direct Link)",
         timestamp: new Date().toISOString()
       }
     });
