@@ -1,59 +1,55 @@
 const express = require('express');
 const router = express.Router();
-const ytdl = require('@distube/ytdl-core');
+const { youtube } = require('@vreden/youtube_scraper');
 
+// Endpoint GET /api/download/ytmp3
 router.get("/", async (req, res) => {
   const url = req.query.url;
 
   if (!url) {
     return res.status(400).json({
       status: false,
-      message: "Parameter 'url' wajib diisi!"
+      message: "Parameter 'url' wajib diisi! Contoh: ?url=https://www.youtube.com/watch?v=J1TFFzbCIiM"
     });
   }
 
   try {
-    // Validasi apakah URL tersebut merupakan tautan YouTube yang benar
-    if (!ytdl.validateURL(url)) {
-      return res.status(400).json({ status: false, message: "URL YouTube tidak valid!" });
-    }
+    // Eksekusi scraper langsung menggunakan URL murni
+    const data = await youtube(url.trim());
 
-    // Ambil metadata info video langsung dari YouTube
-    const info = await ytdl.getInfo(url);
-    
-    // Cari format yang hanya audio (audioonly) dengan kualitas terbaik yang tersedia
-    const audioFormat = ytdl.chooseFormat(info.formats, { filter: 'audioonly', quality: 'highestaudio' });
-
-    if (!audioFormat || !audioFormat.url) {
-      throw new Error("Gagal mendapatkan format audio dari video ini.");
+    if (!data || !data.mp3) {
+      throw new Error("Gagal mengekstrak format MP3 dari video ini.");
     }
 
     return res.status(200).json({
       status: true,
       creator: "Arulzxd",
       result: {
-        title: info.videoDetails.title,
-        thumbnail: info.videoDetails.thumbnails[0]?.url || null,
-        uploader: info.videoDetails.author.name,
-        duration: info.videoDetails.lengthSeconds,
-        viewCount: info.videoDetails.viewCount,
-        uploadDate: info.videoDetails.uploadDate,
+        title: data.title || "YouTube Audio Download",
+        thumbnail: data.thumbnail || null,
+        uploader: data.author || "Unknown",
+        duration: data.duration || "N/A",
+        viewCount: null,
+        uploadDate: null,
         type: 'mp3',
-        quality: '128', 
-        downloadUrl: audioFormat.url, // URL audio mentah langsung dari Google Video Server
-        filename: `${info.videoDetails.title.replace(/[/\\?%*:|"<>]/g, '-')}.mp3`
+        quality: '128', // Kualitas standar dari hasil stream scraper
+        downloadUrl: data.mp3, // Link download MP3 langsung siap pakai
+        filename: `${(data.title || 'audio').replace(/[/\\?%*:|"<>]/g, '-')}.mp3`
       },
       metadata: {
-        source: "YouTube Native Scraper",
+        source: "YouTube - Vreden Scraper Direct",
         timestamp: new Date().toISOString()
       }
     });
   } catch (error) {
-    console.error("LOG SC_ERROR:", error.message);
+    // Log error asli ke console Vercel untuk mempermudah monitoring
+    console.error("LOG ERROR VREDEN_YTMP3:", error.message);
+
     return res.status(500).json({
       status: false,
-      message: "Gagal memproses audio YouTube.",
-      error_detail: error.message
+      message: "Gagal memproses atau mengonversi audio YouTube.",
+      error_detail: error.message,
+      timestamp: new Date().toISOString()
     });
   }
 });
