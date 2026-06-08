@@ -28,7 +28,7 @@ const playlist = [
   {
     title: "TANPO HUBUNGAN",
     artist: "LA TASYA",
-    cover: "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=300&auto=format&fit=crop",
+    cover: "https://i.ytimg.com/vi/1gRZjdf02bo/hq720.jpg",
     url: "https://files.catbox.moe/xd5oq3.mp3"
   },
   {
