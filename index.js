@@ -10,11 +10,11 @@ app.use(express.json());
 /*
 For setting API name etc
 */
-const title = "API-ARULZXD - REST";
+const title = "API Arulz-XD";
 const favicon = "https://arulz-uploader.vercel.app/files/C5VYmq.jpg";
 const logo = "https://arulz-uploader.vercel.app/files/SnhJe3.png";
-const headertitle = "API Arulz-XD";
-const headerdescription = "Browse, inspect & fire requests against live endpoints._";
+const headertitle = "REST API ARULZ XD ";
+const headerdescription = "Kumpulan API Endpoint yang mungkin berguna.";
 const footer = "© Arulz-XD";
 
 // === KONFIGURASI PLAYLIST BANYAK MUSIK ===
@@ -29,13 +29,112 @@ const playlist = [
     title: "TANPO HUBUNGAN",
     artist: "LA TASYA",
     cover: "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=300&auto=format&fit=crop",
-    url: "https://files.catbox.moe/gfuwnv.mp3"
+    url: "https://files.catbox.moe/xd5oq3.mp3"
+  },
+  {
+    title: "DJ CIDRO 2",
+    artist: "TIDAK DIKETAHUI",
+    cover: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=300&auto=format&fit=crop",
+    url: "https://files.catbox.moe/u30w9k.mp3"
   }
 ];
 
+const router = express.Router();
+const apiPath = path.join(__dirname, 'api');
+const endpointDirs = fs.readdirSync(apiPath).filter(f => fs.statSync(path.join(apiPath, f)).isDirectory());
+
+for (const category of endpointDirs) {
+  const categoryPath = path.join(apiPath, category);
+  const files = fs.readdirSync(categoryPath).filter(f => f.endsWith('.js'));
+  for (const file of files) {
+    const routeName = path.basename(file, '.js');
+    const route = require(path.join(categoryPath, file));
+    router.use(`/${category}/${routeName}`, route);
+  }
+}
+
+function getEndpointsFromRouter(category, file) {
+  const endpoints = [];
+  const route = require(path.join(apiPath, category, file));
+  const subRouter = route.stack ? route : route.router || route;
+  if (!subRouter || !subRouter.stack) return endpoints;
+  subRouter.stack.forEach(layer => {
+    if (layer.route) {
+      const methods = Object.keys(layer.route.methods).map(m => m.toUpperCase());
+      let params = {};
+      if (layer.route.stack && layer.route.stack.length) {
+        layer.route.stack.forEach(mw => {
+          const fnString = mw.handle.toString();
+          [...fnString.matchAll(/req\.query\.([a-zA-Z0-9_]+)/g)].forEach(match => {
+            params[match[1]] = "";
+          });
+          [...fnString.matchAll(/req\.body\.([a-zA-Z0-9_]+)/g)].forEach(match => {
+            params[match[1]] = "";
+          });
+        });
+      }
+      endpoints.push({
+        name: `/${category}/${file.replace(/\.js$/,"")}`,
+        path: `/api/${category}/${file.replace(/\.js$/,"")}`,
+        desc: `/${category}/${file.replace(/\.js$/,"")}`,
+        status: "ready",
+        params,
+        methods
+      });
+    }
+  });
+  return endpoints;
+}
+
+router.get('/apilist', (req, res) => {
+  const categories = [];
+
+  for (const category of endpointDirs) {
+    const files = fs.readdirSync(path.join(apiPath, category)).filter(f => f.endsWith('.js'));
+    const endpoints = [];
+    for (const file of files) {
+      endpoints.push(...getEndpointsFromRouter(category, file));
+    }
+    if (endpoints.length) {
+      categories.push({
+        name: `${category.toUpperCase()}`,
+        items: endpoints
+      });
+    }
+  }
+
+  categories.push({
+    name: "OTHER",
+    items: [
+      {
+        name: "/apilist",
+        path: "/api/apilist",
+        desc: "/apilist",
+        status: "ready",
+        params: {},
+        methods: ["GET"]
+      }
+    ]
+  });
+
+  res.json({ categories });
+});
+
+app.use('/api', router);
+
+app.get('/script.js', (req, res) => {
+  res.sendFile(path.join(__dirname, 'script.js'));
+});
+app.get('/linkbio.json', (req, res) => {
+  res.sendFile(path.join(__dirname, 'linkbio.json'));
+});
+app.get('/styles.css', (req, res) => {
+  res.sendFile(path.join(__dirname, 'styles.css'));
+});
+
 app.get('/', (req, res) => {
     res.send(`<!DOCTYPE html>
-<html lang="id" class="notranslate" translate="no">
+<html lang="en" class="notranslate" translate="no">
 <head>
     <meta charset="UTF-8" />
     <meta name="google" content="notranslate" />
@@ -43,139 +142,353 @@ app.get('/', (req, res) => {
     <title>${title}</title>
     <link id="faviconLink" rel="icon" type="image/x-icon" href="${favicon}">
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css" />
+    
     <style>
+        /* == Unified Light Base for Multi-Themes == */
         body {
-            transition: background-color 0.5s ease, color 0.3s ease;
+            transition: background 0.25s ease, color 0.25s ease;
+            color: #0f172a !important; /* Default dark text for all themes */
+        }
+
+        /* Fixed Top Gradient Bar that changes per theme */
+        #themeTopGradient {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 120px; /* Specific area to change gradient as per image description */
+            z-index: 0;
+            transition: background 0.5s ease;
+        }
+
+        /* --- Default Glass Panel (Base style is light) --- */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.9) !important;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            border: 1px solid rgba(15, 23, 42, 0.12) !important;
+            will-change: transform, opacity;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03) !important;
+        }
+
+        /* --- Core Element Colors for Base Light Look --- */
+        #mainTitle { color: #0f172a !important; }
+        #mainDescription { color: #334155 !important; }
+        #stat-battery-title,
+        #stat-endpoints-title,
+        #stat-categories-title { color: #475569 !important; }
+        #siteFooter { color: #64748b !important; border-color: rgba(0,0,0,0.1); }
+        #no-results-title { color: #0f172a !important; }
+
+        /* Music Player Core in Light Look */
+        .music-player-card {
+            background: rgba(255, 255, 255, 0.85) !important;
+            border-color: rgba(0, 0, 0, 0.12) !important;
+        }
+        .music-text-title { color: #0f172a !important; }
+        .music-text-artist { color: #475569 !important; }
+        .music-progress-bar-bg { background-color: rgba(0,0,0,0.1) !important; }
+        
+        .music-btn-nav {
+            background-color: rgba(255, 255, 255, 0.9) !important;
+            border-color: rgba(0,0,0,0.12) !important;
+            color: #1e293b !important;
+        }
+        .music-btn-nav:hover {
+            background-color: #f1f5f9 !important;
+            color: #0f172a !important;
+        }
+
+        /* Social Badges Core Light Look */
+        .social-badge > div {
+            px-4 py-2 rounded-xl text-xs font-bold transition-colors text-center border
+            bg-white/80 text-slate-900 hover:bg-slate-100 border-black/10 shadow-sm
         }
         
-        /* Definisi Gradasi Background Tema Utama */
-        .bg-theme-biru   { background: linear-gradient(135deg, #0f172a 0%, #0284c7 100%); }
-        .bg-theme-merah  { background: linear-gradient(135deg, #18000a 0%, #be123c 100%); }
-        .bg-theme-kuning { background: linear-gradient(135deg, #1e1b4b 0%, #d97706 100%); }
-        .bg-theme-hijau  { background: linear-gradient(135deg, #022c22 0%, #059669 100%); }
-        .bg-theme-ungu   { background: linear-gradient(135deg, #1e1b4b 0%, #7c3aed 100%); }
-
-        /* Dialog Panel Style Sesuai Gambar */
-        .theme-dialog-panel {
+        /* Brutalist Toggle Language Switcher */
+        .lang-btn {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: bold;
+            padding: 3px 10px;
+            border: 2px solid #000000;
             background-color: #ffffff;
-            border-radius: 24px;
-            width: 100%;
-            max-width: 400px;
-            padding: 24px;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
-            position: relative;
+            color: #000000;
+            transition: all 0.15s ease;
         }
-        .theme-item-row {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            padding: 14px 0;
-            border-bottom: 1px dashed #e2e8f0;
-            cursor: pointer;
+        .lang-btn.active {
+            background-color: #0f172a;
+            color: #ffffff;
+            box-shadow: 2px 2px 0px #000000;
+        }
+
+        /* Filter Buttons Style */
+        .filter-btn {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            padding: 6px 12px;
+            border: 1px solid rgba(0,0,0,0.15);
+            background: rgba(0,0,0,0.04);
+            color: #334155;
             transition: all 0.2s ease;
-        }
-        .theme-item-row:last-child {
-            border-bottom: none;
-        }
-        .theme-item-row:hover {
-            opacity: 0.8;
-            transform: translateX(4px);
-        }
-        .theme-swatch {
-            width: 75px;
-            height: 32px;
             border-radius: 8px;
-            flex-shrink: 0;
+            white-space: nowrap;
+            cursor: pointer;
         }
-        /* Swatch Warna di Dalam Modal */
-        .swatch-biru   { background: linear-gradient(to right, #0ea5e9, #0284c7); }
-        .swatch-merah  { background: linear-gradient(to right, #e11d48, #be123c); }
-        .swatch-kuning { background: linear-gradient(to right, #f59e0b, #d97706); }
-        .swatch-hijau  { background: linear-gradient(to right, #10b981, #059669); }
-        .swatch-ungu   { background: linear-gradient(to right, #8b5cf6, #7c3aed); }
+        .filter-btn:hover {
+            background: rgba(0,0,0,0.08);
+        }
+        .filter-btn.active {
+            background-color: #0f172a !important;
+            color: #ffffff !important;
+            border-color: #0f172a !important;
+            font-weight: bold;
+        }
+
+        /* --- THEME VARIATIONS (Backgrounds and Top Gradients) --- */
+        /* Change overall bg and fixed top gradient */
+        
+        /* Biru (Asli) - Base Lightish Blue */
+        .theme-biru { background-color: #f0f9ff; }
+        .theme-biru #themeTopGradient { background: linear-gradient(to right, #7dd3fc, #0ea5e9); }
+        
+        /* Merah - Lightish Red-Pink like target image */
+        .theme-merah { background-color: #fff1f2; }
+        .theme-merah #themeTopGradient { background: linear-gradient(to right, #fecdd3, #ec4899); }
+        
+        /* Kuning - Lightish Orange/Amber */
+        .theme-kuning { background-color: #fffbeb; }
+        .theme-kuning #themeTopGradient { background: linear-gradient(to right, #fde68a, #f59e0b); }
+        
+        /* Hijau - Lightish Emerald/Teal */
+        .theme-hijau { background-color: #ecfdf5; }
+        .theme-hijau #themeTopGradient { background: linear-gradient(to right, #a7f3d0, #10b981); }
+        
+        /* Ungu - Lightish Violet/Indigo */
+        .theme-ungu { background-color: #f5f3ff; }
+        .theme-ungu #themeTopGradient { background: linear-gradient(to right, #ddd6fe, #8b5cf6); }
+
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="text-slate-100 min-h-screen relative font-sans antialiased selection:bg-cyan-500 selection:text-white">
+<body class="min-h-screen antialiased text-slate-900 relative theme-biru">
 
-    <div id="themeBg" class="fixed inset-0 bg-theme-biru z-0 transition-all duration-700 ease-in-out"></div>
+    <div id="themeTopGradient"></div>
 
-    <div class="relative z-10 max-w-4xl mx-auto px-4 py-8 flex flex-col min-h-screen justify-between">
+    <div id="toast" class="toast z-50">
+        <div class="flex items-center gap-3">
+            <svg id="toastIcon" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+            </svg>
+            <span id="toastMessage" class="font-medium">Action completed</span>
+        </div>
+    </div>
+
+    <div class="fixed top-6 right-6 z-40">
+        <button id="bioMenuBtn" class="flex items-center justify-center w-12 h-12 rounded-xl glass-panel text-slate-700 hover:text-slate-900 shadow-lg transition-all active:scale-95 focus:outline-none">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+        </button>
+    </div>
+
+    <div id="bioDropdown" class="fixed top-0 right-0 h-full w-72 bg-white/95 backdrop-blur-lg border-l border-slate-200 transform translate-x-full transition-transform duration-300 ease-in-out z-50 shadow-2xl flex flex-col p-6 font-['Space_Grotesk'] overflow-y-auto">
         
-        <header class="text-center mb-8 relative">
-            <button id="bioMenuBtn" class="absolute left-0 top-0 p-2 bg-white/10 hover:bg-white/20 rounded-xl transition backdrop-blur-md">
-                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-                </svg>
-            </button>
-            <div class="inline-block p-1 bg-white/10 rounded-full backdrop-blur-md shadow-xl mb-4 animate-bounce">
-                <img src="${logo}" alt="Logo" class="w-20 h-20 rounded-full border-2 border-white/20 object-cover" />
+        <div class="flex items-center justify-between mb-8">
+            <div class="flex gap-0 border border-black p-0.5 bg-white">
+                <button id="lang-id" class="lang-btn active" onclick="setLanguage('id')">ID</button>
+                <button id="lang-en" class="lang-btn" onclick="setLanguage('en')">EN</button>
             </div>
-            <h1 class="text-3xl font-black tracking-tight mb-2 bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-200 to-slate-400 drop-shadow-sm">${headertitle}</h1>
-            <p class="text-sm text-slate-300 font-medium max-w-md mx-auto leading-relaxed opacity-90">${headerdescription}</p>
-        </header>
+            
+            <div class="flex items-center gap-2">
+                <div class="flex items-center justify-center w-8 h-8 border border-slate-300 bg-slate-100 rounded-lg">
+                    <div id="currentThemeIcon" class="w-4 h-4 rounded-full bg-cyan-400"></div>
+                </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div class="md:col-span-2 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 flex flex-col justify-between min-h-[140px]">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Server Status</p>
-                        <h3 class="text-lg font-black text-emerald-400 flex items-center gap-2">
-                            <span class="flex h-2 w-2 relative">
-                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                            </span>
-                            OPERATIONAL
-                        </h3>
-                    </div>
-                </div>
-                <div class="grid grid-cols-3 gap-2 text-center mt-4 pt-4 border-t border-white/5">
-                    <div>
-                        <p class="text-[10px] text-slate-400 font-bold uppercase">Total</p>
-                        <p id="stat-total" class="text-sm font-black text-white">-</p>
-                    </div>
-                    <div>
-                        <p class="text-[10px] text-slate-400 font-bold uppercase">Categories</p>
-                        <p id="stat-categories" class="text-sm font-black text-cyan-400">-</p>
-                    </div>
-                    <div>
-                        <p class="text-[10px] text-slate-400 font-bold uppercase">Battery</p>
-                        <p id="stat-battery" class="text-sm font-black text-amber-400">-</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 flex flex-col justify-between min-h-[140px]">
-                <div class="flex items-center gap-3">
-                    <img id="music-cover" src="${playlist[0].cover}" class="w-12 h-12 rounded-xl object-cover shadow-md border border-white/10" />
-                    <div class="min-w-0 flex-1">
-                        <p id="music-title" class="text-xs font-bold text-white truncate">${playlist[0].title}</p>
-                        <p id="music-artist" class="text-[10px] text-slate-400 truncate mt-0.5">${playlist[0].artist}</p>
-                    </div>
-                </div>
-                <div class="flex items-center justify-between gap-2 mt-2">
-                    <button id="prevBtn" class="p-1.5 text-slate-400 hover:text-white transition">
-                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
-                    </button>
-                    <button id="playBtn" class="p-2 bg-cyan-500 hover:bg-cyan-400 text-white rounded-full transition shadow-md shadow-cyan-500/20">
-                        <svg id="playIcon" class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                    </button>
-                    <button id="nextBtn" class="p-1.5 text-slate-400 hover:text-white transition">
-                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6zm9-12v12h2V6z"/></svg>
-                    </button>
-                </div>
+                <button id="closeMenuBtn" class="text-slate-700 hover:text-red-500 transition-colors p-1.5 border border-slate-300 rounded bg-slate-100">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
             </div>
         </div>
 
-        <div class="mb-8 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 shadow-2xl">
+        <nav class="flex flex-col gap-5 text-sm font-bold tracking-wider uppercase text-slate-700">
+            <a href="#api" class="menu-link hover:text-cyan-700 transition-colors flex items-center gap-2">HOME</a>
+            <a href="#apiList" class="menu-link hover:text-cyan-700 transition-colors flex items-center gap-2">DOCUMENTATION</a>
+            <a href="#" class="menu-link hover:text-cyan-700 transition-colors flex items-center gap-2">FILE UPLOADER</a>
+            <a href="#" class="menu-link hover:text-cyan-700 transition-colors flex items-center gap-2">PASTEBIN</a>
+            <hr class="border-slate-200 my-2">
+            <a href="#" class="menu-link hover:text-cyan-700 transition-colors flex items-center gap-2 text-xs opacity-80">BUG REPORT</a>
+            <a href="#" class="menu-link hover:text-cyan-700 transition-colors flex items-center gap-2 text-xs opacity-80">PRIVACY POLICY</a>
+        </nav>
+
+        <div class="mt-8">
+            <h3 id="themeTitle" class="text-sm font-bold uppercase tracking-wider text-slate-500 mb-5">Tema</h3>
+            <div id="themeListContainer" class="flex flex-col gap-4">
+                
+                <button type="button" onclick="setTheme('biru')" class="theme-option flex gap-3 p-1 rounded-lg hover:bg-slate-100 transition-colors">
+                    <div class="w-16 h-8 rounded-full bg-cyan-500 border border-black shadow-inner flex-shrink-0"></div>
+                    <div class="text-left flex-1">
+                        <h4 id="themeTitle_biru" class="text-sm font-bold">Biru (Asli)</h4>
+                        <p id="themeDesc_biru" class="text-xs text-slate-600 font-semibold mt-0.5">Ubah gradasi area atas</p>
+                    </div>
+                </button>
+
+                <button type="button" onclick="setTheme('merah')" class="theme-option flex gap-3 p-1 rounded-lg hover:bg-slate-100 transition-colors">
+                    <div class="w-16 h-8 rounded-full bg-pink-500 border border-black shadow-inner flex-shrink-0"></div>
+                    <div class="text-left flex-1">
+                        <h4 id="themeTitle_merah" class="text-sm font-bold">Merah</h4>
+                        <p id="themeDesc_merah" class="text-xs text-slate-600 font-semibold mt-0.5">Ubah gradasi area atas</p>
+                    </div>
+                </button>
+
+                <button type="button" onclick="setTheme('kuning')" class="theme-option flex gap-3 p-1 rounded-lg hover:bg-slate-100 transition-colors">
+                    <div class="w-16 h-8 rounded-full bg-amber-500 border border-black shadow-inner flex-shrink-0"></div>
+                    <div class="text-left flex-1">
+                        <h4 id="themeTitle_kuning" class="text-sm font-bold">Kuning</h4>
+                        <p id="themeDesc_kuning" class="text-xs text-slate-600 font-semibold mt-0.5">Ubah gradasi area atas</p>
+                    </div>
+                </button>
+
+                <button type="button" onclick="setTheme('hijau')" class="theme-option flex gap-3 p-1 rounded-lg hover:bg-slate-100 transition-colors">
+                    <div class="w-16 h-8 rounded-full bg-emerald-500 border border-black shadow-inner flex-shrink-0"></div>
+                    <div class="text-left flex-1">
+                        <h4 id="themeTitle_hijau" class="text-sm font-bold">Hijau</h4>
+                        <p id="themeDesc_hijau" class="text-xs text-slate-600 font-semibold mt-0.5">Ubah gradasi area atas</p>
+                    </div>
+                </button>
+
+                <button type="button" onclick="setTheme('ungu')" class="theme-option flex gap-3 p-1 rounded-lg hover:bg-slate-100 transition-colors">
+                    <div class="w-16 h-8 rounded-full bg-violet-500 border border-black shadow-inner flex-shrink-0"></div>
+                    <div class="text-left flex-1">
+                        <h4 id="themeTitle_ungu" class="text-sm font-bold">Ungu</h4>
+                        <p id="themeDesc_ungu" class="text-xs text-slate-600 font-semibold mt-0.5">Ubah gradasi area atas</p>
+                    </div>
+                </button>
+
+            </div>
+        </div>
+
+        <div class="mt-8 flex-1">
+            <h3 class="text-[10px] font-bold tracking-widest uppercase mb-3 text-slate-500 code-font">DYNAMIC LINK BIO</h3>
+            <div id="socialContainer" class="flex flex-col gap-2">
+                <div id="socialLoading" class="text-center py-2 w-full"><p class="text-xs text-slate-500">Loading...</p></div>
+                <div id="socialError" class="text-center py-2 w-full hidden"><p class="text-[10px] text-red-500">Link bio tidak tersedia.</p></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="menuOverlay" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden z-30 transition-opacity duration-300"></div>
+
+    <div class="max-w-5xl mx-auto px-4 py-8 relative z-10">
+        <header id="api" class="mb-12 text-center">
+            <div class="flex items-center justify-center gap-3 mb-2">
+                <span class="bg-cyan-100 text-cyan-700 border border-cyan-300 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest animate-pulse">● ONLINE</span>
+            </div>
+            <h1 id="mainTitle" class="text-5xl md:text-6xl font-black mb-4 tracking-tight font-['Space_Grotesk'] text-white">${headertitle}</h1>
+            <p id="mainDescription" class="text-md md:text-lg font-medium tracking-wide text-slate-300 max-w-xl mx-auto">${headerdescription}</p>
+            
+            <div class="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto">
+                <div class="glass-panel flex flex-col items-center justify-center p-4 rounded-xl shadow-lg">
+                    <span id="stat-battery-title" class="text-xs font-bold uppercase tracking-wider text-slate-600">Baterai Anda</span>
+                    <div class="flex items-center gap-3 mt-2">
+                        <div id="batteryContainer" class="battery-container border border-slate-400">
+                            <div id="batteryLevel" class="battery-level bg-green-500" style="width: 0%"></div>
+                            <div class="battery-tip"></div>
+                        </div>
+                        <div class="text-left">
+                            <span id="batteryPercentage" class="text-lg font-bold block leading-none text-slate-900">0%</span>
+                            <span id="batteryStatus" class="text-[10px] uppercase text-slate-500 font-medium">Mendeteksi...</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="glass-panel flex flex-col items-center justify-center p-4 rounded-xl shadow-lg">
+                    <span id="stat-endpoints-title" class="text-xs font-bold uppercase tracking-wider text-slate-600">Total Endpoint</span>
+                    <span id="totalEndpoints" class="text-3xl font-black text-cyan-600 mt-1">0</span>
+                </div>
+                
+                <div class="glass-panel flex flex-col items-center justify-center p-4 rounded-xl shadow-lg">
+                    <span id="stat-categories-title" class="text-xs font-bold uppercase tracking-wider text-slate-600">Total Kategori</span>
+                    <span id="totalCategories" class="text-3xl font-black text-cyan-600 mt-1">0</span>
+                </div>
+            </div>
+
+            <div class="glass-panel max-w-3xl mx-auto mt-4 p-3 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-3 border border-slate-300 shadow">
+    <div class="flex items-center gap-2 text-sm text-cyan-700 code-font">
+        <span>🔗</span> <span class="underline break-all font-semibold">https://simple-api-lagi.vercel.app/</span>
+    </div>
+    <a href="https://wa.me/6285122629940?text=Halo%20Arulz,%20saya%20ingin%20request%20fitur%20baru%20di%20REST%20API%20:" 
+       target="_blank" 
+       class="w-full sm:w-auto px-6 py-2 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs uppercase rounded-lg shadow transition-all active:scale-95 text-center flex items-center justify-center">
+        + Request New Feature
+    </a>
+</div>
+
+<div class="flex justify-center gap-4 mt-4 max-w-3xl mx-auto">
+    <a href="https://wa.me/6285122629940?text=Halo%20Arulz,%20boleh%20minta%20link%20Channel%20kamu%3F" 
+       target="_blank" 
+       class="flex-1 glass-panel py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-slate-100 transition-colors text-slate-700 text-center block">
+       💬 Channel
+    </a>
+    <a href="https://wa.me/6285122629940?text=Halo%20Arulz,%20boleh%20minta%20link%20Group%20kamu%3F" 
+       target="_blank" 
+       class="flex-1 glass-panel py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-slate-100 transition-colors text-slate-700 text-center block">
+       👥 Group
+    </a>
+</div>
+
+            <div class="music-player-card glass-panel mt-8 max-w-2xl mx-auto rounded-2xl p-4 shadow-2xl relative overflow-hidden border border-slate-200">
+                <audio id="audioElement"></audio>
+                <div class="flex items-center justify-between gap-4">
+                    <div class="flex items-center gap-4 flex-1 min-w-0">
+                        <div class="relative w-16 h-16 rounded-xl overflow-hidden bg-black flex-shrink-0 border border-slate-200/50">
+                            <img id="musicCoverImg" src="" alt="Cover" class="w-full h-full object-cover transition-transform duration-500">
+                        </div>
+                        <div class="flex-1 min-w-0 text-left">
+                            <h3 id="musicTitle" class="music-text-title text-slate-950 font-bold text-sm tracking-wider uppercase truncate m-0">Loading...</h3>
+                            <p id="musicArtist" class="music-text-artist text-slate-600 text-xs font-semibold tracking-wide truncate mt-0.5">-</p>
+                            <div class="flex items-center gap-2 mt-2">
+                                <span id="currentTime" class="text-[10px] text-slate-500 code-font w-7 text-left">0:00</span>
+                                <div id="progressContainer" class="music-progress-bar-bg flex-1 h-1 bg-black/10 rounded-full relative cursor-pointer group">
+                                    <div id="progressBar" class="h-full bg-cyan-600 rounded-full w-0 transition-all duration-300"></div>
+                                </div>
+                                <span id="totalDuration" class="text-[10px] text-slate-500 code-font w-7 text-right">0:00</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-1.5 flex-shrink-0">
+                        <button id="prevBtn" class="music-btn-nav w-9 h-9 flex items-center justify-center glass-panel rounded-xl transition-all active:scale-95 text-slate-700 hover:text-slate-950 hover:bg-slate-100">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+                        </button>
+                        <button id="playBtn" class="music-btn-nav w-10 h-10 flex items-center justify-center glass-panel rounded-xl transition-all active:scale-95 text-slate-700 hover:text-slate-950 hover:bg-slate-100">
+                            <svg id="playIcon" class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                        </button>
+                        <button id="nextBtn" class="music-btn-nav w-9 h-9 flex items-center justify-center glass-panel rounded-xl transition-all active:scale-95 text-slate-700 hover:text-slate-950 hover:bg-slate-100">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M16 6h2v12h-2zm-10.5 12l8.5-6-8.5-6z"/></svg>
+                        </button>
+                        <button id="playlistToggleBtn" class="music-btn-nav w-9 h-9 flex items-center justify-center glass-panel rounded-xl transition-all active:scale-95 text-slate-700 hover:text-slate-950 hover:bg-slate-100">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <div id="playlistPanel" class="music-playlist-border hidden mt-4 pt-4 border-t border-slate-200 max-h-40 overflow-y-auto space-y-1"></div>
+            </div>
+        </header>
+
+        <div class="mb-8">
             <div class="relative">
                 <input 
                     type="text" 
                     id="searchInput" 
-                    placeholder="Cari endpoint API..." 
-                    class="w-full bg-black/20 border border-white/10 rounded-xl py-3 pl-5 pr-12 text-sm text-white placeholder-slate-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition shadow-inner"
+                    placeholder="Cari endpoint berdasarkan nama, path, atau kategori..."
+                    class="search-input w-full px-4 py-3 text-sm rounded-xl focus:outline-none transition-all code-font glass-panel text-slate-900 placeholder-slate-500 focus:border-cyan-600 shadow"
                 >
-                <svg class="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                 </svg>
             </div>
@@ -184,111 +497,29 @@ app.get('/', (req, res) => {
 
         <div id="noResults" class="text-center py-12 hidden">
             <div class="text-4xl mb-2">🔍</div>
-            <h3 class="text-sm font-bold mb-1 text-white">Endpoint tidak ditemukan</h3>
-            <p class="text-xs text-slate-400">Coba gunakan kata kunci lain</p>
+            <h3 id="no-results-title" class="text-sm font-bold mb-1 text-slate-900">Endpoint tidak ditemukan</h3>
+            <p id="no-results-desc" class="text-xs text-slate-500">Coba gunakan kata kunci lain</p>
         </div>
 
         <div id="apiList" class="space-y-4"></div>
 
-        <footer id="siteFooter" class="mt-12 pt-6 border-t border-white/10 text-center text-xs text-slate-400 font-medium">
-            <p>${footer}</p>
+        <footer id="siteFooter" class="mt-12 pt-6 border-t border-slate-200 text-center text-xs text-slate-500">
+            ${footer}
         </footer>
     </div>
-
-    <div id="menuOverlay" class="fixed inset-0 bg-black/60 z-40 hidden backdrop-blur-sm transition-opacity duration-300"></div>
-
-    <div id="bioDropdown" class="fixed top-0 left-0 h-full w-80 bg-slate-900/95 border-r border-white/10 z-50 p-6 shadow-2xl transform -translate-x-full transition-transform duration-300 flex flex-col justify-between backdrop-blur-xl">
-        <div>
-            <div class="flex justify-between items-center mb-8">
-                <h3 class="font-bold text-lg text-white">Main Menu</h3>
-                <button id="closeMenuBtn" class="p-2 text-slate-400 hover:text-white transition">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                </button>
-            </div>
-            
-            <nav class="space-y-2">
-                <button id="themeToggle" class="w-full flex items-center gap-3 px-4 py-3 bg-white/5 hover:bg-white/10 text-slate-200 hover:text-white rounded-xl transition text-left text-sm font-medium border border-white/5">
-                    <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/>
-                    </svg>
-                    <span>Ganti Warna Tema</span>
-                </button>
-            </nav>
-        </div>
-        <div class="text-xs text-slate-500 border-t border-white/10 pt-4">Dashboard V2.0</div>
-    </div>
-
-    <div id="themeModalOverlay" class="fixed inset-0 bg-black/70 z-50 hidden flex items-center justify-center p-4 backdrop-blur-md">
-        <div class="theme-dialog-panel transform scale-95 transition-all duration-300" id="themeDialog">
-            
-            <button id="closeThemeModal" class="absolute right-4 top-4 text-slate-400 hover:text-slate-600 z-10">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-            </button>
-
-            <h2 class="theme-panel-title text-slate-950 font-bold text-center text-lg mb-4">Tema</h2>
-
-            <div class="theme-item-row" data-theme="biru">
-                <div class="theme-swatch swatch-biru"></div>
-                <div>
-                    <p class="text-slate-900 font-bold text-sm">Biru (Asli)</p>
-                    <p class="text-slate-400 text-xs">Ubah gradasi area atas</p>
-                </div>
-            </div>
-
-            <div class="theme-item-row" data-theme="merah">
-                <div class="theme-swatch swatch-merah"></div>
-                <div>
-                    <p class="text-slate-900 font-bold text-sm">Merah</p>
-                    <p class="text-slate-400 text-xs">Ubah gradasi area atas</p>
-                </div>
-            </div>
-
-            <div class="theme-item-row" data-theme="kuning">
-                <div class="theme-swatch swatch-kuning"></div>
-                <div>
-                    <p class="text-slate-900 font-bold text-sm">Kuning</p>
-                    <p class="text-slate-400 text-xs">Ubah gradasi area atas</p>
-                </div>
-            </div>
-
-            <div class="theme-item-row" data-theme="hijau">
-                <div class="theme-swatch swatch-hijau"></div>
-                <div>
-                    <p class="text-slate-900 font-bold text-sm">Hijau</p>
-                    <p class="text-slate-400 text-xs">Ubah gradasi area atas</p>
-                </div>
-            </div>
-
-            <div class="theme-item-row" data-theme="ungu">
-                <div class="theme-swatch swatch-ungu"></div>
-                <div>
-                    <p class="text-slate-900 font-bold text-sm">Ungu</p>
-                    <p class="text-slate-400 text-xs">Ubah gradasi area atas</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        window.DASHBOARD_PLAYLIST = ${JSON.stringify(playlist)};
-    </script>
-    <script src="script.js"></script>
+<script class="notranslate" translate="no">
+    window.musicPlaylist = ${JSON.stringify(playlist)};
+</script>
+<script src="script.js"></script>
 </body>
-</html>`);
+</html>
+    `);
 });
 
-// Menambahkan API List Dummy agar dashboard bisa nge-load data dengan lancar
-app.get('/api/apilist', (req, res) => {
-    res.json([
-        { name: "Gemini AI Multi-Turn", category: "ai", endpoint: "/api/gemini", description: "Chat AI interaktif multi-turn" },
-        { name: "TikTok Video Downloader", category: "downloader", endpoint: "/api/tiktok", description: "Unduh video TikTok tanpa watermark" }
-    ]);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+  });
+}
 
-app.listen(PORT, () => {
-    console.log(`Server running at http://localhost:${PORT}`);
-});
+module.exports = app;
