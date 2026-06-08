@@ -32,10 +32,10 @@ const playlist = [
     url: "https://files.catbox.moe/xd5oq3.mp3"
   },
   {
-    title: "DJ CIDRO 2",
-    artist: "TIDAK DIKETAHUI",
-    cover: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=300&auto=format&fit=crop",
-    url: "https://files.catbox.moe/u30w9k.mp3"
+    title: "DENOK",
+    artist: "LA TASYA",
+    cover: "https://i.ytimg.com/vi/J1TFFzbCIiM/hq720.jpg",
+    url: "https://arulz-uploader.vercel.app/files/xlXr2L.mp3"
   }
 ];
 
