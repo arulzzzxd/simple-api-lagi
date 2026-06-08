@@ -333,6 +333,8 @@ app.get('/', (req, res) => {
             <a href="https://t.me/Arulzxd" target="_blank" class="menu-link hover:text-cyan-400 transition-colors flex items-center gap-2 text-xs opacity-80">OWNER (TELEGRAM)</a>
         </nav>
 
+        <div class="mt-8 flex-1 overflow-y-auto">
+            
 
     <div id="menuOverlay" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden z-30 transition-opacity duration-300"></div>
 
