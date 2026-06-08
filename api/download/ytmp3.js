@@ -50,9 +50,9 @@ async function savetube(link, quality, value) {
                 'Referer': 'https://save-tube.com/'
             }
         })).data;
-        
+
         const info = decode(infoget.data);
-        
+
         const response = (await axios.post('https://' + cdn + '/download', {
             'downloadType': value,
             'quality': `${quality}`,
@@ -64,11 +64,12 @@ async function savetube(link, quality, value) {
                 'Referer': 'https://save-tube.com/'
             }
         })).data;
-        
+
         return {
             status: true,
+            title: info.title || "YouTube Audio",
             url: response.data.downloadUrl,
-            filename: `${info.title} (${quality}kbps).mp3`,
+            filename: `${info.title || "audio"} (${quality}kbps).mp3`,
             durationRaw: info.duration 
         };
     } catch (error) {
@@ -110,7 +111,7 @@ router.get("/", async (req, res) => {
         const formatSaves = 128;
         const responseSaveTube = await savetube(cleanUrl, formatSaves, "audio");
 
-        if (!responseSaveTube.status || !responseSaveTube.url) {
+        if (!responseSaveTube || !responseSaveTube.status || !responseSaveTube.url) {
             return res.status(500).json({
                 status: false,
                 creator: "Arulzxd",
@@ -118,39 +119,42 @@ router.get("/", async (req, res) => {
             });
         }
 
-        // 2. Ambil Durasi Pas Sesuai Isi Link
-        const durationResult = format_duration(responseSaveTube.durationRaw);
-
-        // 3. PERBAIKAN UTAMA: Mencari metadata spesifik berdasarkan objek videoId (Bukan teks string URL)
-        let videoMeta = {};
+        // 2. PERBAIKAN UTAMA: Mencari metadata spesifik berdasarkan objek videoId
+        let videoMeta = null;
         try {
             videoMeta = await yts({ videoId: id });
         } catch (e) {
             console.error("yt-search videoId error:", e.message);
         }
 
-        // 4. Kembalikan Response Sukses (Data dijamin sinkron)
+        // 3. --- PROSES PERAPIAN DATA (DISAMAKAN DENGAN KODE YTPLAY) ---
+        const durationResult = format_duration(responseSaveTube.durationRaw);
+        const finalTitle = (videoMeta?.title || responseSaveTube.title || "YouTube Audio").trim();
+        const cleanTitle = finalTitle.replace(/[/\\?%*:|"<>]/g, '');
+        const formattedViews = videoMeta?.views ? videoMeta.views.toLocaleString('id-ID') : "0";
+
+        // 4. Kembalikan Response Sukses dengan Tampilan Struktur Sesuai Kode YTPLAY
         return res.status(200).json({
             status: true,
             creator: "Arulzxd",
             result: {
-                title: videoMeta.title || responseSaveTube.filename.replace(" (128kbps).mp3", ""),
-                duration: durationResult, 
-                thumbnail: videoMeta.thumbnail || `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
-                youtube_url: cleanUrl,
-                download_url: responseSaveTube.url,
-                filename: responseSaveTube.filename,
-                quality: "128kbps",
-                info: {
-                    author: videoMeta.author?.name || "Unknown",
-                    views: videoMeta.views || 0,
-                    uploaded: videoMeta.ago || "Unknown",
+                video: {
+                    id: id,
+                    title: finalTitle,
+                    author: videoMeta?.author?.name || "Unknown Channel",
+                    duration: durationResult,
+                    views: formattedViews,
+                    uploaded: videoMeta?.ago || "Unknown Date",
+                    thumbnail: videoMeta?.thumbnail || `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
+                    url: cleanUrl
+                },
+                download: {
+                    url: responseSaveTube.url,
+                    filename: `${cleanTitle} (${formatSaves}kbps).mp3`,
+                    quality: `${formatSaves}kbps`,
+                    type: "audio/mp3",
                     seconds_total: responseSaveTube.durationRaw || 0
                 }
-            },
-            metadata: {
-                source: "savetube.vip + yt-search (fixed id)",
-                timestamp: new Date().toISOString()
             }
         });
 
@@ -160,7 +164,7 @@ router.get("/", async (req, res) => {
         return res.status(500).json({
             status: false,
             creator: "Arulzxd",
-            message: "Terjadi kesalahan pada sistem internal!",
+            message: "Internal Server Error",
             error: err.message
         });
     }
