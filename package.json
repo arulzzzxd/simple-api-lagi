@@ -9,7 +9,6 @@
   },
   "dependencies": {
     "@google/genai": "^0.13.0",
-    "@distube/ytdl-core": "^4.15.9",
     "@vreden/youtube_scraper": "^1.2.9",
     "axios": "^1.10.0",
     "cheerio": "github:iyayn-ajah/cheerio",
