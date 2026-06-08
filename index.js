@@ -45,26 +45,26 @@ app.get('/', (req, res) => {
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="styles.css" />
     <style>
-        /* Base Smooth Transition & Theme Backgrounds */
         body {
             transition: background-color 0.5s ease, color 0.3s ease;
         }
         
-        /* Definisi Gradasi Background Tema */
+        /* Definisi Gradasi Background Tema Utama */
         .bg-theme-biru   { background: linear-gradient(135deg, #0f172a 0%, #0284c7 100%); }
         .bg-theme-merah  { background: linear-gradient(135deg, #18000a 0%, #be123c 100%); }
         .bg-theme-kuning { background: linear-gradient(135deg, #1e1b4b 0%, #d97706 100%); }
         .bg-theme-hijau  { background: linear-gradient(135deg, #022c22 0%, #059669 100%); }
         .bg-theme-ungu   { background: linear-gradient(135deg, #1e1b4b 0%, #7c3aed 100%); }
 
-        /* Custom Styles untuk Modal Tema sesuai Gambar */
+        /* Dialog Panel Style Sesuai Gambar */
         .theme-dialog-panel {
             background-color: #ffffff;
             border-radius: 24px;
             width: 100%;
-            max-width: 420px;
+            max-width: 400px;
             padding: 24px;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+            position: relative;
         }
         .theme-item-row {
             display: flex;
@@ -73,7 +73,7 @@ app.get('/', (req, res) => {
             padding: 14px 0;
             border-bottom: 1px dashed #e2e8f0;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.2s ease;
         }
         .theme-item-row:last-child {
             border-bottom: none;
@@ -83,12 +83,12 @@ app.get('/', (req, res) => {
             transform: translateX(4px);
         }
         .theme-swatch {
-            width: 70px;
-            height: 30px;
+            width: 75px;
+            height: 32px;
             border-radius: 8px;
             flex-shrink: 0;
         }
-        /* Swatches gradasi di dalam modal */
+        /* Swatch Warna di Dalam Modal */
         .swatch-biru   { background: linear-gradient(to right, #0ea5e9, #0284c7); }
         .swatch-merah  { background: linear-gradient(to right, #e11d48, #be123c); }
         .swatch-kuning { background: linear-gradient(to right, #f59e0b, #d97706); }
@@ -105,7 +105,7 @@ app.get('/', (req, res) => {
         <header class="text-center mb-8 relative">
             <button id="bioMenuBtn" class="absolute left-0 top-0 p-2 bg-white/10 hover:bg-white/20 rounded-xl transition backdrop-blur-md">
                 <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M4 6h16M4 12h16M4 18h16\"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
                 </svg>
             </button>
             <div class="inline-block p-1 bg-white/10 rounded-full backdrop-blur-md shadow-xl mb-4 animate-bounce">
@@ -114,6 +114,58 @@ app.get('/', (req, res) => {
             <h1 class="text-3xl font-black tracking-tight mb-2 bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-200 to-slate-400 drop-shadow-sm">${headertitle}</h1>
             <p class="text-sm text-slate-300 font-medium max-w-md mx-auto leading-relaxed opacity-90">${headerdescription}</p>
         </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div class="md:col-span-2 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 flex flex-col justify-between min-h-[140px]">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Server Status</p>
+                        <h3 class="text-lg font-black text-emerald-400 flex items-center gap-2">
+                            <span class="flex h-2 w-2 relative">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                            </span>
+                            OPERATIONAL
+                        </h3>
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-2 text-center mt-4 pt-4 border-t border-white/5">
+                    <div>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase">Total</p>
+                        <p id="stat-total" class="text-sm font-black text-white">-</p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase">Categories</p>
+                        <p id="stat-categories" class="text-sm font-black text-cyan-400">-</p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase">Battery</p>
+                        <p id="stat-battery" class="text-sm font-black text-amber-400">-</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 flex flex-col justify-between min-h-[140px]">
+                <div class="flex items-center gap-3">
+                    <img id="music-cover" src="${playlist[0].cover}" class="w-12 h-12 rounded-xl object-cover shadow-md border border-white/10" />
+                    <div class="min-w-0 flex-1">
+                        <p id="music-title" class="text-xs font-bold text-white truncate">${playlist[0].title}</p>
+                        <p id="music-artist" class="text-[10px] text-slate-400 truncate mt-0.5">${playlist[0].artist}</p>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between gap-2 mt-2">
+                    <button id="prevBtn" class="p-1.5 text-slate-400 hover:text-white transition">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+                    </button>
+                    <button id="playBtn" class="p-2 bg-cyan-500 hover:bg-cyan-400 text-white rounded-full transition shadow-md shadow-cyan-500/20">
+                        <svg id="playIcon" class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                    </button>
+                    <button id="nextBtn" class="p-1.5 text-slate-400 hover:text-white transition">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6zm9-12v12h2V6z"/></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
 
         <div class="mb-8 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 shadow-2xl">
             <div class="relative">
@@ -124,7 +176,7 @@ app.get('/', (req, res) => {
                     class="w-full bg-black/20 border border-white/10 rounded-xl py-3 pl-5 pr-12 text-sm text-white placeholder-slate-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition shadow-inner"
                 >
                 <svg class="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2\" d=\"M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z\"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                 </svg>
             </div>
             <div id="categoryFilters" class="flex flex-wrap gap-2 mt-4 justify-start md:justify-center overflow-x-auto pb-2 scrollbar-hide"></div>
@@ -132,8 +184,8 @@ app.get('/', (req, res) => {
 
         <div id="noResults" class="text-center py-12 hidden">
             <div class="text-4xl mb-2">🔍</div>
-            <h3 id="no-results-title" class="text-sm font-bold mb-1 text-white">Endpoint tidak ditemukan</h3>
-            <p id="no-results-desc" class="text-xs text-slate-400">Coba gunakan kata kunci lain</p>
+            <h3 class="text-sm font-bold mb-1 text-white">Endpoint tidak ditemukan</h3>
+            <p class="text-xs text-slate-400">Coba gunakan kata kunci lain</p>
         </div>
 
         <div id="apiList" class="space-y-4"></div>
@@ -145,7 +197,7 @@ app.get('/', (req, res) => {
 
     <div id="menuOverlay" class="fixed inset-0 bg-black/60 z-40 hidden backdrop-blur-sm transition-opacity duration-300"></div>
 
-    <div id="bioDropdown" class="fixed top-0 left-0 h-full w-80 bg-slate-900/95 border-r border-white/10 z-50 p-6 shadow-2xl transform -translate-x-full transition-transform duration-300 cubic-bezier(0.4, 0, 0.2, 1) flex flex-col justify-between backdrop-blur-xl">
+    <div id="bioDropdown" class="fixed top-0 left-0 h-full w-80 bg-slate-900/95 border-r border-white/10 z-50 p-6 shadow-2xl transform -translate-x-full transition-transform duration-300 flex flex-col justify-between backdrop-blur-xl">
         <div>
             <div class="flex justify-between items-center mb-8">
                 <h3 class="font-bold text-lg text-white">Main Menu</h3>
@@ -165,27 +217,24 @@ app.get('/', (req, res) => {
                 </button>
             </nav>
         </div>
-        
-        <div class="text-xs text-slate-500 border-t border-white/10 pt-4">
-            Dashboard Version 2.0
-        </div>
+        <div class="text-xs text-slate-500 border-t border-white/10 pt-4">Dashboard V2.0</div>
     </div>
 
     <div id="themeModalOverlay" class="fixed inset-0 bg-black/70 z-50 hidden flex items-center justify-center p-4 backdrop-blur-md">
         <div class="theme-dialog-panel transform scale-95 transition-all duration-300" id="themeDialog">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-slate-900 font-bold text-lg mx-auto">Tema</h2>
-                <button id="closeThemeModal" class="absolute right-4 top-4 text-slate-400 hover:text-slate-600">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                </button>
-            </div>
+            
+            <button id="closeThemeModal" class="absolute right-4 top-4 text-slate-400 hover:text-slate-600 z-10">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+
+            <h2 class="theme-panel-title text-slate-950 font-bold text-center text-lg mb-4">Tema</h2>
 
             <div class="theme-item-row" data-theme="biru">
                 <div class="theme-swatch swatch-biru"></div>
                 <div>
-                    <p class="text-slate-800 font-bold text-sm">Biru (Asli)</p>
+                    <p class="text-slate-900 font-bold text-sm">Biru (Asli)</p>
                     <p class="text-slate-400 text-xs">Ubah gradasi area atas</p>
                 </div>
             </div>
@@ -193,7 +242,7 @@ app.get('/', (req, res) => {
             <div class="theme-item-row" data-theme="merah">
                 <div class="theme-swatch swatch-merah"></div>
                 <div>
-                    <p class="text-slate-800 font-bold text-sm">Merah</p>
+                    <p class="text-slate-900 font-bold text-sm">Merah</p>
                     <p class="text-slate-400 text-xs">Ubah gradasi area atas</p>
                 </div>
             </div>
@@ -201,7 +250,7 @@ app.get('/', (req, res) => {
             <div class="theme-item-row" data-theme="kuning">
                 <div class="theme-swatch swatch-kuning"></div>
                 <div>
-                    <p class="text-slate-800 font-bold text-sm">Kuning</p>
+                    <p class="text-slate-900 font-bold text-sm">Kuning</p>
                     <p class="text-slate-400 text-xs">Ubah gradasi area atas</p>
                 </div>
             </div>
@@ -209,7 +258,7 @@ app.get('/', (req, res) => {
             <div class="theme-item-row" data-theme="hijau">
                 <div class="theme-swatch swatch-hijau"></div>
                 <div>
-                    <p class="text-slate-800 font-bold text-sm">Hijau</p>
+                    <p class="text-slate-900 font-bold text-sm">Hijau</p>
                     <p class="text-slate-400 text-xs">Ubah gradasi area atas</p>
                 </div>
             </div>
@@ -217,26 +266,29 @@ app.get('/', (req, res) => {
             <div class="theme-item-row" data-theme="ungu">
                 <div class="theme-swatch swatch-ungu"></div>
                 <div>
-                    <p class="text-slate-800 font-bold text-sm">Ungu</p>
+                    <p class="text-slate-900 font-bold text-sm">Ungu</p>
                     <p class="text-slate-400 text-xs">Ubah gradasi area atas</p>
                 </div>
             </div>
         </div>
     </div>
 
+    <script>
+        window.DASHBOARD_PLAYLIST = ${JSON.stringify(playlist)};
+    </script>
     <script src="script.js"></script>
 </body>
 </html>`);
 });
 
-// Endpoint dummy untuk kelancaran fetch dashboard Anda
+// Menambahkan API List Dummy agar dashboard bisa nge-load data dengan lancar
 app.get('/api/apilist', (req, res) => {
     res.json([
-        { name: "Gemini AI", category: "ai", endpoint: "/api/gemini", description: "Tanya jawab bersama AI" },
-        { name: "TikTok Downloader", category: "downloader", endpoint: "/api/tt", description: "Download video tanpa watermark" }
+        { name: "Gemini AI Multi-Turn", category: "ai", endpoint: "/api/gemini", description: "Chat AI interaktif multi-turn" },
+        { name: "TikTok Video Downloader", category: "downloader", endpoint: "/api/tiktok", description: "Unduh video TikTok tanpa watermark" }
     ]);
 });
 
 app.listen(PORT, () => {
-    console.log(`Server berjalan di http://localhost:\${PORT}`);
+    console.log(`Server running at http://localhost:${PORT}`);
 });
