@@ -1,185 +1,832 @@
 const BASE_URL = window.location.origin;
 let isRequestInProgress = false;
 let apiData = null;
+let currentLang = 'id';
+// New: Store the full name of current theme (biru, merah, kuning, hijau, ungu)
 let currentTheme = 'biru';
+let allApiElements = [];
+let totalEndpoints = 0;
+let totalCategories = 0;
+let batteryMonitor = null;
 let activeCategory = 'all';
 
-// Audio Player Settings
-let currentTrackIndex = 0;
-let isPlaying = false;
-const audio = new Audio();
-const playlist = window.DASHBOARD_PLAYLIST || [];
+// Pemetaan Ikon Kategori (SVG Hijau/Cyan untuk kontras di tema cerah)
+const categoryIcons = {
+    'ai': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-cyan-600"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73A2 2 0 1 1 12 2zm-2 10a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm4 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/></svg>',
+    'download': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-cyan-600"><path d="M12 16l-5-5h3V4h4v7h3l-5 5zm9 4H3v-2h18v2z"/></svg>',
+    'search': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-cyan-600"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>',
+    'image': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-cyan-600"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>',
+    'tools': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-cyan-600"><path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.1L9 6 6 9 1.8 4.7C.5 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z"/></svg>',
+    'maker': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-cyan-600"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>',
+    'stalker': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-cyan-600"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>',
+    'canvas': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-cyan-600"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>',
+    'security': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-cyan-600"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>',
+    'news': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-cyan-600"><path d="M21 3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 16H5V5h14v14zm-9-2h8v-2h-8v2zm0-4h8v-2h-8v2zm0-4h8V7h-8v2zm-4 8h2v-8H6v8z"/></svg>',
+    'random': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-cyan-600"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg>',
+    'islam': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-cyan-600"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg>',
+    'default': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-cyan-600"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>'
+};
 
-// Ambil element DOM asli Anda
-const bioMenuBtn = document.getElementById('bioMenuBtn');
-const bioDropdown = document.getElementById('bioDropdown');
-const closeMenuBtn = document.getElementById('closeMenuBtn');
-const menuOverlay = document.getElementById('menuOverlay');
-const themeBg = document.getElementById('themeBg');
-const themeToggleBtn = document.getElementById('themeToggle');
+// Map current theme name to the color used in the top simple icon in dropdown
+const themeIconColors = {
+    biru: '#0ea5e9', // cyan-500
+    merah: '#ec4899', // pink-500
+    kuning: '#f59e0b', // amber-500
+    hijau: '#10b981', // emerald-500
+    ungu: '#8b5cf6'  // violet-500
+};
 
-// Element Modal Baru
-const themeModalOverlay = document.getElementById('themeModalOverlay');
-const closeThemeModalBtn = document.getElementById('closeThemeModal');
-const themeDialog = document.getElementById('themeDialog');
-const themeRows = document.querySelectorAll('.theme-item-row');
+const i18n = {
+    id: {
+        searchPlaceholder: "Cari endpoint berdasarkan nama, path, atau kategori...",
+        noResultsTitle: "Endpoint tidak ditemukan",
+        noResultsDesc: "Coba gunakan kata kunci lain",
+        batteryTitle: "Baterai Anda",
+        endpointsTitle: "Total Endpoint",
+        categoriesTitle: "Total Kategori",
+        batteryDetecting: "Mendeteksi...",
+        batteryCharging: "Mengisi Daya",
+        batteryFull: "Penuh",
+        batteryDischarging: "Menguras Daya",
+        batteryLeft: "tersisa",
+        endpointsCount: "endpoints",
+        btnExecute: "Eksekusi",
+        btnClear: "Bersihkan",
+        toastMediaCopy: "Media URL disalin ke papan klip!",
+        toastMediaFail: "Gagal menyalin URL",
+        endpointNotAvailable: "⚠️ Endpoint ini tidak tersedia untuk pengujian",
+        toastRequestWait: "Harap tunggu permintaan saat ini selesai",
+        toastRequestSuccess: "Permintaan berhasil diselesaikan!",
+        toastRequestFailed: "Permintaan gagal!",
+        // New Theme Text (From image verbtim)
+        themeTitle: "Tema",
+        themeTitles: {
+            biru: "Biru (Asli)",
+            merah: "Merah",
+            kuning: "Kuning",
+            hijau: "Hijau",
+            ungu: "Ungu"
+        },
+        themeDesc: "Ubah gradasi area atas"
+    },
+    en: {
+        searchPlaceholder: "Search endpoints by name, path, or category...",
+        noResultsTitle: "No endpoints found",
+        noResultsDesc: "Try a different search term",
+        batteryTitle: "Your Battery",
+        endpointsTitle: "Total Endpoints",
+        categoriesTitle: "Total Categories",
+        batteryDetecting: "Detecting...",
+        batteryCharging: "Charging",
+        batteryFull: "Fully charged",
+        batteryDischarging: "Discharging",
+        batteryLeft: "left",
+        endpointsCount: "endpoints",
+        btnExecute: "Execute",
+        btnClear: "Clear",
+        toastMediaCopy: "Media URL copied to clipboard!",
+        toastMediaFail: "Failed to copy URL",
+        endpointNotAvailable: "⚠️ This endpoint is not available for testing",
+        toastRequestWait: "Please wait for current request",
+        toastRequestSuccess: "Request completed successfully!",
+        toastRequestFailed: "Request failed!",
+        // New Theme Text Translated
+        themeTitle: "Theme",
+        themeTitles: {
+            biru: "Original Blue",
+            merah: "Red",
+            kuning: "Yellow",
+            hijau: "Green",
+            ungu: "Purple"
+        },
+        themeDesc: "Change upper area gradient"
+    }
+};
 
-// Fungsi Sidebar Menu
-function closeSidebarMenu() {
-    if (bioDropdown && menuOverlay) {
-        bioDropdown.style.transform = 'translateX(-100%)';
-        menuOverlay.classList.add('hidden');
+// --- NEW MULTI-THEME MANAGEMENT FUNCTIONS ---
+
+// 1. Applies the theme classes to the body for background changes
+function applyTheme(themeName) {
+    // Replaces all previous theme classes on body with the new one
+    // Also ensures default text is dark for all these cerah themes
+    document.body.className = `min-h-screen antialiased text-slate-900 relative theme-${themeName}`;
+    
+    // Update the simple icon in dropdown header to match current theme
+    const icon = document.getElementById('currentThemeIcon');
+    if (icon) {
+        icon.style.backgroundColor = themeIconColors[themeName] || '#0ea5e9';
     }
 }
 
-// Fungsi Modal Pilihan Tema
-function openThemeModal() {
-    closeSidebarMenu(); // Tutup sidebar dulu biar bersih
-    if (themeModalOverlay) {
-        themeModalOverlay.classList.remove('hidden');
-        setTimeout(() => {
-            themeDialog.classList.remove('scale-95');
-            themeDialog.classList.add('scale-100');
-        }, 10);
+// 2. Initialize theme from localStorage on page load
+function initTheme() {
+    // Default to 'biru' if no theme saved, or user was previously on 'dark'/'light'
+    const savedTheme = localStorage.getItem('theme');
+    if (themeIconColors[savedTheme]) {
+        currentTheme = savedTheme;
+    } else {
+        currentTheme = 'biru'; // Default fallback
+        localStorage.setItem('theme', currentTheme);
     }
+    
+    applyTheme(currentTheme);
 }
 
-function closeThemeModal() {
-    if (themeModalOverlay) {
-        themeDialog.classList.remove('scale-100');
-        themeDialog.classList.add('scale-95');
-        setTimeout(() => {
-            themeModalOverlay.classList.add('hidden');
-        }, 150);
-    }
-}
-
-// Mengganti gradasi background berdasarkan pilihan warna
+// 3. Main function to change the theme
 function setTheme(themeName) {
+    if (!themeIconColors[themeName]) return; // Invalid theme
+
     currentTheme = themeName;
-    if (themeBg) {
-        themeBg.className = "fixed inset-0 z-0 transition-all duration-700 ease-in-out";
-        themeBg.classList.add(`bg-theme-${themeName}`);
-    }
-    localStorage.setItem('selected-theme', themeName);
+    localStorage.setItem('theme', currentTheme);
+    
+    applyTheme(currentTheme);
+    
+    // Update the active visual state in the dropdown list
+    updateThemeSelectionUI();
+    
+    // Close the dropdown after selection for better UX
+    closeSidebarMenu();
 }
 
-// === FITUR MUSIK UTAMA (DISEMATKAN KEMBALI AGAR TIDAK BUG) ===
-function initMusic() {
-    if (playlist.length === 0) return;
+// 4. Update visual active state of theme buttons in the dropdown list
+function updateThemeSelectionUI() {
+    document.querySelectorAll('.theme-option').forEach(btn => {
+        // If the button was previously modified to have a different border or bg, reset it.
+        // Tailwind usually handles this with hover:, but we may want an 'active' state.
+        // For simplicity matching the image where no specific active highlight is shown,
+        // we'll just rely on applyTheme changes.
+    });
+}
+
+// --- END OF THEME FUNCTIONS ---
+
+
+function setLanguage(lang) {
+    currentLang = lang;
+    localStorage.setItem('lang', lang);
     
+    document.getElementById('lang-id').classList.toggle('active', lang === 'id');
+    document.getElementById('lang-en').classList.toggle('active', lang === 'en');
+    
+    // Core text
+    document.getElementById('searchInput').placeholder = i18n[lang].searchPlaceholder;
+    document.getElementById('no-results-title').textContent = i18n[lang].noResultsTitle;
+    document.getElementById('no-results-desc').textContent = i18n[lang].noResultsDesc;
+    document.getElementById('stat-battery-title').textContent = i18n[lang].batteryTitle;
+    document.getElementById('stat-endpoints-title').textContent = i18n[lang].endpointsTitle;
+    document.getElementById('stat-categories-title').textContent = i18n[lang].categoriesTitle;
+    
+    // Theme section text
+    document.getElementById('themeTitle').textContent = i18n[lang].themeTitle;
+    Object.keys(i18n[lang].themeTitles).forEach(themeKey => {
+        const titleEl = document.getElementById(`themeTitle_${themeKey}`);
+        const descEl = document.getElementById(`themeDesc_${themeKey}`);
+        if (titleEl) titleEl.textContent = i18n[lang].themeTitles[themeKey];
+        if (descEl) descEl.textContent = i18n[lang].themeDesc;
+    });
+
+    if (batteryMonitor) {
+        window.dispatchEvent(new Event('batteryupdate-hook'));
+    }
+    
+    if (apiData) loadApis();
+}
+
+// ... rest of your script.js functions (initBatteryDetection, showToast, copyText, loadApis, etc.) remain untouched ...
+
+function initBatteryDetection() {
+    const batteryLevelElement = document.getElementById('batteryLevel');
+    const batteryPercentageElement = document.getElementById('batteryPercentage');
+    const batteryStatusElement = document.getElementById('batteryStatus');
+    const batteryContainer = document.getElementById('batteryContainer');
+    
+    if ('getBattery' in navigator) {
+        navigator.getBattery().then(function(battery) {
+            function updateBatteryInfo() {
+                const level = battery.level * 100;
+                const isCharging = battery.charging;
+                const roundedLevel = Math.round(level);
+                
+                batteryPercentageElement.textContent = `${roundedLevel}%`;
+                batteryLevelElement.style.width = `${level}%`;
+                
+                if (level > 60) {
+                    batteryLevelElement.className = 'battery-level bg-green-500';
+                } else if (level > 20) {
+                    batteryLevelElement.className = 'battery-level bg-yellow-500';
+                } else {
+                    batteryLevelElement.className = 'battery-level bg-red-500';
+                }
+                
+                if (isCharging) {
+                    batteryContainer.classList.add('charging');
+                    batteryStatusElement.textContent = i18n[currentLang].batteryCharging;
+                } else {
+                    batteryContainer.classList.remove('charging');
+                    if (battery.dischargingTime === Infinity) {
+                        batteryStatusElement.textContent = i18n[currentLang].batteryFull;
+                    } else {
+                        batteryStatusElement.textContent = i18n[currentLang].batteryDischarging;
+                    }
+                }
+            }
+            
+            updateBatteryInfo();
+            battery.addEventListener('levelchange', updateBatteryInfo);
+            battery.addEventListener('chargingchange', updateBatteryInfo);
+            window.addEventListener('batteryupdate-hook', updateBatteryInfo);
+            batteryMonitor = battery;
+            
+        }).catch(function() { fallbackBattery(); });
+    } else {
+        fallbackBattery();
+    }
+    
+    function fallbackBattery() {
+        batteryStatusElement.textContent = 'Simulated';
+        batteryPercentageElement.textContent = '85%';
+        batteryLevelElement.style.width = '85%';
+        batteryLevelElement.className = 'battery-level bg-green-400';
+    }
+}
+
+function cleanupBatteryMonitor() {
+    if (batteryMonitor) batteryMonitor = null;
+}
+
+function updateTotalEndpoints() { document.getElementById('totalEndpoints').textContent = totalEndpoints; }
+function updateTotalCategories() { document.getElementById('totalCategories').textContent = totalCategories; }
+
+function showToast(message, isError = false) {
+    const toast = document.getElementById('toast');
+    const toastMessage = document.getElementById('toastMessage');
+    const toastIcon = document.getElementById('toastIcon');
+    
+    toastMessage.textContent = message;
+    if (isError) {
+        toastIcon.innerHTML = '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>';
+    } else {
+        toastIcon.innerHTML = '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>';
+    }
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+function copyText(text, type = 'path') {
+    navigator.clipboard.writeText(text).then(() => {
+        showToast(`${type} berhasil disalin ke papan klip!`);
+    }).catch(() => {
+        showToast('Gagal menyalin text', true);
+    });
+}
+
+function copyFromElement(elementId, type) {
+    const el = document.getElementById(elementId);
+    if (el) {
+        copyText(el.innerText || el.textContent, type);
+    }
+}
+
+function updateLivePreview(catIdx, epIdx, method, basePath) {
+    const form = document.getElementById(`form-${catIdx}-${epIdx}`);
+    if (!form) return;
+
+    const formData = new FormData(form);
+    const params = new URLSearchParams();
+    for (const [key, value] of formData.entries()) {
+        if (value) params.append(key, value);
+    }
+
+    const queryStr = params.toString();
+    const finalUrl = queryStr ? `${BASE_URL}${basePath}?${queryStr}` : `${BASE_URL}${basePath}`;
+    
+    const urlContainer = document.getElementById(`live-url-${catIdx}-${epIdx}`);
+    const curlContainer = document.getElementById(`live-curl-${catIdx}-${epIdx}`);
+
+    if (urlContainer) urlContainer.textContent = finalUrl;
+    if (curlContainer) {
+        if (method === 'GET') {
+            curlContainer.textContent = `curl -X GET "${finalUrl}"`;
+        } else {
+            const bodyParams = [];
+            for (const [key, value] of formData.entries()) {
+                if (value) bodyParams.push(`"${key}": "${value}"`);
+            }
+            const dataString = bodyParams.length ? ` -H "Content-Type: application/json" -d '{${bodyParams.join(', ')}}'` : '';
+            curlContainer.textContent = `curl -X ${method} "${BASE_URL}${basePath}"${dataString}`;
+        }
+    }
+}
+
+function toggleCategory(index) {
+    const content = document.getElementById(`cat-${index}`);
+    const icon = document.getElementById(`cat-icon-${index}`);
+    content.classList.toggle('hidden');
+    icon.style.transform = content.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(180deg)';
+}
+
+function closeSidebarMenu() {
+    const bioDropdown = document.getElementById('bioDropdown');
+    const menuOverlay = document.getElementById('menuOverlay');
+    if (bioDropdown) bioDropdown.style.transform = 'translateX(100%)';
+    if (menuOverlay) menuOverlay.classList.add('hidden');
+}
+
+function toggleEndpoint(catIdx, epIdx) {
+    const content = document.getElementById(`ep-${catIdx}-${epIdx}`);
+    const icon = document.getElementById(`ep-icon-${catIdx}-${epIdx}`);
+    content.classList.toggle('hidden');
+    icon.style.transform = content.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(180deg)';
+}
+
+function getContentType(url, contentType) {
+    if (contentType) {
+        if (contentType.includes('image/')) return 'image';
+        if (contentType.includes('video/')) return 'video';
+        if (contentType.includes('audio/')) return 'audio';
+        if (contentType.includes('application/pdf')) return 'pdf';
+    }
+    if (url.includes('.jpg') || url.includes('.png')) return 'image';
+    if (url.includes('.mp4')) return 'video';
+    if (url.includes('.mp3')) return 'audio';
+    if (url.includes('.pdf')) return 'pdf';
+    return 'unknown';
+}
+
+function createMediaPreview(url, contentType, originalUrl = '') {
+    const type = getContentType(url, contentType);
+    let previewHtml = '';
+    
+    switch(type) {
+        case 'image':
+            previewHtml = `<div class="media-preview"><img src="${url}" class="media-image" alt="Response Image"></div>`;
+            break;
+        case 'video':
+            previewHtml = `<div class="media-preview"><video controls class="media-iframe"><source src="${url}">Your browser does not support the video tag.</video></div>`;
+            break;
+        case 'audio':
+            previewHtml = `<div class="media-preview"><audio controls class="w-full"><source src="${url}">Your browser does not support the audio tag.</audio></div>`;
+            break;
+        default:
+            previewHtml = `<div class="media-preview"><iframe src="${url}" class="media-iframe" frameborder="0"></iframe></div>`;
+    }
+    
+    const btnClass = 'px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-lg text-xs font-semibold flex items-center gap-1.5';
+    
+    return `<div class="w-full">${previewHtml}<div class="flex gap-2 mt-3"><button type="button" onclick="copyText('${originalUrl || url}', 'Media URL')" class="${btnClass}">📋 Copy URL</button><a href="${url}" download class="${btnClass}">📥 Download</a></div></div>`;
+}
+
+async function executeRequest(e, catIdx, epIdx, method, path) {
+    e.preventDefault();
+    if (isRequestInProgress) {
+        showToast(i18n[currentLang].toastRequestWait, true);
+        return;
+    }
+
+    const form = document.getElementById(`form-${catIdx}-${epIdx}`);
+    const responseDiv = document.getElementById(`response-${catIdx}-${epIdx}`);
+    const responseContent = document.getElementById(`response-content-${catIdx}-${epIdx}`);
+    const executeBtn = form.querySelector('button[type="submit"]');
+    
+    let spinner = executeBtn.querySelector('.local-spinner');
+    if (!spinner) {
+        spinner = document.createElement('span');
+        spinner.className = 'local-spinner ml-2';
+        executeBtn.appendChild(spinner);
+    }
+    
+    isRequestInProgress = true;
+    executeBtn.disabled = true;
+    executeBtn.classList.add('btn-loading');
+    spinner.classList.add('active');
+    
+    const formData = new FormData(form);
+    const params = new URLSearchParams();
+    for (const [key, value] of formData.entries()) {
+        if (value) params.append(key, value);
+    }
+
+    const fullPath = `${BASE_URL}${path.split('?')[0]}?${params.toString()}`;
+    let curlCommand = `curl -X ${method} "${fullPath}"`;
+    if (method !== 'GET') {
+        curlCommand = `curl -X ${method} "${BASE_URL}${path.split('?')[0]}" `;
+        const bodyParams = [];
+        for (const [key, value] of formData.entries()) {
+            if (value) bodyParams.push(`"${key}": "${value}"`);
+        }
+        if (bodyParams.length) {
+            curlCommand += `-H "Content-Type: application/json" -d '{${bodyParams.join(', ')}}'`;
+        }
+    }
+
+    responseDiv.classList.remove('hidden');
+    responseContent.innerHTML = '<div class="spinner mx-auto"></div>';
+
+    try {
+        const response = await fetch(fullPath);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const contentType = response.headers.get("content-type");
+        let rawResponseText = "";
+        let isMedia = false;
+
+        if (contentType?.includes("application/json")) {
+            const data = await response.json();
+            rawResponseText = JSON.stringify(data, null, 2);
+            responseContent.innerHTML = `<pre id="raw-text-${catIdx}-${epIdx}" class="code-font text-sm overflow-auto text-cyan-700">${rawResponseText}</pre>`;
+        } else if (contentType?.startsWith("image/") || contentType?.startsWith("video/") || contentType?.startsWith("audio/") || contentType?.includes("application/pdf")) {
+            isMedia = true;
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            responseContent.innerHTML = createMediaPreview(url, contentType, fullPath);
+        } else {
+            rawResponseText = await response.text();
+            responseContent.innerHTML = `<pre id="raw-text-${catIdx}-${epIdx}" class="code-font text-sm overflow-auto">${rawResponseText}</pre>`;
+        }
+
+        const btnStyle = 'px-2.5 py-1 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded text-[11px] font-semibold transition-colors code-font border border-black/5';
+
+        const actionContainer = document.createElement('div');
+        actionContainer.className = "flex flex-wrap gap-2 mb-3 border-b border-slate-200 pb-3";
+
+        const copyUrlBtn = document.createElement('button');
+        copyUrlBtn.type = "button";
+        copyUrlBtn.className = btnStyle;
+        copyUrlBtn.innerHTML = "🔗 Copy URL Request";
+        copyUrlBtn.onclick = () => copyText(fullPath, "URL Request");
+        actionContainer.appendChild(copyUrlBtn);
+
+        const copyCurlBtn = document.createElement('button');
+        copyCurlBtn.type = "button";
+        copyCurlBtn.className = btnStyle;
+        copyCurlBtn.innerHTML = "💻 Copy cURL";
+        copyCurlBtn.onclick = () => copyText(curlCommand, "cURL Command");
+        actionContainer.appendChild(copyCurlBtn);
+
+        if (!isMedia) {
+            const copyResponseBtn = document.createElement('button');
+            copyResponseBtn.type = "button";
+            copyResponseBtn.className = btnStyle;
+            copyResponseBtn.innerHTML = "📋 Copy Response";
+            copyResponseBtn.onclick = () => copyText(rawResponseText, "Response");
+            actionContainer.appendChild(copyResponseBtn);
+        }
+
+        responseContent.insertBefore(actionContainer, responseContent.firstChild);
+        showToast(i18n[currentLang].toastRequestSuccess);
+    } catch (error) {
+        responseContent.innerHTML = `<pre class="text-red-600 code-font text-sm">Error: ${error.message}</pre>`;
+        showToast(i18n[currentLang].toastRequestFailed, true);
+    } finally {
+        isRequestInProgress = false;
+        executeBtn.disabled = false;
+        executeBtn.classList.remove('btn-loading');
+        spinner.classList.remove('active');
+    }
+}
+
+function clearResponse(catIdx, epIdx) {
+    document.getElementById(`response-${catIdx}-${epIdx}`).classList.add('hidden');
+}
+
+function renderCategoryFilters() {
+    const container = document.getElementById('categoryFilters');
+    if (!container || !apiData || !apiData.categories) return;
+
+    let html = `<button class="filter-btn active" data-filter="all" onclick="filterByCategory('all')">semua (${totalEndpoints})</button>`;
+
+    apiData.categories.forEach(category => {
+        const catName = category.name.toLowerCase();
+        const count = category.items.length;
+        html += `<button class="filter-btn" data-filter="${catName}" onclick="filterByCategory('${catName}')">${catName} (${count})</button>`;
+    });
+
+    container.innerHTML = html;
+}
+
+function filterByCategory(catName) {
+    activeCategory = catName;
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        if (btn.dataset.filter === catName) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+    performSearch();
+}
+
+function performSearch() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+    const noResults = document.getElementById('noResults');
+    let hasVisibleItems = false;
+
+    requestAnimationFrame(() => {
+        document.querySelectorAll('.category-group').forEach(category => {
+            const catName = category.dataset.category;
+            
+            if (activeCategory !== 'all' && catName !== activeCategory) {
+                category.classList.add('hidden');
+                return;
+            }
+
+            let categoryHasVisibleItems = false;
+            const items = category.querySelectorAll('.api-item');
+            
+            for (let i = 0; i < items.length; i++) {
+                const item = items[i];
+                const matches = item.dataset.path.includes(searchTerm) || 
+                                item.dataset.alias.includes(searchTerm) || 
+                                item.dataset.description.includes(searchTerm) ||
+                                item.dataset.category.includes(searchTerm);
+                if (matches) {
+                    item.classList.remove('hidden');
+                    categoryHasVisibleItems = true;
+                    hasVisibleItems = true;
+                } else {
+                    item.classList.add('hidden');
+                }
+            }
+            
+            category.classList.toggle('hidden', !categoryHasVisibleItems);
+        });
+        
+        noResults.classList.toggle('hidden', hasVisibleItems);
+    });
+}
+
+function loadApis() {
+    const apiList = document.getElementById('apiList');
+    if (!apiData || !apiData.categories) {
+        apiList.innerHTML = '<p class="text-center">No API data loaded.</p>';
+        return;
+    }
+    
+    totalEndpoints = 0;
+    totalCategories = apiData.categories.length;
+    apiData.categories.forEach(category => { totalEndpoints += category.items.length; });
+    
+    updateTotalEndpoints();
+    updateTotalCategories();
+    renderCategoryFilters();
+    
+    const pathColorClass = 'text-cyan-700';
+    const subTextColorClass = 'text-slate-600';
+
+    let html = '';
+    apiData.categories.forEach((category, catIdx) => {
+        const catNameLower = category.name.toLowerCase();
+        
+        let iconSvg = categoryIcons.default;
+        for (const [key, svg] of Object.entries(categoryIcons)) {
+            if (catNameLower.includes(key)) {
+                iconSvg = svg;
+                break;
+            }
+        }
+
+        html += `
+        <div class="category-group" data-category="${catNameLower}">
+            <div class="glass-panel border rounded-xl overflow-hidden shadow mb-4">
+                <button onclick="toggleCategory(${catIdx})" class="w-full px-4 py-4 flex items-center justify-between hover:bg-slate-100 transition-colors">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 flex items-center justify-center bg-slate-100 rounded-xl border border-slate-300 shadow-inner flex-shrink-0">
+                            ${iconSvg}
+                        </div>
+                        <div class="text-left">
+                            <h3 class="font-bold text-sm tracking-widest text-cyan-600 uppercase font-['Space_Grotesk']">${category.name}</h3>
+                            <p class="text-[11px] code-font ${subTextColorClass}">${category.items.length} ${i18n[currentLang].endpointsCount}</p>
+                        </div>
+                    </div>
+                    <svg id="cat-icon-${catIdx}" class="w-5 h-5 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </button>
+                <div id="cat-${catIdx}" class="hidden">`;
+        
+        category.items.forEach((item, epIdx) => {
+            const method = item.methods && item.methods.length ? item.methods[0] : 'GET';
+            const pathParts = item.path.split('?');
+            const path = pathParts[0];
+            const queryParams = new URLSearchParams(pathParts[1] || '');
+            let statusClass = item.status === 'update' ? 'status-update' : (item.status === 'error' ? 'status-error' : 'status-ready');
+
+            html += `
+            <div class="api-item border-t border-slate-200" 
+                data-method="${method}" data-path="${path}" data-alias="${item.name.toLowerCase()}" data-description="${item.desc.toLowerCase()}" data-category="${category.name.toLowerCase()}">
+                <button onclick="toggleEndpoint(${catIdx}, ${epIdx})" class="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-100 transition-colors">
+                    <div class="flex items-center gap-3 flex-1 min-w-0">
+                        <span class="bg-cyan-600 text-white px-2 py-0.5 rounded text-[10px] flex-shrink-0 code-font font-black">${method}</span>
+                        <div class="text-left flex-1 min-w-0">
+                            <p class="code-font font-semibold text-[13px] ${pathColorClass} truncate">${path}</p>
+                            <div class="flex items-center gap-2 mt-1">
+                                <p class="text-xs ${subTextColorClass} truncate">${item.name}</p>
+                                <span class="px-1.5 py-0.5 text-[9px] rounded-sm ${statusClass} flex-shrink-0 uppercase tracking-wider font-bold">${item.status || 'ready'}</span>
+                            </div>
+                        </div>
+                    </div>
+                </button>
+                <div id="ep-${catIdx}-${epIdx}" class="hidden bg-slate-50 px-4 py-4 border-t border-slate-200 backdrop-blur-sm">
+                    <p class="text-xs mb-4 text-slate-700">${item.desc}</p>
+                    
+                    <div class="mb-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <h4 class="font-bold text-[11px] uppercase tracking-wider text-slate-600 code-font">ENDPOINT / REQUEST URL</h4>
+                            <button type="button" onclick="copyFromElement('live-url-${catIdx}-${epIdx}', 'URL')" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-lg text-[10px] transition-all active:scale-95 code-font text-slate-800">Copy URL</button>
+                        </div>
+                        <div class="bg-slate-100 border border-slate-300 px-4 py-3 rounded-xl backdrop-blur-md shadow-inner">
+                            <code id="live-url-${catIdx}-${epIdx}" class="code-font text-xs text-cyan-700 font-medium break-all">${BASE_URL}${path}</code>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <h4 class="font-bold text-[11px] uppercase tracking-wider text-slate-600 code-font">cURL Command</h4>
+                            <button type="button" onclick="copyFromElement('live-curl-${catIdx}-${epIdx}', 'cURL')" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-lg text-[10px] transition-all active:scale-95 code-font text-slate-800">Copy cURL</button>
+                        </div>
+                        <div class="bg-slate-100 border border-slate-300 px-4 py-3 rounded-xl backdrop-blur-md shadow-inner">
+                            <code id="live-curl-${catIdx}-${epIdx}" class="code-font text-xs text-slate-700 block overflow-x-auto whitespace-pre">curl -X ${method} "${BASE_URL}${path}"</code>
+                        </div>
+                    </div>`;
+
+            if (item.status === 'ready') {
+                html += `
+                    <div>
+                        <h4 class="font-bold text-[11px] uppercase tracking-wider text-slate-600 mb-3">Parameter</h4>
+                        <form id="form-${catIdx}-${epIdx}" onsubmit="executeRequest(event, ${catIdx}, ${epIdx}, '${method}', '${path}')">
+                            <div class="space-y-3 mb-4">`;
+                if (item.params) {
+                    Object.keys(item.params).forEach(paramName => {
+                        const isRequired = !queryParams.has(paramName) || queryParams.get(paramName) === '';
+                        html += `
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1.5 code-font">
+                                    ${paramName} ${isRequired ? '<span class="text-red-600">*</span>' : ''}
+                                </label>
+                                <input type="text" name="${paramName}" oninput="updateLivePreview(${catIdx}, ${epIdx}, '${method}', '${path}')" class="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-slate-900 focus:outline-none focus:border-cyan-600 code-font text-sm" placeholder="${item.params[paramName]}" ${isRequired ? 'required' : ''}>
+                            </div>`;
+                    });
+                }
+                html += `
+                            </div>
+                            <div class="flex gap-3">
+                                <button type="submit" class="px-5 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-md font-bold text-xs tracking-wider transition-all flex items-center justify-center">EKSEKUSI</button>
+                                <button type="button" onclick="clearResponse(${catIdx}, ${epIdx})" class="px-5 py-2 bg-transparent border border-slate-300 hover:bg-slate-100 text-slate-700 rounded-md font-bold text-xs transition-colors">BERSIHKAN</button>
+                            </div>
+                        </form>
+
+                        <div id="response-${catIdx}-${epIdx}" class="hidden mt-6 space-y-4">
+                            <div>
+                                <h5 class="text-[11px] uppercase tracking-wider font-bold mb-2 text-slate-500">Response</h5>
+                                <div class="bg-slate-100 border border-slate-300 p-3 rounded-lg min-h-[100px] overflow-x-auto" id="response-content-${catIdx}-${epIdx}"></div>
+                            </div>
+                        </div>
+                    </div>`;
+            } else {
+                html += `<div class="px-4 py-3 bg-red-100 border border-red-300 rounded-lg text-xs text-red-600 font-medium">${i18n[currentLang].endpointNotAvailable}</div>`;
+            }
+            html += `</div></div>`;
+        });
+        html += `</div></div></div>`;
+    });
+    apiList.innerHTML = html;
+    allApiElements = Array.from(document.querySelectorAll('.api-item'));
+}
+
+async function loadLinkBio() {
+    try {
+        const response = await fetch('linkbio.json');
+        if (!response.ok) throw new Error('Failed');
+        const socialData = await response.json();
+        
+        document.getElementById('socialLoading').classList.add('hidden');
+        const socialContainer = document.getElementById('socialContainer');
+        socialContainer.innerHTML = '';
+
+        socialData.link_bio.forEach(social => {
+            const socialElement = document.createElement('a');
+            socialElement.href = social.url;
+            socialElement.target = '_blank';
+            socialElement.className = 'social-badge w-full';
+            
+            const innerDiv = document.createElement('div');
+            innerDiv.textContent = social.name;
+            socialElement.appendChild(innerDiv);
+            socialContainer.appendChild(socialElement);
+        });
+        updateSocialBadges();
+    } catch (error) {
+        document.getElementById('socialLoading').classList.add('hidden');
+        document.getElementById('socialError').classList.remove('hidden');
+    }
+}
+
+function initMultiMusicPlayer() {
+    const playlist = window.musicPlaylist || [];
+    if (!playlist.length) return;
+
+    let currentTrackIdx = 0;
+    const audio = document.getElementById('audioElement');
     const playBtn = document.getElementById('playBtn');
-    const prevBtn = document.getElementById('prevBtn');
-    const nextBtn = document.getElementById('nextBtn');
-    
+    const playIcon = document.getElementById('playIcon');
+    const progressBar = document.getElementById('progressBar');
+    const progressContainer = document.getElementById('progressContainer');
+    const currentTimeEl = document.getElementById('currentTime');
+    const totalDurationEl = document.getElementById('totalDuration');
+    const coverImg = document.getElementById('musicCoverImg');
+    const titleEl = document.getElementById('musicTitle');
+    const artistEl = document.getElementById('musicArtist');
+    const playlistPanel = document.getElementById('playlistPanel');
+
+    function formatTime(secs) {
+        if (isNaN(secs)) return "0:00";
+        const mins = Math.floor(secs / 60);
+        const remainingSecs = Math.floor(secs % 60);
+        return `${mins}:${remainingSecs < 10 ? '0' : ''}${remainingSecs}`;
+    }
+
     function loadTrack(index) {
+        currentTrackIdx = index;
         const track = playlist[index];
         audio.src = track.url;
-        document.getElementById('music-title').textContent = track.title;
-        document.getElementById('music-artist').textContent = track.artist;
-        document.getElementById('music-cover').src = track.cover;
+        titleEl.textContent = track.title;
+        artistEl.textContent = track.artist;
+        coverImg.src = track.cover;
+        progressBar.style.width = '0%';
+        currentTimeEl.textContent = '0:00';
+        renderPlaylistItems();
     }
 
-    function togglePlay() {
-        if (isPlaying) {
-            audio.pause();
-            document.getElementById('playIcon').innerHTML = '<path d="M8 5v14l11-7z"/>';
-        } else {
-            audio.play().catch(err => console.log("User interaction required"));
-            document.getElementById('playIcon').innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
-        }
-        isPlaying = !isPlaying;
-    }
-
-    if(playBtn) playBtn.addEventListener('click', togglePlay);
-    if(prevBtn) prevBtn.addEventListener('click', () => {
-        currentTrackIndex = (currentTrackIndex - 1 + playlist.length) % playlist.length;
-        loadTrack(currentTrackIndex);
-        if (isPlaying) audio.play();
-    });
-    if(nextBtn) nextBtn.addEventListener('click', () => {
-        currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
-        loadTrack(currentTrackIndex);
-        if (isPlaying) audio.play();
-    });
-
-    loadTrack(currentTrackIndex);
-}
-
-// === PROSES AMBIL DATA DAN LIVE SEARCH ===
-function loadApis() {
-    const apiListEl = document.getElementById('apiList');
-    if (!apiListEl || !apiData) return;
-    
-    apiListEl.innerHTML = '';
-    
-    // Tampilkan total counter stats
-    document.getElementById('stat-total').textContent = apiData.length;
-    const categories = [...new Set(apiData.map(item => item.category))];
-    document.getElementById('stat-categories').textContent = categories.length;
-
-    apiData.forEach(api => {
-        apiListEl.innerHTML += `
-            <div class="p-4 bg-white/5 backdrop-blur-md border border-white/10 rounded-xl flex justify-between items-center hover:bg-white/10 transition">
-                <div>
-                    <h4 class="font-bold text-sm text-white">${api.name}</h4>
-                    <p class="text-xs text-slate-400 mt-0.5">${api.description}</p>
-                </div>
-                <span class="px-2 py-1 bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-[10px] uppercase font-bold rounded-md tracking-wider">${api.category}</span>
-            </div>`;
-    });
-}
-
-// Inisialisasi Utama saat Halaman Selesai Dimuat
-document.addEventListener('DOMContentLoaded', () => {
-    
-    // Ambil preferensi tema terakhir dari storage
-    const savedTheme = localStorage.getItem('selected-theme');
-    if (savedTheme) setTheme(savedTheme);
-
-    // Setup Battery Stats Simulator
-    if (navigator.getBattery) {
-        navigator.getBattery().then(battery => {
-            document.getElementById('stat-battery').textContent = `${Math.round(battery.level * 100)}%`;
+    function renderPlaylistItems() {
+        playlistPanel.innerHTML = '';
+        playlist.forEach((track, idx) => {
+            const isActive = idx === currentTrackIdx;
+            const itemBtn = document.createElement('button');
+            itemBtn.className = `w-full text-left px-3 py-2 text-xs rounded-xl flex items-center justify-between transition-all ${isActive ? 'bg-cyan-100 border border-cyan-300 text-cyan-700 font-bold' : 'hover:bg-slate-100 text-slate-600'}`;
+            itemBtn.innerHTML = `<div class="flex items-center gap-2 truncate"><span class="opacity-50 text-[10px] code-font">${String(idx + 1).padStart(2, '0')}</span><span class="truncate">${track.title} <span class="opacity-60 font-normal">- ${track.artist}</span></span></div>${isActive ? '<span class="text-[9px] tracking-wider text-cyan-700 bg-cyan-100 px-1.5 py-0.5 rounded animate-pulse font-bold">PLAYING</span>' : ''}`;
+            itemBtn.addEventListener('click', () => {
+                loadTrack(idx);
+                audio.play().catch(e => console.log(e));
+            });
+            playlistPanel.appendChild(itemBtn);
         });
-    } else {
-        document.getElementById('stat-battery').textContent = '100%';
     }
 
-    // Hubungkan Event Sidebar Menu
-    if (bioMenuBtn) {
+    playBtn.addEventListener('click', () => { audio.paused ? audio.play() : audio.pause(); });
+    audio.addEventListener('play', () => {
+        playIcon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+        coverImg.classList.add('scale-105', 'rotate-3');
+    });
+    audio.addEventListener('pause', () => {
+        playIcon.innerHTML = '<path d="M8 5v14l11-7z"/>';
+        coverImg.classList.remove('scale-105', 'rotate-3');
+    });
+    audio.addEventListener('timeupdate', () => {
+        if (audio.duration) {
+            progressBar.style.width = `${(audio.currentTime / audio.duration) * 100}%`;
+            currentTimeEl.textContent = formatTime(audio.currentTime);
+        }
+    });
+    audio.addEventListener('loadedmetadata', () => { totalDurationEl.textContent = formatTime(audio.duration); });
+    progressContainer.addEventListener('click', (e) => { if (audio.duration) audio.currentTime = (e.offsetX / progressContainer.clientWidth) * audio.duration; });
+    document.getElementById('prevBtn').addEventListener('click', () => { loadTrack(currentTrackIdx - 1 < 0 ? playlist.length - 1 : currentTrackIdx - 1); audio.play(); });
+    document.getElementById('nextBtn').addEventListener('click', () => { loadTrack(currentTrackIdx + 1 >= playlist.length ? 0 : currentTrackIdx + 1); audio.play(); });
+    audio.addEventListener('ended', () => { loadTrack(currentTrackIdx + 1 >= playlist.length ? 0 : currentTrackIdx + 1); audio.play(); });
+    document.getElementById('playlistToggleBtn').addEventListener('click', () => { playlistPanel.classList.toggle('hidden'); });
+
+    loadTrack(0);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const savedLang = localStorage.getItem('lang') || 'id';
+    
+    // Core logic
+    initBatteryDetection();
+    loadLinkBio();
+    initMultiMusicPlayer();
+    
+    // New Theme Logic (Binary toggle is gone)
+    initTheme();
+
+    setLanguage(savedLang);
+    
+    // Dropdown functionality remains similar
+    const bioMenuBtn = document.getElementById('bioMenuBtn');
+    const bioDropdown = document.getElementById('bioDropdown');
+    const closeMenuBtn = document.getElementById('closeMenuBtn');
+    const menuOverlay = document.getElementById('menuOverlay');
+
+    if (bioMenuBtn && bioDropdown && menuOverlay) {
         bioMenuBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             bioDropdown.style.transform = 'translateX(0)';
             menuOverlay.classList.remove('hidden');
         });
+        if (closeMenuBtn) closeMenuBtn.addEventListener('click', closeSidebarMenu);
+        menuOverlay.addEventListener('click', closeSidebarMenu);
+        bioDropdown.addEventListener('click', (e) => { e.stopPropagation(); });
     }
-    if (closeMenuBtn) closeMenuBtn.addEventListener('click', closeSidebarMenu);
-    if (menuOverlay) menuOverlay.addEventListener('click', closeSidebarMenu);
-
-    // Event Listener Membuka Modal Pilihan Tema lewat Menu Sidebar
-    if (themeToggleBtn) themeToggleBtn.addEventListener('click', openThemeModal);
-
-    // Event Listener Menutup Modal Tema
-    if (closeThemeModalBtn) closeThemeModalBtn.addEventListener('click', closeThemeModal);
-    if (themeModalOverlay) {
-        themeModalOverlay.addEventListener('click', closeThemeModal);
-        themeDialog.addEventListener('click', (e) => e.stopPropagation());
-    }
-
-    // Logika pemilihan warna di dalam row modal
-    themeRows.forEach(row => {
-        row.addEventListener('click', () => {
-            const targetColor = row.getAttribute('data-theme');
-            setTheme(targetColor);
-            closeThemeModal();
-        });
-    });
-
-    // Jalankan Music Player bawaan
-    initMusic();
-
-    // Fetch API List Data asli
+    
     fetch('/api/apilist')
         .then(res => res.json())
         .then(data => {
@@ -187,7 +834,14 @@ document.addEventListener('DOMContentLoaded', () => {
             loadApis();
         })
         .catch(err => {
-            const el = document.getElementById('apiList');
-            if(el) el.innerHTML = `<div class="text-center p-8 bg-red-900/20 border border-red-700 rounded-lg"><p>Gagal memuat data API</p></div>`;
+            document.getElementById('apiList').innerHTML = `<div class="text-center p-8 bg-red-100 border border-red-300 rounded-lg"><div class="text-4xl mb-4">⚠️</div><h3 class="font-bold text-lg mb-2">Failed to load API data</h3></div>`;
         });
 });
+
+let searchTimeout;
+document.getElementById('searchInput').addEventListener('input', function() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(performSearch, 150);
+});
+
+window.addEventListener('beforeunload', cleanupBatteryMonitor);
