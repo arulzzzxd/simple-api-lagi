@@ -79,35 +79,21 @@ const i18n = {
 };
 
 
-// =====================================================================
-// LOGIKA BARU: OTOMATIS GENERATE BACKGROUND BINTIK-BINTIK (ANTI-BUG)
-// =====================================================================
-
 function updateThemeBackground(theme) {
-    // Mencari elemen themeBg, jika belum ada maka otomatis dibuatkan oleh script
-    let themeBg = document.getElementById('themeBg');
-    if (!themeBg) {
-        themeBg = document.createElement('div');
-        themeBg.id = 'themeBg';
-        // Menyisipkan di bagian paling atas body agar menjadi layer dasar
-        document.body.insertBefore(themeBg, document.body.firstChild);
-    }
-
-    // Set class utama agar background memenuhi seluruh layar penuh
-    themeBg.className = "fixed inset-0 -z-50 transition-all duration-300";
-    
-    if (theme === 'light') {
-        // Mode Terang: Background Putih, Bintik Abu-abu Lembut (#cbd5e1)
-        document.body.style.backgroundColor = "#ffffff";
-        themeBg.style.backgroundColor = "#ffffff";
-        themeBg.style.backgroundImage = "radial-gradient(#cbd5e1 1.5px, transparent 1.5px)";
-        themeBg.style.backgroundSize = "24px 24px";
-    } else {
-        // Mode Gelap: Background Gelap murni (#030712), Bintik Putih Transparan Lembut
-        document.body.style.backgroundColor = "#030712";
-        themeBg.style.backgroundColor = "#030712";
-        themeBg.style.backgroundImage = "radial-gradient(rgba(255, 255, 255, 0.12) 1.5px, transparent 1.5px)";
-        themeBg.style.backgroundSize = "24px 24px";
+    if (themeBg) {
+        themeBg.className = "fixed inset-0 -z-50 transition-all duration-300";
+        
+        if (theme === 'light') {
+            document.body.style.backgroundColor = "#ffffff";
+            themeBg.style.backgroundColor = "#ffffff";
+            themeBg.style.backgroundImage = "radial-gradient(#cbd5e1 1.5px, transparent 1.5px)";
+            themeBg.style.backgroundSize = "24px 24px";
+        } else {
+            document.body.style.backgroundColor = "#030712";
+            themeBg.style.backgroundColor = "#030712";
+            themeBg.style.backgroundImage = "radial-gradient(rgba(255, 255, 255, 0.12) 1.5px, transparent 1.5px)";
+            themeBg.style.backgroundSize = "24px 24px";
+        }
     }
 }
 
@@ -131,10 +117,8 @@ function initTheme() {
         themeToggleDarkIcon?.classList.remove('hidden');
         themeToggleLightIcon?.classList.add('hidden');
     }
-    
-    // Eksekusi render background bintik-bintik
     updateThemeBackground(currentTheme);
-    if (typeof updateSocialBadges === 'function') updateSocialBadges();
+    updateSocialBadges();
 }
 
 function toggleTheme() {
@@ -159,13 +143,9 @@ function toggleTheme() {
     
     localStorage.setItem('theme', currentTheme);
     updateThemeBackground(currentTheme);
-    if (typeof updateSocialBadges === 'function') updateSocialBadges();
-    if (apiData && typeof loadApis === 'function') loadApis();
+    updateSocialBadges();
+    if (apiData) loadApis();
 }
-
-// =====================================================================
-// SELESAI UPDATE LOGIKA TEMA
-// ===================================================================== 
 
 function setLanguage(lang) {
     currentLang = lang;
@@ -707,34 +687,6 @@ function loadApis() {
     allApiElements = Array.from(document.querySelectorAll('.api-item'));
 }
 
-async function loadLinkBio() {
-    try {
-        const response = await fetch('linkbio.json');
-        if (!response.ok) throw new Error('Failed');
-        const socialData = await response.json();
-        
-        document.getElementById('socialLoading').classList.add('hidden');
-        const socialContainer = document.getElementById('socialContainer');
-        socialContainer.innerHTML = '';
-
-        socialData.link_bio.forEach(social => {
-            const socialElement = document.createElement('a');
-            socialElement.href = social.url;
-            socialElement.target = '_blank';
-            socialElement.className = 'social-badge w-full';
-            
-            const innerDiv = document.createElement('div');
-            innerDiv.textContent = social.name;
-            socialElement.appendChild(innerDiv);
-            socialContainer.appendChild(socialElement);
-        });
-        updateSocialBadges();
-    } catch (error) {
-        document.getElementById('socialLoading').classList.add('hidden');
-        document.getElementById('socialError').classList.remove('hidden');
-    }
-}
-
 function initMultiMusicPlayer() {
     const playlist = window.musicPlaylist || [];
     if (!playlist.length) return;
@@ -816,7 +768,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     initTheme();
     initBatteryDetection();
-    loadLinkBio();
     initMultiMusicPlayer();
     setLanguage(savedLang);
     
@@ -835,77 +786,7 @@ document.addEventListener('DOMContentLoaded', function() {
         menuOverlay.addEventListener('click', closeSidebarMenu);
         bioDropdown.addEventListener('click', (e) => { e.stopPropagation(); });
     }
-
-    // =====================================================================
-    // FITUR NAVIGASI OTOMATIS (HOME, DOCUMENTATION, UPLOADER, PASTEBIN)
-    // =====================================================================
     
-    // 1. Klik "Home" -> Kembali ke Atas (Smooth Scroll)
-    const homeBtn = document.getElementById('homeBtn') || 
-                    [...document.querySelectorAll('a, button, span, .nav-link')].find(el => el.textContent.trim().toLowerCase() === 'home');
-    
-    if (homeBtn) {
-        homeBtn.style.cursor = 'pointer';
-        homeBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            window.scrollTo({
-                top: 0,
-                behavior: 'smooth'
-            });
-            if (typeof closeSidebarMenu === 'function') closeSidebarMenu();
-        });
-    }
-
-    // 2. Klik "Documentation" -> Scroll ke List/Daftar Endpoint API
-    const docBtn = document.getElementById('docBtn') || 
-                   [...document.querySelectorAll('a, button, span, .nav-link')].find(el => el.textContent.trim().toLowerCase().includes('documentation'));
-    
-    if (docBtn) {
-        docBtn.style.cursor = 'pointer';
-        docBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            const apiListTarget = document.getElementById('apiList') || document.getElementById('searchInput');
-            if (apiListTarget) {
-                apiListTarget.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start'
-                });
-            }
-            if (typeof closeSidebarMenu === 'function') closeSidebarMenu();
-        });
-    }
-
-    // 3. Klik "File Uploader" -> Pindah URL
-    const uploaderBtn = document.getElementById('uploaderBtn') || 
-                        [...document.querySelectorAll('a, button, span, .nav-link')].find(el => el.textContent.trim().toLowerCase().includes('file uploader'));
-    
-    if (uploaderBtn) {
-        uploaderBtn.style.cursor = 'pointer';
-        uploaderBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            window.location.href = 'https://arulz-uploader.vercel.app'; 
-        });
-    }
-
-    // 4. Klik "Pastebin" -> Pindah URL
-    const pastebinBtn = document.getElementById('pastebinBtn') || 
-                      [...document.querySelectorAll('a, button, span, .nav-link')].find(el => el.textContent.trim().toLowerCase().includes('pastebin'));
-    
-    if (pastebinBtn) {
-        pastebinBtn.style.cursor = 'pointer';
-        pastebinBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            window.location.href = 'https://pastebin.com'; 
-        });
-    }
-    // =====================================================================
-    // SELESAI FITUR NAVIGASI
-    // =====================================================================
-
-
-    // =====================================================================
-    // KODE PERBAIKAN: MEMANGGIL KEMBALI DATA ENDPOINT API DARI BACKEND
-    // =====================================================================
     fetch('/api/apilist')
         .then(res => res.json())
         .then(data => {
@@ -913,13 +794,8 @@ document.addEventListener('DOMContentLoaded', function() {
             loadApis();
         })
         .catch(err => {
-            const apiListEl = document.getElementById('apiList');
-            if (apiListEl) {
-                apiListEl.innerHTML = `<div class="text-center p-8 bg-red-900/20 border border-red-700 rounded-lg"><div class="text-4xl mb-4">⚠️</div><h3 class="font-bold text-lg mb-2">Failed to load API data</h3></div>`;
-            }
+            document.getElementById('apiList').innerHTML = `<div class="text-center p-8 bg-red-900/20 border border-red-700 rounded-lg"><div class="text-4xl mb-4">⚠️</div><h3 class="font-bold text-lg mb-2">Failed to load API data</h3></div>`;
         });
-    // =====================================================================
-
 });
 
 themeToggleBtn.addEventListener('click', toggleTheme);
