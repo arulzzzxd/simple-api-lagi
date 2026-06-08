@@ -125,9 +125,6 @@ app.use('/api', router);
 app.get('/script.js', (req, res) => {
   res.sendFile(path.join(__dirname, 'script.js'));
 });
-app.get('/linkbio.json', (req, res) => {
-  res.sendFile(path.join(__dirname, 'linkbio.json'));
-});
 app.get('/styles.css', (req, res) => {
   res.sendFile(path.join(__dirname, 'styles.css'));
 });
