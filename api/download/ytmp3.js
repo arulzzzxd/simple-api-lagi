@@ -3,139 +3,92 @@ const express = require("express");
 
 const router = express.Router();
 
-async function ytdownDl(url) {
+async function yt2mp3Dl(youtubeUrl) {
   try {
-    // TAHAP 1: Ambil data metadata video dan daftar mediaUrl
-    const response = await axios.post('https://app.ytdown.to/proxy.php', 
-      new URLSearchParams({ url: url }), 
+    // TAHAP 1: Inisialisasi konversi / Ambil Data awal
+    // Catatan: Ganti '/api/convert' atau '/ajax.php' jika kamu menemukan endpoint aslinya di tab Network F12
+    const initResponse = await axios.post('https://yt2mp3.gs/api/ajax.php', 
+      new URLSearchParams({
+        url: youtubeUrl,
+        format: 'mp3',
+        lang: 'en'
+      }), 
       {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
           'X-Requested-With': 'XMLHttpRequest',
-          'Origin': 'https://ytdown.to',
-          'Referer': 'https://ytdown.to/',
+          'Origin': 'https://yt2mp3.gs',
+          'Referer': 'https://yt2mp3.gs/',
           'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36'
         }
       }
     );
 
-    if (!response.data || response.data.api?.status !== 'ok') {
+    const data = initResponse.data;
+
+    // Validasi respons dari server target
+    if (!data || data.status !== 'success' && !data.url) {
       return { 
         status: false, 
-        message: 'Gagal mengambil data dari ytdown. Server merespon tidak OK.',
-        debug: response.data 
+        message: 'Gagal mendapatkan respons valid dari yt2mp3.gs',
+        debug: data // Membantu kamu melihat isi asli respons jika error
       };
     }
 
-    const apiData = response.data.api;
-    
-    const result = {
+    // TAHAP 2: Susun output sesuai format yang kamu inginkan sebelumnya
+    return {
       status: true,
-      title: apiData.title || '-',
-      id: apiData.id || '-',
-      thumbnail: apiData.imagePreviewUrl || '-',
-      duration: apiData.mediaItems?.[0]?.mediaDuration || '-',
-      channel: apiData.userInfo?.name || '-',
-      audios: []
+      title: data.title || 'YouTube Audio',
+      id: data.id || '-',
+      thumbnail: data.thumbnail || '-',
+      duration: data.duration || '-',
+      channel: data.channel || '-',
+      audios: [
+        {
+          quality: data.quality || '128K',
+          size: data.size || '-',
+          ext: 'MP3',
+          fileUrl: data.url || data.fileUrl || '' // Mengambil link download langsung (.mp3)
+        }
+      ]
     };
 
-    if (Array.isArray(apiData.mediaItems)) {
-      const audioItems = apiData.mediaItems.filter(item => item.type === 'Audio');
-
-      // TAHAP 2: Menggunakan Promise.all (Dibatasi maks 3 kali polling agar tidak timeout di Vercel)
-      const audioPromises = audioItems.map(async (item) => {
-        let fileUrl = '';
-
-        if (item.mediaUrl) {
-          try {
-            for (let i = 0; i < 3; i++) { 
-              const fileResponse = await axios.post('https://app.ytdown.to/proxy.php', 
-                new URLSearchParams({ url: item.mediaUrl }), 
-                {
-                  headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Origin': 'https://ytdown.to',
-                    'Referer': 'https://ytdown.to/',
-                    'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36'
-                  }
-                }
-              );
-
-              const fileApiData = fileResponse.data?.api;
-
-              if (fileApiData && fileApiData.fileUrl && fileApiData.fileUrl !== 'Waiting...') {
-                fileUrl = fileApiData.fileUrl;
-                break; 
-              }
-
-              // Jeda jeda diturunkan ke 1 detik agar hemat waktu di Vercel
-              await new Promise(resolve => setTimeout(resolve, 1000));
-            }
-          } catch (err) {
-            fileUrl = `Error Fetch: ${err.message}`;
-          }
-        }
-
-        return {
-          quality: item.mediaQuality || '-',
-          size: item.mediaFileSize || '-',
-          ext: item.mediaExtension || 'MP3',
-          fileUrl: fileUrl
-        };
-      });
-
-      result.audios = await Promise.all(audioPromises);
-    }
-
-    return result;
-
-  } catch (e) {
+  } catch (error) {
     return {
       status: false,
-      message: `Sistem Error: ${e.message}`
+      message: `Scrape Error: ${error.message}`
     };
   }
 }
 
 // ======================================================
-// ENDPOINT GET UTAMA (AUDIO ONLY)
+// ENDPOINT GET UTAMA
 // ======================================================
-
 router.get("/", async (req, res) => {
   const url = req.query.url;
 
   if (!url) {
-    return res.status(200).json({ // Diubah ke 200 agar pesan terbaca di UI
+    return res.status(200).json({
       status: false,
       message: "Parameter 'url' wajib diisi!"
     });
   }
 
-  try {
-    const result = await ytdownDl(url);
+  const result = await yt2mp3Dl(url);
 
-    // Diubah sementara ke status 200 agar log text error-nya muncul di UI kamu!
-    if (!result.status) {
-      return res.status(200).json(result); 
-    }
-
-    return res.status(200).json({
-      status: true,
-      creator: "Arulzxd",
-      result,
-      metadata: {
-        source: "YouTube - Ytmp3",
-        timestamp: new Date().toISOString()
-      }
-    });
-  } catch (error) {
-    return res.status(200).json({ // Diubah ke 200 agar tidak tertutup pesan HTTP 400 global
-      status: false,
-      message: "Gagal mengambil audio YouTube global",
-      error: error.message
-    });
+  if (!result.status) {
+    return res.status(200).json(result); // Menggunakan 200 agar log error terbaca di UI Dashboard
   }
+
+  return res.status(200).json({
+    status: true,
+    creator: "Arulzxd",
+    result,
+    metadata: {
+      source: "yt2mp3.gs",
+      timestamp: new Date().toISOString()
+    }
+  });
 });
 
 module.exports = router;
