@@ -895,15 +895,17 @@ document.addEventListener('DOMContentLoaded', function() {
         pastebinBtn.style.cursor = 'pointer';
         pastebinBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            window.location.href = 'https://pastebin.com'; // Ganti ke web pastebin kamu jika ada
+            window.location.href = 'https://pastebin.com'; 
         });
     }
     // =====================================================================
     // SELESAI FITUR NAVIGASI
     // =====================================================================
 
-}); // Penutup akhir DOMContentLoaded yang aman
-    
+
+    // =====================================================================
+    // KODE PERBAIKAN: MEMANGGIL KEMBALI DATA ENDPOINT API DARI BACKEND
+    // =====================================================================
     fetch('/api/apilist')
         .then(res => res.json())
         .then(data => {
@@ -911,8 +913,13 @@ document.addEventListener('DOMContentLoaded', function() {
             loadApis();
         })
         .catch(err => {
-            document.getElementById('apiList').innerHTML = `<div class="text-center p-8 bg-red-900/20 border border-red-700 rounded-lg"><div class="text-4xl mb-4">⚠️</div><h3 class="font-bold text-lg mb-2">Failed to load API data</h3></div>`;
+            const apiListEl = document.getElementById('apiList');
+            if (apiListEl) {
+                apiListEl.innerHTML = `<div class="text-center p-8 bg-red-900/20 border border-red-700 rounded-lg"><div class="text-4xl mb-4">⚠️</div><h3 class="font-bold text-lg mb-2">Failed to load API data</h3></div>`;
+            }
         });
+    // =====================================================================
+
 });
 
 themeToggleBtn.addEventListener('click', toggleTheme);
