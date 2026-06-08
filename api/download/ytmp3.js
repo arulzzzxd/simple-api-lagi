@@ -3,185 +3,83 @@ const express = require("express");
 
 const router = express.Router();
 
-const BASE = "https://app.ytdown.to";
-const API = `${BASE}/proxy.php`;
-const PAGE = `${BASE}/en27/`;
-
-const UA =
-  "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Mobile Safari/537.36";
-
-const MAX_POLL = 120;
-const POLL_DELAY = 2500;
-
-let cookieJar = "";
-
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-function parseSetCookie(setCookie = []) {
-  if (!Array.isArray(setCookie)) return "";
-  return setCookie
-    .map(v => v.split(";")[0].trim())
-    .filter(Boolean)
-    .join("; ");
-}
-
-function randomGa() {
-  const a = Math.floor(Math.random() * 1e10);
-  const b = Math.floor(Date.now() / 1000);
-  return `GA1.1.${a}.${b}`;
-}
-
-function buildCookie(extra = "") {
-  const now = Math.floor(Date.now() / 1000);
-  const ga = `_ga=${randomGa()}`;
-  const ga2 = `_ga_2K69M9RN1B=GS2.1.s${now}$o1$g1$t${now}$j49$l0$h0`;
-  return [cookieJar, ga, ga2, extra].filter(Boolean).join("; ");
-}
-
-// Validasi & ambil ID YouTube
-function isUrl(str) {
-  try { new URL(str); return true; } catch (_) { return false; }
-}
-
-function getVideoId(url) {
-  if (!url) return null;
-  const patterns = [
-    new RegExp("youtube\\.com/watch\\?v=([a-zA-Z0-9_-]{11})"),
-    new RegExp("youtube\\.com/embed/([a-zA-Z0-9_-]{11})"),
-    new RegExp("youtube\\.com/v/([a-zA-Z0-9_-]{11})"),
-    new RegExp("youtube\\.com/shorts/([a-zA-Z0-9_-]{11})"),
-    new RegExp("youtu\\.be/([a-zA-Z0-9_-]{11})")
-  ];
-  for (const regex of patterns) {
-    const m = url.match(regex);
-    if (m && m[1]) return m[1];
-  }
-  return null;
-}
-
-// ======================================================
-// CORE YTMP3 FUNCTION (TANPA SEARCH)
-// ======================================================
-
-async function warmup() {
-  const res = await axios.get(PAGE, {
-    headers: {
-      "user-agent": UA,
-      "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-      "accept-language": "id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7"
-    }
-  });
-  const cookie = parseSetCookie(res.headers["set-cookie"]);
-  if (cookie) cookieJar = cookie;
-}
-
-async function requestDownload(videoUrl) {
-  const body = new URLSearchParams({ url: videoUrl });
-  const { data } = await axios.post(API, body.toString(), {
-    headers: {
-      "user-agent": UA,
-      "accept": "*/*",
-      "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
-      "origin": BASE,
-      "referer": PAGE,
-      "x-requested-with": "XMLHttpRequest",
-      "sec-ch-ua": `"Google Chrome";v="147", "Not.A/Brand";v="8", "Chromium";v="147"`,
-      "sec-ch-ua-mobile": "?1",
-      "sec-ch-ua-platform": `"Android"`,
-      "accept-language": "id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7",
-      "cookie": buildCookie()
-    }
-  });
-  return data;
-}
-
-function pickMp3(downloadJson) {
-  const items = downloadJson?.api?.mediaItems || [];
-  const mp3 =
-    items.find(x => x.type === "Audio" && x.mediaExtension === "MP3") ||
-    items.find(x => x.type === "Audio" && x.mediaQuality === "128K") ||
-    items.find(x => x.type === "Audio");
-  if (!mp3) return null;
-  return {
-    quality: mp3.mediaQuality,
-    extension: mp3.mediaExtension,
-    size: mp3.mediaFileSize,
-    duration: mp3.mediaDuration,
-    url: mp3.mediaUrl
-  };
-}
-
-function isFinalUrl(value) {
-  return (
-    typeof value === "string" &&
-    value.startsWith("http") &&
-    value !== "Waiting..." &&
-    value !== "In Processing..."
-  );
-}
-
-async function resolveAudioUrl(mediaUrl) {
-  let lastJson = null;
-  for (let i = 1; i <= MAX_POLL; i++) {
-    const { data } = await axios.get(mediaUrl, {
-      headers: {
-        "user-agent": UA,
-        "accept": "application/json, text/plain, */*",
-        "referer": PAGE
+async function ytdownDl(url) {
+  try {
+    const response = await axios.post('https://app.ytdown.to/proxy.php', 
+      new URLSearchParams({ url: url }), 
+      {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+          'X-Requested-With': 'XMLHttpRequest',
+          'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36'
+        }
       }
-    });
-    lastJson = data;
-    const fileUrl = data?.fileUrl || data?.url || data?.downloadUrl;
-    if (isFinalUrl(fileUrl)) return fileUrl;
-    if (data?.status === "error" || data?.status === "failed") {
-      throw new Error("Render audio gagal");
+    );
+
+    if (!response.data || response.data.api?.status !== 'ok') {
+      return { status: false, message: 'Gagal mengambil data dari ytdown.' };
     }
-    await sleep(POLL_DELAY);
+
+    const apiData = response.data.api;
+    
+    // Struktur respons diubah khusus untuk Audio Only
+    const result = {
+      status: true,
+      title: apiData.title || '-',
+      id: apiData.id || '-',
+      thumbnail: apiData.imagePreviewUrl || '-',
+      duration: apiData.mediaItems?.[0]?.mediaDuration || '-',
+      channel: apiData.userInfo?.name || '-',
+      audios: [] // Array video dihapus
+    };
+
+    if (Array.isArray(apiData.mediaItems)) {
+      apiData.mediaItems.forEach(item => {
+        // Hanya mengambil tipe 'Audio'
+        if (item.type === 'Audio') {
+          result.audios.push({
+            quality: item.mediaQuality || '-',
+            size: item.mediaFileSize || '-',
+            ext: item.mediaExtension || 'M4A',
+            url: item.mediaUrl
+          });
+        }
+      });
+    }
+
+    return result;
+
+  } catch (e) {
+    return {
+      status: false,
+      message: e.message
+    };
   }
-  throw new Error(`Audio belum selesai diproses: ${JSON.stringify(lastJson)}`);
-}
-
-async function ytmp3(link) {
-  if (!link) throw new Error("Infokan linknya cik");
-  if (!isUrl(link)) throw new Error("Itu bukan link youtube kocak");
-
-  const videoId = getVideoId(link);
-  if (!videoId) throw new Error("Yaelah link youtubenya ada yang salah cik");
-
-  await warmup();
-  const download = await requestDownload(link);
-  const audio = pickMp3(download);
-  if (!audio?.url) throw new Error("URL audio tidak ditemukan");
-
-  audio.url = await resolveAudioUrl(audio.url);
-
-  return {
-    title: download?.api?.title || "Tidak diketahui",
-    videoId: videoId,
-    url: link,
-    thumbnail: `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`,
-    audio
-  };
 }
 
 // ======================================================
-// ENDPOINT GET UTAMA
+// ENDPOINT GET UTAMA (AUDIO ONLY)
 // ======================================================
 
 router.get("/", async (req, res) => {
-  const link = req.query.link;
+  const url = req.query.url;
 
-  if (!link) {
+  if (!url) {
     return res.status(400).json({
       status: false,
-      message: "Parameter 'link' wajib diisi! Contoh: ?link=https://youtu.be/xxxxxx"
+      message: "Parameter 'url' wajib diisi! Contoh: ?url=https://youtu.be/xxxxxx"
     });
   }
 
   try {
-    const result = await ytmp3(link);
+    // PERBAIKAN: Mengubah ytmp3 menjadi ytdownDl
+    const result = await ytdownDl(url);
+
+    // Jika scraping internal gagal (misal url mati/salah)
+    if (!result.status) {
+      return res.status(400).json(result);
+    }
+
     return res.status(200).json({
       status: true,
       creator: "Arulzxd",
@@ -199,6 +97,7 @@ router.get("/", async (req, res) => {
       timestamp: new Date().toISOString()
     });
   }
+  
 });
 
 module.exports = router;
