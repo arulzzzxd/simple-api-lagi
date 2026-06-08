@@ -22,10 +22,9 @@ async function ytdownDl(url) {
 
     const apiData = response.data.api;
     
-    // Struktur respons Audio Only
     const result = {
       status: true,
-      title: apiData.title || '-',
+      title: apiData.title || 'audio_youtube',
       id: apiData.id || '-',
       thumbnail: apiData.imagePreviewUrl || '-',
       duration: apiData.mediaItems?.[0]?.mediaDuration || '-',
@@ -57,11 +56,10 @@ async function ytdownDl(url) {
 }
 
 // ======================================================
-// ENDPOINT GET UTAMA (AUDIO ONLY)
+// ENDPOINT GET UTAMA (DIRECT DOWNLOAD)
 // ======================================================
 
 router.get("/", async (req, res) => {
-  // Menggunakan req.query.url sesuai permintaan
   const url = req.query.url;
 
   if (!url) {
@@ -74,25 +72,42 @@ router.get("/", async (req, res) => {
   try {
     const result = await ytdownDl(url);
 
-    if (!result.status) {
-      return res.status(400).json(result);
+    if (!result.status || !result.audios || result.audios.length === 0) {
+      return res.status(400).json({
+        status: false,
+        message: result.message || "Audio tidak ditemukan atau link tidak valid."
+      });
     }
 
-    return res.status(200).json({
-      status: true,
-      creator: "Arulzxd",
-      result,
-      metadata: {
-        source: "YouTube - Ytmp3",
-        timestamp: new Date().toISOString()
+    // 1. Ambil URL download langsung dari hasil scraping (dl.iamworker.com)
+    const directDownloadUrl = result.audios[0].url;
+
+    // 2. Bersihkan judul video untuk dijadikan nama file .mp3 saat didownload
+    const safeTitle = result.title.replace(/[^a-zA-Z0-9]/g, "_");
+    const fileName = `${safeTitle}.mp3`;
+
+    // 3. Lakukan request stream ke link download tersebut
+    const audioStream = await axios({
+      method: 'GET',
+      url: directDownloadUrl,
+      responseType: 'stream',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36'
       }
     });
+
+    // 4. Set Header agar Browser otomatis mendownloadnya sebagai file, bukan memutarnya
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.setHeader('Content-Type', 'audio/mpeg');
+
+    // 5. Alirkan file langsung ke user
+    return audioStream.data.pipe(res);
+
   } catch (error) {
     return res.status(500).json({
       status: false,
-      message: "Gagal mengambil audio YouTube",
-      error: error.message,
-      timestamp: new Date().toISOString()
+      message: "Gagal memproses download langsung",
+      error: error.message
     });
   }
   
