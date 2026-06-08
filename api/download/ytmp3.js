@@ -22,7 +22,7 @@ async function ytdownDl(url) {
 
     const apiData = response.data.api;
     
-    // Struktur respons diubah khusus untuk Audio Only
+    // Struktur respons Audio Only
     const result = {
       status: true,
       title: apiData.title || '-',
@@ -30,12 +30,11 @@ async function ytdownDl(url) {
       thumbnail: apiData.imagePreviewUrl || '-',
       duration: apiData.mediaItems?.[0]?.mediaDuration || '-',
       channel: apiData.userInfo?.name || '-',
-      audios: [] // Array video dihapus
+      audios: []
     };
 
     if (Array.isArray(apiData.mediaItems)) {
       apiData.mediaItems.forEach(item => {
-        // Hanya mengambil tipe 'Audio'
         if (item.type === 'Audio') {
           result.audios.push({
             quality: item.mediaQuality || '-',
@@ -62,6 +61,7 @@ async function ytdownDl(url) {
 // ======================================================
 
 router.get("/", async (req, res) => {
+  // Menggunakan req.query.url sesuai permintaan
   const url = req.query.url;
 
   if (!url) {
@@ -72,10 +72,8 @@ router.get("/", async (req, res) => {
   }
 
   try {
-    // PERBAIKAN: Mengubah ytmp3 menjadi ytdownDl
     const result = await ytdownDl(url);
 
-    // Jika scraping internal gagal (misal url mati/salah)
     if (!result.status) {
       return res.status(400).json(result);
     }
