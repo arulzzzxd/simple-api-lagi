@@ -65,8 +65,9 @@ async function savetube(link, quality, value) {
         
         return {
             status: true,
+            title: info.title || "YouTube Audio",
             url: response.data.downloadUrl,
-            filename: `${info.title} (${quality}kbps).mp3`,
+            filename: `${info.title || "audio"} (${quality}kbps).mp3`,
             durationRaw: info.duration 
         };
     } catch (error) {
@@ -96,7 +97,7 @@ router.get("/", async (req, res) => {
         let id = get_id(query);
         let videoMeta = null;
 
-        // 1. Jika inputnya adalah Link/URL, langsung lookup ID-nya
+        // 1. Cek Pencarian
         if (id) {
             try {
                 videoMeta = await yts({ videoId: id });
@@ -104,75 +105,75 @@ router.get("/", async (req, res) => {
                 console.error("Lookup ID error:", e.message);
             }
         } else {
-            // Jika input berupa kata kunci teks biasa, lakukan pencarian search
             const searchData = await yts(query);
-            if (searchData.videos && searchData.videos.length > 0) {
+            if (searchData && searchData.videos && searchData.videos.length > 0) {
                 videoMeta = searchData.videos[0];
                 id = videoMeta.videoId;
             }
         }
 
-        // Validasi jika video benar-benar tidak ditemukan
-        if (!id || !videoMeta) {
+        // Jika pencarian benar-benar zonk dan tidak ada ID yang bisa diproses
+        if (!id) {
             return res.status(404).json({
                 status: false,
                 creator: "Arulzxd",
-                message: "Video tidak ditemukan, coba kata kunci lain!"
+                message: "Video tidak ditemukan, silakan gunakan kata kunci lain!"
             });
         }
 
         const cleanUrl = "https://youtube.com/watch?v=" + id;
 
-        // 2. Jalankan Engine Converter SaveTube berdasarkan video yang didapat
+        // 2. Jalankan Engine Converter SaveTube
         const formatSaves = 128;
         const responseSaveTube = await savetube(cleanUrl, formatSaves, "audio");
 
-        if (!responseSaveTube.status || !responseSaveTube.url) {
+        if (!responseSaveTube || !responseSaveTube.status || !responseSaveTube.url) {
             return res.status(500).json({
                 status: false,
                 creator: "Arulzxd",
-                message: "Gagal memproses konversi audio dari server pihak ketiga"
+                message: "Gagal memproses konversi audio dari server pihak ketiga (SaveTube Error)"
             });
         }
 
-        // 3. Ambil Durasi Murni Sesuai Isi Link
+        // 3. Ambil Durasi Pas Sesuai Isi Link
         const durationResult = format_duration(responseSaveTube.durationRaw);
 
-        // Bersihkan karakter ilegal dari judul asli untuk penulisan filename yang rapi
-        const cleanTitle = videoMeta.title.replace(/[/\\?%*:|"<>]/g, '');
+        // Proteksi Penamaan: Menggunakan data YouTube, jika null/blank pindah ke data SaveTube
+        const finalTitle = videoMeta?.title || responseSaveTube.title || "YouTube Audio";
+        const cleanTitle = finalTitle.replace(/[/\\?%*:|"<>]/g, '');
 
-        // 4. Kembalikan Response Sukses Fitur Play
+        // 4. Kembalikan Response Sukses dengan Proteksi Objek (?.)
         return res.status(200).json({
             status: true,
             creator: "Arulzxd",
             result: {
-                title: videoMeta.title,
+                title: finalTitle,
                 duration: durationResult, 
-                thumbnail: videoMeta.thumbnail || `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
+                thumbnail: videoMeta?.thumbnail || `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
                 youtube_url: cleanUrl,
-                download_url: responseSaveTube.url, // Link murni asli bawaan CDN
-                filename: `${cleanTitle} (128kbps).mp3`, // Nama file rapi menyesuaikan judul asli
+                download_url: responseSaveTube.url,
+                filename: `${cleanTitle} (128kbps).mp3`,
                 quality: "128kbps",
                 info: {
-                    author: videoMeta.author?.name || "Unknown",
-                    views: videoMeta.views || 0,
-                    uploaded: videoMeta.ago || "Unknown",
+                    author: videoMeta?.author?.name || "Unknown Channel",
+                    views: videoMeta?.views || 0,
+                    uploaded: videoMeta?.ago || "Unknown Date",
                     seconds_total: responseSaveTube.durationRaw || 0
                 }
             },
             metadata: {
-                source: "savetube.vip + yt-search (play mode)",
+                source: "savetube.vip + yt-search (play mode protected)",
                 timestamp: new Date().toISOString()
             }
         });
 
     } catch (err) {
-        console.error(err);
+        console.error("CRITICAL ERROR IN YTPLAY:", err);
 
         return res.status(500).json({
             status: false,
             creator: "Arulzxd",
-            message: "Terjadi kesalahan pada sistem internal ytplay!",
+            message: "Terjadi kesalahan fatal pada sistem internal server!",
             error: err.message
         });
     }
