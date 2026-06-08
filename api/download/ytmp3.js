@@ -23,7 +23,7 @@ async function ytdownDl(url) {
 
     const apiData = response.data.api;
     
-    // Struktur respons Audio Only
+    // Struktur respons Audio Only sesuai request
     const result = {
       status: true,
       title: apiData.title || '-',
@@ -38,13 +38,13 @@ async function ytdownDl(url) {
       // Filter hanya item yang bertipe Audio
       const audioItems = apiData.mediaItems.filter(item => item.type === 'Audio');
 
-      // TAHAP 2: Menggunakan Promise.all agar proses menembak fileUrl berjalan paralel (bersamaan)
+      // TAHAP 2: Menggunakan Promise.all untuk menembak fileUrl secara paralel
       const audioPromises = audioItems.map(async (item) => {
-        let fileUrl = '-';
+        let fileUrl = '';
 
         if (item.mediaUrl) {
           try {
-            // Lakukan polling maksimal 5 kali jika server membutuhkan waktu untuk convert file
+            // Lakukan polling maksimal 5 kali jika server membutuhkan waktu untuk convert
             for (let i = 0; i < 5; i++) {
               const fileResponse = await axios.post('https://app.ytdown.to/proxy.php', 
                 new URLSearchParams({ url: item.mediaUrl }), 
@@ -59,31 +59,30 @@ async function ytdownDl(url) {
 
               const fileApiData = fileResponse.data?.api;
 
-              // Pastikan fileUrl sudah ter-generate dan bukan berstatus "Waiting..."
+              // Pastikan fileUrl sudah siap dan bukan "Waiting..."
               if (fileApiData && fileApiData.fileUrl && fileApiData.fileUrl !== 'Waiting...') {
                 fileUrl = fileApiData.fileUrl;
-                break; // Keluar dari loop polling jika sukses mendapatkan link s30.worker03
+                break; // Stop loop jika berhasil mendapatkan link s30.worker03.com
               }
 
-              // Jeda waktu 1.5 detik sebelum mencoba hit ulang (polling)
+              // Jeda waktu 1.5 detik sebelum hit ulang (polling)
               await new Promise(resolve => setTimeout(resolve, 1500));
             }
           } catch (err) {
-            // Jika terjadi error pada item audio tertentu, set default '-'
-            fileUrl = '-';
+            fileUrl = '';
           }
         }
 
+        // Output objek yang sudah disaring bersih tanpa key 'url'
         return {
           quality: item.mediaQuality || '-',
           size: item.mediaFileSize || '-',
-          ext: item.mediaExtension || 'M4A',
-          url: item.mediaUrl,
-          fileUrl: fileUrl // <--- Tambahan Link unduhan langsung dari worker / s30
+          ext: item.mediaExtension || 'MP3',
+          fileUrl: fileUrl
         };
       });
 
-      // Tunggu hingga seluruh kualitas audio selesai mendapatkan fileUrl masing-masing
+      // Tunggu hingga seluruh proses mapping selesai
       result.audios = await Promise.all(audioPromises);
     }
 
@@ -135,7 +134,6 @@ router.get("/", async (req, res) => {
       timestamp: new Date().toISOString()
     });
   }
-  
 });
 
 module.exports = router;
