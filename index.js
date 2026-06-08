@@ -333,14 +333,6 @@ app.get('/', (req, res) => {
             <a href="https://t.me/Arulzxd" target="_blank" class="menu-link hover:text-cyan-400 transition-colors flex items-center gap-2 text-xs opacity-80">OWNER (TELEGRAM)</a>
         </nav>
 
-        <div class="mt-8 flex-1 overflow-y-auto">
-            <h3 class="text-[10px] font-bold tracking-widest uppercase mb-3 text-slate-400 light-mode:text-slate-500 code-font">DYNAMIC LINK BIO</h3>
-            <div id="socialContainer" class="flex flex-col gap-2">
-                <div id="socialLoading" class="text-center py-2 w-full"><p class="text-xs text-slate-400">Loading...</p></div>
-                <div id="socialError" class="text-center py-2 w-full hidden"><p class="text-[10px] text-red-400">Link bio tidak tersedia.</p></div>
-            </div>
-        </div>
-    </div>
 
     <div id="menuOverlay" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden z-30 transition-opacity duration-300"></div>
 
