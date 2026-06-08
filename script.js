@@ -835,6 +835,74 @@ document.addEventListener('DOMContentLoaded', function() {
         menuOverlay.addEventListener('click', closeSidebarMenu);
         bioDropdown.addEventListener('click', (e) => { e.stopPropagation(); });
     }
+
+    // =====================================================================
+    // FITUR NAVIGASI OTOMATIS (HOME, DOCUMENTATION, UPLOADER, PASTEBIN)
+    // =====================================================================
+    
+    // 1. Klik "Home" -> Kembali ke Atas (Smooth Scroll)
+    const homeBtn = document.getElementById('homeBtn') || 
+                    [...document.querySelectorAll('a, button, span, .nav-link')].find(el => el.textContent.trim().toLowerCase() === 'home');
+    
+    if (homeBtn) {
+        homeBtn.style.cursor = 'pointer';
+        homeBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+            if (typeof closeSidebarMenu === 'function') closeSidebarMenu();
+        });
+    }
+
+    // 2. Klik "Documentation" -> Scroll ke List/Daftar Endpoint API
+    const docBtn = document.getElementById('docBtn') || 
+                   [...document.querySelectorAll('a, button, span, .nav-link')].find(el => el.textContent.trim().toLowerCase().includes('documentation'));
+    
+    if (docBtn) {
+        docBtn.style.cursor = 'pointer';
+        docBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const apiListTarget = document.getElementById('apiList') || document.getElementById('searchInput');
+            if (apiListTarget) {
+                apiListTarget.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+            if (typeof closeSidebarMenu === 'function') closeSidebarMenu();
+        });
+    }
+
+    // 3. Klik "File Uploader" -> Pindah URL
+    const uploaderBtn = document.getElementById('uploaderBtn') || 
+                        [...document.querySelectorAll('a, button, span, .nav-link')].find(el => el.textContent.trim().toLowerCase().includes('file uploader'));
+    
+    if (uploaderBtn) {
+        uploaderBtn.style.cursor = 'pointer';
+        uploaderBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.location.href = 'https://arulz-uploader.vercel.app'; 
+        });
+    }
+
+    // 4. Klik "Pastebin" -> Pindah URL
+    const pastebinBtn = document.getElementById('pastebinBtn') || 
+                      [...document.querySelectorAll('a, button, span, .nav-link')].find(el => el.textContent.trim().toLowerCase().includes('pastebin'));
+    
+    if (pastebinBtn) {
+        pastebinBtn.style.cursor = 'pointer';
+        pastebinBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.location.href = 'https://pastebin.com'; // Ganti ke web pastebin kamu jika ada
+        });
+    }
+    // =====================================================================
+    // SELESAI FITUR NAVIGASI
+    // =====================================================================
+
+}); // Penutup akhir DOMContentLoaded yang aman
     
     fetch('/api/apilist')
         .then(res => res.json())
