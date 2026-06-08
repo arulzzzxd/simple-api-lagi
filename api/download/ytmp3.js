@@ -1,4 +1,4 @@
-const axios = require('axios'); // FIX: Mengubah 'Const' menjadi 'const'
+const axios = require('axios'); 
 const express = require('express');
 const router = express.Router();
 
@@ -7,12 +7,12 @@ async function search(q) {
   try {
     const r = await axios.get('https://yt-extractor.y2mp3.co/api/youtube/search?q=' + encodeURIComponent(q), {
       headers: {
-        'user-agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Mobile Safari/537.36',
-        'accept': 'application/json',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'accept': 'application/json, text/plain, */*',
         'origin': 'https://ytmp3.gg',
         'referer': 'https://ytmp3.gg/'
       },
-      timeout: 5000 // Batasi 5 detik agar tidak memicu Vercel Timeout
+      timeout: 5000 
     });
     
     const i = r.data?.items?.find(v => v.type === 'stream');
@@ -33,51 +33,48 @@ async function download(url) {
     audioBitrate: '128'
   };
 
-  const dataString = JSON.stringify(payload);
-
   try {
-    const r = await axios.post('https://hub.y2mp3.co', dataString, {
+    // FIX: Kirim sebagai objek langsung, biarkan Axios yang mengelola stringify & content-length secara native
+    const r = await axios.post('https://hub.y2mp3.co', payload, {
       headers: {
-        'user-agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Mobile Safari/537.36',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'content-type': 'application/json',
-        'accept': 'application/json',
+        'accept': 'application/json, text/plain, */*',
         'origin': 'https://ytmp3.gg',
-        'referer': 'https://ytmp3.gg/',
-        'content-length': Buffer.byteLength(dataString) // FIX: Membantu server target membaca payload bypass proteksi
+        'referer': 'https://ytmp3.gg/'
       },
-      timeout: 8000 // Batasi waktu tunggu respon dari server converter
+      timeout: 9000 
     });
 
     if (!r.data || !r.data.url) {
-      throw new Error('API Converter tidak mengembalikan link download (Gagal Convert).');
+      throw new Error('API Converter tidak mengembalikan link download.');
     }
     return r.data;
   } catch (err) {
-    throw new Error('Converter Error: ' + (err.response?.data?.message || err.message));
+    // Mengambil pesan error internal dari server target jika ada
+    const errMsg = err.response?.data?.message || err.response?.statusText || err.message;
+    throw new Error('Converter Error: ' + errMsg);
   }
 }
 
 // Fungsi utama penentu input (URL atau Judul)
 async function ytmp3(input) {
   let info = null;
-  let url = input;
+  let url = input.trim();
 
-  // Deteksi regex URL yang lebih aman termasuk link youtube/googleusercontent Anda
-  const isUrl = /^https?:\/\//i.test(input.trim());
+  const isUrl = /^https?:\/\//i.test(url);
 
   if (!isUrl) {
-    info = await search(input);
+    info = await search(url);
     url = info.id; 
   }
 
-  // Ambil data download
   const dl = await download(url);
 
-  // Fallback metadata jika input berupa URL langsung agar respon JSON tidak bernilai null
   if (!info) {
     info = {
       title: dl.title || "YouTube Audio Download",
-      thumbnailUrl: dl.thumbnail || "https://i.ytimg.com/vi/" + (url.includes('v=') ? url.split('v=')[1]?.split('&')[0] : 'default') + "/0.jpg",
+      thumbnailUrl: dl.thumbnail || "https://i.ytimg.com/vi/default/0.jpg",
       uploaderName: dl.uploader || "Unknown",
       duration: dl.duration || "N/A",
       viewCount: null,
@@ -101,12 +98,12 @@ async function ytmp3(input) {
 
 // Endpoint GET /api/download/ytmp3
 router.get("/", async (req, res) => {
-  const url = req.query.url
+  const url = req.query.url;
 
   if (!url) {
     return res.status(400).json({
       status: false,
-      message: "Parameter 'url' wajib diisi! Contoh: ?url=https://youtube.com/watch?v=J1TFFzbCIiM"
+      message: "Parameter 'url' wajib diisi! Contoh: ?url=https://www.youtube.com/watch?v=J1TFFzbCIiM"
     });
   }
 
@@ -122,8 +119,8 @@ router.get("/", async (req, res) => {
       }
     });
   } catch (error) {
-    // Memberikan log mendetail ke console Vercel agar Anda tahu letak error aslinya
-    console.error("LOG ERROR YTMP3:", error.message);
+    // Log mendetail ke server terminal (Vercel logs) untuk melacak respons error dari Axios
+    console.error("LOG DETAIL ERROR:", error);
 
     return res.status(500).json({
       status: false,
