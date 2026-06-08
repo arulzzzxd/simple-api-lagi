@@ -143,139 +143,122 @@ app.get('/', (req, res) => {
     <link rel="stylesheet" href="styles.css" />
     
     <style>
-        /* Pola Bintik-Bintik Mode Terang (Background Putih, Bintik Abu-abu Lembut) */
-
+    /* Pola Bintik-Bintik Mode Terang (Background Putih, Bintik Abu-abu Lembut) */
     .bg-dots-light {
-
         background-color: #ffffff;
-
         background-image: radial-gradient(#e2e8f0 1.5px, transparent 1.5px);
-
         background-size: 24px 24px;
-
     }
-
-
 
     /* Pola Bintik-Bintik Mode Gelap (Background Gelap, Bintik Putih Transparan) */
-
     .bg-dots-dark {
-
-        background-color: #0f172a; /* atau sesuaikan dengan warna dark mode bawaanmu */
-
+        background-color: #0f172a;
         background-image: radial-gradient(rgba(255, 255, 255, 0.15) 1.5px, transparent 1.5px);
-
         background-size: 24px 24px;
-
     }
-
     
-
     /* Memastikan perpindahan theme terasa mulus */
-
     #themeBg {
-
         transition: background-color 0.3s ease, background-image 0.3s ease;
-
     }
-        /* Menggunakan background solid & tipis blur agar super ringan */
-        body {
-            transition: background 0.25s ease, color 0.25s ease;
-        }
+    /* Menggunakan background solid & tipis blur agar super ringan */
+    body {
+        transition: background 0.25s ease, color 0.25s ease;
+    }
 
-        .glass-panel {
-            background: rgba(15, 23, 42, 0.75);
-            backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            will-change: transform, opacity;
-        }
-        
-        .light-mode .glass-panel {
-            background: rgba(255, 255, 255, 0.9);
-            border: 1px solid rgba(15, 23, 42, 0.12);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03);
-        }
+    .glass-panel {
+        background: rgba(15, 23, 42, 0.75);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        will-change: transform, opacity;
+    }
+    
+    .light-mode .glass-panel {
+        background: rgba(255, 255, 255, 0.9);
+        border: 1px solid rgba(15, 23, 42, 0.12);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03);
+    }
 
-        /* Perbaikan Kontras Tulisan & Komponen Mode Terang */
-        .light-mode {
-            color: #0f172a !important;
-        }
-        .light-mode #mainTitle { color: #0f172a !important; }
-        .light-mode #mainDescription { color: #334155 !important; }
-        .light-mode #stat-battery-title,
-        .light-mode #stat-endpoints-title,
-        .light-mode #stat-categories-title { color: #475569 !important; }
-        .light-mode #siteFooter { color: #64748b !important; border-color: rgba(0,0,0,0.1); }
-        .light-mode #no-results-title { color: #0f172a !important; }
+    /* Perbaikan Kontras Tulisan & Komponen Mode Terang */
+    .light-mode {
+        color: #0f172a !important;
+    }
+    .light-mode #mainTitle { color: #0f172a !important; }
+    .light-mode #mainDescription { color: #334155 !important; }
+    .light-mode #stat-battery-title,
+    .light-mode #stat-endpoints-title,
+    .light-mode #stat-categories-title { color: #475569 !important; }
+    .light-mode #siteFooter { color: #64748b !important; border-color: rgba(0,0,0,0.1); }
+    .light-mode #no-results-title { color: #0f172a !important; }
 
-        .light-mode .music-player-card {
-            background: rgba(255, 255, 255, 0.85) !important;
-            border-color: rgba(0, 0, 0, 0.12) !important;
-        }
-        .light-mode .music-text-title { color: #0f172a !important; }
-        .light-mode .music-text-artist { color: #475569 !important; }
-        .light-mode .music-progress-bar-bg { background-color: rgba(0,0,0,0.1) !important; }
-        
-        .light-mode .music-btn-nav {
-            background-color: rgba(255, 255, 255, 0.9) !important;
-            border-color: rgba(0,0,0,0.12) !important;
-            color: #1e293b !important;
-        }
-        .light-mode .music-btn-nav:hover {
-            background-color: #f1f5f9 !important;
-            color: #0f172a !important;
-        }
-        
-        /* Brutalist Toggle Language Switcher */
-        .lang-btn {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 11px;
-            font-weight: bold;
-            padding: 3px 10px;
-            border: 2px solid #000000;
-            background-color: #1a1a1a;
-            color: #ffffff;
-            transition: all 0.15s ease;
-        }
-        .lang-btn.active {
-            background-color: #06b6d4;
-            color: #000000;
-            box-shadow: 2px 2px 0px #000000;
-        }
+    .light-mode .music-player-card {
+        background: rgba(255, 255, 255, 0.85) !important;
+        border-color: rgba(0, 0, 0, 0.12) !important;
+    }
+    .light-mode .music-text-title { color: #0f172a !important; }
+    .light-mode .music-text-artist { color: #475569 !important; }
+    .light-mode .music-progress-bar-bg { background-color: rgba(0,0,0,0.1) !important; }
+    
+    .light-mode .music-btn-nav {
+        background-color: rgba(255, 255, 255, 0.9) !important;
+        border-color: rgba(0,0,0,0.12) !important;
+        color: #1e293b !important;
+    }
+    .light-mode .music-btn-nav:hover {
+        background-color: #f1f5f9 !important;
+        color: #0f172a !important;
+    }
+    
+    /* Brutalist Toggle Language Switcher */
+    .lang-btn {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 11px;
+        font-weight: bold;
+        padding: 3px 10px;
+        border: 2px solid #000000;
+        background-color: #1a1a1a;
+        color: #ffffff;
+        transition: all 0.15s ease;
+    }
+    .lang-btn.active {
+        background-color: #06b6d4;
+        color: #000000;
+        box-shadow: 2px 2px 0px #000000;
+    }
 
-        /* Filter Buttons Style */
-        .filter-btn {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 11px;
-            padding: 6px 12px;
-            border: 1px solid rgba(255,255,255,0.2);
-            background: rgba(255,255,255,0.05);
-            color: #e2e8f0;
-            transition: all 0.2s ease;
-            border-radius: 8px;
-            white-space: nowrap;
-            cursor: pointer;
-        }
-        .filter-btn:hover {
-            background: rgba(255,255,255,0.15);
-        }
-        .filter-btn.active {
-            background-color: #06b6d4 !important;
-            color: #000000 !important;
-            border-color: #06b6d4 !important;
-            font-weight: bold;
-        }
-        .light-mode .filter-btn {
-            border-color: rgba(0,0,0,0.15);
-            background: rgba(0,0,0,0.04);
-            color: #334155;
-        }
-        .light-mode .filter-btn:hover {
-            background: rgba(0,0,0,0.08);
-        }
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
-        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+    /* Filter Buttons Style */
+    .filter-btn {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 11px;
+        padding: 6px 12px;
+        border: 1px solid rgba(255,255,255,0.2);
+        background: rgba(255,255,255,0.05);
+        color: #e2e8f0;
+        transition: all 0.2s ease;
+        border-radius: 8px;
+        white-space: nowrap;
+        cursor: pointer;
+    }
+    .filter-btn:hover {
+        background: rgba(255,255,255,0.15);
+    }
+    .filter-btn.active {
+        background-color: #06b6d4 !important;
+        color: #000000 !important;
+        border-color: #06b6d4 !important;
+        font-weight: bold;
+    }
+    .light-mode .filter-btn {
+        border-color: rgba(0,0,0,0.15);
+        background: rgba(0,0,0,0.04);
+        color: #334155;
+    }
+    .light-mode .filter-btn:hover {
+        background: rgba(0,0,0,0.08);
+    }
+    .scrollbar-hide::-webkit-scrollbar { display: none; }
+    .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 <body class="min-h-screen antialiased bg-[#030712] text-slate-100 relative">
@@ -332,9 +315,7 @@ app.get('/', (req, res) => {
             <a href="https://wa.me/6285122629940" target="_blank" class="menu-link hover:text-cyan-400 transition-colors flex items-center gap-2 text-xs opacity-80">OWNER (WHATSAPP)</a>
             <a href="https://t.me/Arulzxd" target="_blank" class="menu-link hover:text-cyan-400 transition-colors flex items-center gap-2 text-xs opacity-80">OWNER (TELEGRAM)</a>
         </nav>
-
-        <div class="mt-8 flex-1 overflow-y-auto">
-            
+    </div>
 
     <div id="menuOverlay" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden z-30 transition-opacity duration-300"></div>
 
@@ -373,28 +354,28 @@ app.get('/', (req, res) => {
             </div>
 
             <div class="glass-panel max-w-3xl mx-auto mt-4 p-3 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-3 border border-white/20">
-    <div class="flex items-center gap-2 text-sm text-cyan-400 light-mode:text-cyan-700 code-font">
-        <span>🔗</span> <span class="underline break-all font-semibold">https://simple-api-lagi.vercel.app/</span>
-    </div>
-    <a href="https://wa.me/6285122629940?text=Halo%20Arulz,%20saya%20ingin%20request%20fitur%20baru%20di%20REST%20API%20:" 
-       target="_blank" 
-       class="w-full sm:w-auto px-6 py-2 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs uppercase rounded-lg shadow transition-all active:scale-95 light-mode:bg-cyan-600 light-mode:hover:bg-cyan-500 light-mode:text-white text-center flex items-center justify-center">
-        + Request New Feature
-    </a>
-</div>
+                <div class="flex items-center gap-2 text-sm text-cyan-400 light-mode:text-cyan-700 code-font">
+                    <span>🔗</span> <span class="underline break-all font-semibold">https://simple-api-lagi.vercel.app/</span>
+                </div>
+                <a href="https://wa.me/6285122629940?text=Halo%20Arulz,%20saya%20ingin%20request%20fitur%20baru%20di%20REST%20API%20:" 
+                   target="_blank" 
+                   class="w-full sm:w-auto px-6 py-2 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs uppercase rounded-lg shadow transition-all active:scale-95 light-mode:bg-cyan-600 light-mode:hover:bg-cyan-500 light-mode:text-white text-center flex items-center justify-center">
+                    + Request New Feature
+                </a>
+            </div>
 
-<div class="flex justify-center gap-4 mt-4 max-w-3xl mx-auto">
-    <a href="https://wa.me/6285122629940?text=Halo%20Arulz,%20boleh%20minta%20link%20Channel%20kamu%3F" 
-       target="_blank" 
-       class="flex-1 glass-panel py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-white/10 light-mode:hover:bg-slate-100 transition-colors light-mode:text-slate-700 text-center block">
-       💬 Channel
-    </a>
-    <a href="https://wa.me/6285122629940?text=Halo%20Arulz,%20boleh%20minta%20link%20Group%20kamu%3F" 
-       target="_blank" 
-       class="flex-1 glass-panel py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-white/10 light-mode:hover:bg-slate-100 transition-colors light-mode:text-slate-700 text-center block">
-       👥 Group
-    </a>
-</div>
+            <div class="flex justify-center gap-4 mt-4 max-w-3xl mx-auto">
+                <a href="https://wa.me/6285122629940?text=Halo%20Arulz,%20boleh%20minta%20link%20Channel%20kamu%3F" 
+                   target="_blank" 
+                   class="flex-1 glass-panel py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-white/10 light-mode:hover:bg-slate-100 transition-colors light-mode:text-slate-700 text-center block">
+                   💬 Channel
+                </a>
+                <a href="https://wa.me/6285122629940?text=Halo%20Arulz,%20boleh%20minta%20link%20Group%20kamu%3F" 
+                   target="_blank" 
+                   class="flex-1 glass-panel py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-white/10 light-mode:hover:bg-slate-100 transition-colors light-mode:text-slate-700 text-center block">
+                   👥 Group
+                </a>
+            </div>
 
             <div class="music-player-card glass-panel mt-8 max-w-2xl mx-auto rounded-2xl p-4 shadow-2xl relative overflow-hidden border border-white/10">
                 <audio id="audioElement"></audio>
