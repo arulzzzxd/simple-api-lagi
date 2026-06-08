@@ -13,7 +13,6 @@ function get_id(url) {
     return match ? match[1] : null;
 }
 
-// Fungsi konversi detik langsung dari API SaveTube ke format "Menit:Detik"
 function format_duration(seconds) {
     if (!seconds) return "00:00";
     const mins = Math.floor(seconds / 60);
@@ -38,7 +37,6 @@ const decode = (enc) => {
     }
 };
 
-// Modifikasi fungsi savetube agar ikut mengembalikan info metadata asli dari link
 async function savetube(link, quality, value) {
     try {
         const cdn = (await axios.get("https://media.savetube.vip/api/random-cdn")).data.cdn;
@@ -106,7 +104,7 @@ router.get("/", async (req, res) => {
 
         const cleanUrl = "https://youtube.com/watch?v=" + id;
 
-        // 1. Jalankan Engine Converter SaveTube berdasarkan link murni
+        // 1. Jalankan Engine Converter SaveTube
         const formatSaves = 128;
         const responseSaveTube = await savetube(cleanUrl, formatSaves, "audio");
 
@@ -121,7 +119,7 @@ router.get("/", async (req, res) => {
         // 2. Ambil Durasi Pas Sesuai Isi Link
         const durationResult = format_duration(responseSaveTube.durationRaw);
 
-        // 3. PERBAIKAN UTAMA: Mencari metadata spesifik berdasarkan objek videoId (Bukan teks string URL)
+        // 3. Ambil metadata spesifik berdasarkan objek videoId
         let videoMeta = {};
         try {
             videoMeta = await yts({ videoId: id });
@@ -129,17 +127,22 @@ router.get("/", async (req, res) => {
             console.error("yt-search videoId error:", e.message);
         }
 
-        // 4. Kembalikan Response Sukses (Data dijamin sinkron)
+        // 4. Proses manipulasi nama file pada download_url agar sama dengan title
+        const finalTitle = videoMeta.title || responseSaveTube.filename.replace(" (128kbps).mp3", "");
+        const cleanTitleForUrl = encodeURIComponent(finalTitle.replace(/[/\\?%*:|"<>]/g, ''));
+        const customDownloadUrl = `${responseSaveTube.url}&title=${cleanTitleForUrl}`;
+
+        // 5. Kembalikan Response Sukses
         return res.status(200).json({
             status: true,
             creator: "Arulzxd",
             result: {
-                title: videoMeta.title || responseSaveTube.filename.replace(" (128kbps).mp3", ""),
+                title: finalTitle,
                 duration: durationResult, 
                 thumbnail: videoMeta.thumbnail || `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
                 youtube_url: cleanUrl,
-                download_url: responseSaveTube.url,
-                filename: responseSaveTube.filename,
+                download_url: customDownloadUrl,
+                filename: `${finalTitle} (128kbps).mp3`,
                 quality: "128kbps",
                 info: {
                     author: videoMeta.author?.name || "Unknown",
