@@ -101,7 +101,7 @@ async function ytmp3(input) {
 
 // Endpoint GET /api/download/ytmp3
 router.get("/", async (req, res) => {
-  const url = req.query.url || req.query.q; // FIX: Mendukung fallback jika user tidak sengaja mengisi ?q=
+  const url = req.query.url
 
   if (!url) {
     return res.status(400).json({
