@@ -4,19 +4,20 @@ const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-
 app.use(express.static(path.join(__dirname)));
 app.use(express.json());
 
-/* Configuration & Brand Metadata */
+/*
+Setting nama API & Metadata
+*/
 const title = "API-ARULZXD - REST";
 const favicon = "https://arulz-uploader.vercel.app/files/C5VYmq.jpg";
 const logo = "https://arulz-uploader.vercel.app/files/SnhJe3.png";
-const headertitle = "API Arulz-XD";
-const headerdescription = "Browse, inspect & fire requests against live endpoints._";
+const headertitle = "REST API";
+const headerdescription = "Solomat datanng di REST API documentasian.";
 const footer = "© Arulz-XD";
 
-// === KONFIGURASI PLAYLIST BANYAK MUSIK ===
+// === KONFIGURASI PLAYLIST MUSIK ===
 const playlist = [
   {
     title: "PAMIT KERJO",
@@ -41,13 +42,13 @@ const playlist = [
 const router = express.Router();
 const apiPath = path.join(__dirname, 'api');
 
-// Membaca direktori kategori di dalam folder api secara asinkronus/sinkronus awal
-let endpointDirs = [];
-if (fs.existsSync(apiPath)) {
-  endpointDirs = fs.readdirSync(apiPath).filter(f => fs.statSync(path.join(apiPath, f)).isDirectory());
+// Pastikan folder api ada
+if (!fs.existsSync(apiPath)) {
+  fs.mkdirSync(apiPath);
 }
 
-// Daftarkan route API secara otomatis berdasarkan struktur folder
+const endpointDirs = fs.readdirSync(apiPath).filter(f => fs.statSync(path.join(apiPath, f)).isDirectory());
+
 for (const category of endpointDirs) {
   const categoryPath = path.join(apiPath, category);
   const files = fs.readdirSync(categoryPath).filter(f => f.endsWith('.js'));
@@ -58,14 +59,13 @@ for (const category of endpointDirs) {
   }
 }
 
-// Parser parameter internal dari script middleware untuk dimasukkan ke dashboard UI
 function getEndpointsFromRouter(category, file) {
   const endpoints = [];
   try {
     const route = require(path.join(apiPath, category, file));
     const subRouter = route.stack ? route : route.router || route;
     if (!subRouter || !subRouter.stack) return endpoints;
-
+    
     subRouter.stack.forEach(layer => {
       if (layer.route) {
         const methods = Object.keys(layer.route.methods).map(m => m.toUpperCase());
@@ -73,7 +73,6 @@ function getEndpointsFromRouter(category, file) {
         if (layer.route.stack && layer.route.stack.length) {
           layer.route.stack.forEach(mw => {
             const fnString = mw.handle.toString();
-            // Melakukan ekstraksi otomatis req.query dan req.body dari string fungsi
             [...fnString.matchAll(/req\.query\.([a-zA-Z0-9_]+)/g)].forEach(match => {
               params[match[1]] = "";
             });
@@ -83,25 +82,23 @@ function getEndpointsFromRouter(category, file) {
           });
         }
         endpoints.push({
-          name: `/${category}/${file.replace(/\.js$/, "")}`,
-          path: `/api/${category}/${file.replace(/\.js$/, "")}`,
-          desc: `/${category}/${file.replace(/\.js$/, "")}`,
+          name: `${file.replace(/\.js$/,"")}`,
+          path: `/api/${category}/${file.replace(/\.js$/,"")}`,
+          desc: `Get information from ${file.replace(/\.js$/,"")} endpoint`,
           status: "ready",
           params,
           methods
         });
       }
     });
-  } catch (err) {
-    console.error(`Gagal memuat parameter endpoint dari ${file}:`, err);
+  } catch (e) {
+    console.error(e);
   }
   return endpoints;
 }
 
-// Endpoint JSON untuk mensuplai data ke UI dashboard utama
 router.get('/apilist', (req, res) => {
   const categories = [];
-
   for (const category of endpointDirs) {
     const files = fs.readdirSync(path.join(apiPath, category)).filter(f => f.endsWith('.js'));
     const endpoints = [];
@@ -110,41 +107,23 @@ router.get('/apilist', (req, res) => {
     }
     if (endpoints.length) {
       categories.push({
-        name: `${category.toUpperCase()}`,
+        name: category.toLowerCase(),
         items: endpoints
       });
     }
   }
-
-  // Tambahkan kategori utilitas bawaan
-  categories.push({
-    name: "OTHER",
-    items: [
-      {
-        name: "/apilist",
-        path: "/api/apilist",
-        desc: "Melihat daftar semua endpoint dalam format JSON RAW",
-        status: "ready",
-        params: {},
-        methods: ["GET"]
-      }
-    ]
-  });
-
   res.json({ categories });
 });
 
 app.use('/api', router);
 
-// Pengarah aset statis eksplisit
-app.get('/script.js', (req, res) => res.sendFile(path.join(__dirname, 'script.js')));
-app.get('/linkbio.json', (req, res) => res.sendFile(path.join(__dirname, 'linkbio.json')));
-app.get('/styles.css', (req, res) => res.sendFile(path.join(__dirname, 'styles.css')));
+app.get('/script.js', (req, res) => {
+  res.sendFile(path.join(__dirname, 'script.js'));
+});
 
-// Handler Halaman Utama Dashboard
 app.get('/', (req, res) => {
-  res.send(`<!DOCTYPE html>
-<html lang="en" class="notranslate" translate="no">
+    res.send(`<!DOCTYPE html>
+<html lang="id" class="notranslate" translate="no">
 <head>
     <meta charset="UTF-8" />
     <meta name="google" content="notranslate" />
@@ -152,195 +131,187 @@ app.get('/', (req, res) => {
     <title>${title}</title>
     <link id="faviconLink" rel="icon" type="image/x-icon" href="${favicon}">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
     
     <style>
         body {
-            transition: background 0.25s ease, color 0.25s ease;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            transition: background 0.5s ease, color 0.3s ease;
         }
-        .glass-panel {
-            background: rgba(15, 23, 42, 0.75);
-            backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            will-change: transform, opacity;
+        
+        /* Pastel Theme Style Matcher */
+        .theme-card {
+            background: #fff5f6;
+            border: 2px solid #ffe3e6;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(254, 219, 222, 0.5);
+            transition: all 0.3s ease;
         }
-        .light-mode .glass-panel {
-            background: rgba(255, 255, 255, 0.9);
-            border: 1px solid rgba(15, 23, 42, 0.12);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03);
-        }
-        .light-mode {
-            color: #0f172a !important;
-        }
-        .light-mode #mainTitle { color: #0f172a !important; }
-        .light-mode #mainDescription { color: #334155 !important; }
-        .light-mode #stat-battery-title,
-        .light-mode #stat-endpoints-title,
-        .light-mode #stat-categories-title { color: #475569 !important; }
-        .light-mode #siteFooter { color: #64748b !important; border-color: rgba(0,0,0,0.1); }
-        .light-mode #no-results-title { color: #0f172a !important; }
 
-        .lang-btn {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 11px;
-            font-weight: bold;
-            padding: 3px 10px;
-            border: 2px solid #000000;
-            background-color: #1a1a1a;
-            color: #ffffff;
-            transition: all 0.15s ease;
+        .theme-badge {
+            background: #fff;
+            border: 1px solid #ffe3e6;
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
-        .lang-btn.active {
-            background-color: #06b6d4;
-            color: #000000;
-            box-shadow: 2px 2px 0px #000000;
+
+        /* Dark Mode Override (Soft Pastel Dark Pink/Slate) */
+        body.dark-mode {
+            background-color: #1a1214;
+            color: #ffe4e6;
         }
-        .filter-btn {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 11px;
-            padding: 6px 12px;
-            border: 1px solid rgba(255,255,255,0.2);
-            background: rgba(255,255,255,0.05);
-            color: #e2e8f0;
-            transition: all 0.2s ease;
-            border-radius: 8px;
-            white-space: nowrap;
-            cursor: pointer;
+        .dark-mode .theme-card {
+            background: #25181b;
+            border: 2px solid #3d252a;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         }
-        .filter-btn:hover { background: rgba(255,255,255,0.15); }
-        .filter-btn.active {
-            background-color: #06b6d4 !important;
-            color: #000000 !important;
-            border-color: #06b6d4 !important;
-            font-weight: bold;
+        .dark-mode .theme-badge {
+            background: #1f1416;
+            border: 1px solid #3d252a;
+            color: #fecdd3;
         }
-        .light-mode .filter-btn {
-            border-color: rgba(0,0,0,0.15);
-            background: rgba(0,0,0,0.04);
-            color: #334155;
+        .dark-mode input, .dark-mode textarea {
+            background: #180f11 !important;
+            border-color: #3d252a !important;
+            color: #ffe4e6 !important;
         }
-        .light-mode .filter-btn:hover { background: rgba(0,0,0,0.08); }
+
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .toggle-switch {
+            position: relative;
+            width: 48px;
+            height: 24px;
+            background: #cbd5e1;
+            border-radius: 9999px;
+            transition: background 0.3s;
+            cursor: pointer;
+        }
+        .toggle-dot {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s;
+        }
+        .dark-mode .toggle-switch { background: #f43f5e; }
+        .dark-mode .toggle-dot { transform: translateX(24px); }
     </style>
 </head>
-<body class="min-h-screen antialiased bg-[#030712] text-slate-100 relative">
+<body class="antialiased text-slate-800 relative">
 
-    <div id="themeBg" class="fixed inset-0 -z-50 bg-gradient-to-br from-[#070b12] via-[#0f172a] to-[#070b12] transition-all duration-500"></div>
-
-    <div id="toast" class="toast z-50">
-        <div class="flex items-center gap-3">
-            <svg id="toastIcon" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-            </svg>
-            <span id="toastMessage" class="font-medium">Action completed</span>
-        </div>
-    </div>
+    <div id="themeBg" class="fixed inset-0 -z-50 bg-gradient-to-tr from-[#ffeef0] via-[#fff5f6] to-[#fceedf] transition-all duration-500"></div>
 
     <div class="fixed top-6 right-6 z-40">
-        <button id="bioMenuBtn" class="flex items-center justify-center w-12 h-12 rounded-xl glass-panel text-slate-300 hover:text-white shadow-lg transition-all active:scale-95 focus:outline-none">
+        <button id="bioMenuBtn" class="flex items-center justify-center w-12 h-12 rounded-xl border-2 border-[#ffe3e6] bg-white/90 text-rose-500 hover:bg-rose-50 shadow-md transition-all active:scale-95 focus:outline-none">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
             </svg>
         </button>
     </div>
 
-    <div id="menuOverlay" class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden z-40"></div>
-    <div id="bioDropdown" class="fixed top-0 right-0 h-full w-72 bg-[#08111e]/95 backdrop-blur-lg border-l border-white/10 transform translate-x-full transition-transform duration-300 ease-in-out z-50 shadow-2xl flex flex-col p-6 font-['Space_Grotesk']">
+    <div id="menuOverlay" class="fixed inset-0 bg-black/20 backdrop-blur-sm hidden z-40 transition-opacity"></div>
+
+    <div id="bioDropdown" class="fixed top-0 right-0 h-full w-80 bg-white/95 backdrop-blur-md border-l-2 border-[#ffe3e6] transform translate-x-full transition-transform duration-300 ease-in-out z-50 shadow-2xl flex flex-col p-6 dark-mode:bg-[#25181b]/95 dark-mode:border-[#3d252a]">
+        <div class="flex items-center justify-between pb-4 border-b border-rose-100 dark-mode:border-[#3d252a] mb-6">
+            <h3 class="font-bold text-lg text-slate-800 dark-mode:text-rose-200">Settings</h3>
+            <button id="closeMenuBtn" class="text-slate-400 hover:text-rose-500 font-bold text-xl">&times;</button>
+        </div>
+
+        <div class="flex items-center justify-between mb-6">
+            <span class="font-medium text-sm text-slate-600 dark-mode:text-slate-300">Language</span>
+            <div class="flex border rounded-lg overflow-hidden border-rose-200 dark-mode:border-[#3d252a]">
+                <button id="lang-id" class="px-3 py-1 text-xs font-bold bg-rose-500 text-white" onclick="setLanguage('id')">ID</button>
+                <button id="lang-en" class="px-3 py-1 text-xs font-bold bg-slate-100 text-slate-700" onclick="setLanguage('en')">EN</button>
+            </div>
+        </div>
+
         <div class="flex items-center justify-between mb-8">
-            <div class="flex gap-0 border border-black p-0.5 bg-[#111]">
-                <button id="lang-id" class="lang-btn active" onclick="setLanguage('id')">ID</button>
-                <button id="lang-en" class="lang-btn" onclick="setLanguage('en')">EN</button>
-            </div>
-            
-            <div class="flex items-center gap-2">
-                <button id="themeToggle" class="flex items-center justify-center w-8 h-8 rounded-lg transition-all active:scale-95 focus:outline-none border border-white/20 bg-slate-900/50 text-white">
-                    <svg id="theme-toggle-dark-icon" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
-                    </svg>
-                    <svg id="theme-toggle-light-icon" class="w-4 h-4 hidden" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1z" fill-rule="evenodd" clip-rule="evenodd"></path>
-                    </svg>
-                </button>
-                <button id="closeMenuBtn" class="text-slate-400 hover:text-white">&times;</button>
+            <span class="font-medium text-sm text-slate-600 dark-mode:text-slate-300">Theme</span>
+            <div id="themeToggle" class="toggle-switch">
+                <div class="toggle-dot"></div>
             </div>
         </div>
-        <div class="flex flex-col items-center text-center border-b border-white/10 pb-6 mb-6">
-             <img src="${logo}" class="w-20 h-20 rounded-full border-2 border-cyan-400 p-1 mb-3" alt="Logo">
-             <h3 class="font-bold text-lg">${headertitle}</h3>
-             <p class="text-xs text-slate-400 mt-1">Fullstack Node.js Ecosystem Developer</p>
-        </div>
-        <div class="space-y-3 social-badge">
-             <a href="https://github.com/Arulzxd" target="_blank" class="block">
-                 <div class="px-4 py-2 rounded-xl text-xs font-bold transition-colors border bg-slate-900/40 text-slate-200 hover:bg-slate-800/60 border-white/10 text-center">GitHub Profile</div>
-             </a>
+        
+        <div class="mt-auto border-t border-rose-100 pt-4 dark-mode:border-[#3d252a] text-center text-xs text-slate-400">
+            ${footer}
         </div>
     </div>
 
-    <main class="max-w-4xl mx-auto px-4 pt-16 pb-24">
-        <header class="text-center md:text-left md:flex md:items-center md:justify-between mb-12 gap-6">
-            <div>
-                <h1 id="mainTitle" class="text-4xl font-extrabold tracking-tight font-['Space_Grotesk'] mb-2">${headertitle}</h1>
-                <p id="mainDescription" class="text-slate-400 text-sm max-w-lg font-['JetBrains_Mono']">${headerdescription}</p>
-            </div>
+    <div class="max-w-6xl mx-auto px-4 py-8 md:py-12">
+        
+        <header class="mb-10">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight mb-2 dark-mode:text-white">${headertitle}</h1>
+            <p id="mainDescription" class="text-sm text-slate-600 dark-mode:text-slate-400">${headerdescription}</p>
         </header>
 
-        <section class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-            <div class="glass-panel rounded-2xl p-4 flex items-center justify-between">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <div class="theme-card p-4 flex items-center justify-between">
                 <div>
-                    <h4 id="stat-battery-title" class="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">Baterai Anda</h4>
-                    <span id="batteryPercentage" class="text-2xl font-bold font-['Space_Grotesk']">...</span>
-                    <p id="batteryStatus" class="text-[10px] text-slate-500 mt-1 font-['JetBrains_Mono']">Mendeteksi...</p>
+                    <p id="stat-battery-title" class="text-xs font-semibold text-slate-500 uppercase tracking-wider dark-mode:text-slate-400">Statistik Baterai</p>
+                    <h3 id="batteryPercentage" class="text-2xl font-bold mt-1 text-slate-800 dark-mode:text-white">-- %</h3>
                 </div>
-                <div id="batteryContainer" class="w-12 h-6 border-2 border-slate-600 rounded p-0.5 relative">
-                     <div id="batteryLevel" class="h-full bg-cyan-400" style="width: 0%"></div>
-                </div>
+                <div class="w-12 h-12 rounded-xl bg-yellow-100 flex items-center justify-center text-xl shadow-inner">🔋</div>
             </div>
-            <div class="glass-panel rounded-2xl p-4">
-                <h4 id="stat-endpoints-title" class="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">Total Endpoint</h4>
-                <span id="totalEndpoints" class="text-3xl font-bold text-cyan-400 font-['Space_Grotesk']">0</span>
-            </div>
-            <div class="glass-panel rounded-2xl p-4">
-                <h4 id="stat-categories-title" class="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">Total Kategori</h4>
-                <span id="totalCategories" class="text-3xl font-bold text-purple-400 font-['Space_Grotesk']">0</span>
-            </div>
-        </section>
 
-        <div class="glass-panel rounded-2xl p-4 mb-8">
+            <div class="theme-card p-4 flex items-center justify-between">
+                <div>
+                    <p id="stat-endpoints-title" class="text-xs font-semibold text-slate-500 uppercase tracking-wider dark-mode:text-slate-400">Total Endpoints</p>
+                    <h3 id="totalEndpoints" class="text-2xl font-bold mt-1 text-slate-800 dark-mode:text-white">0</h3>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center text-xl shadow-inner">⚙️</div>
+            </div>
+
+            <div class="theme-card p-4 flex items-center justify-between">
+                <div>
+                    <p id="stat-categories-title" class="text-xs font-semibold text-slate-500 uppercase tracking-wider dark-mode:text-slate-400">Total Kategori</p>
+                    <h3 id="totalCategories" class="text-2xl font-bold mt-1 text-slate-800 dark-mode:text-white">0</h3>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center text-xl shadow-inner">🗂️</div>
+            </div>
+        </div>
+
+        <div class="theme-card p-4 mb-8">
             <div class="relative">
                 <input 
                     type="text" 
                     id="searchInput" 
-                    placeholder="Cari endpoint berdasarkan nama, path, atau kategori..." 
-                    class="w-full bg-slate-950/40 border border-white/10 rounded-xl py-3 pl-4 pr-12 text-sm focus:outline-none focus:border-cyan-500 font-['JetBrains_Mono'] transition-colors"
+                    placeholder="Cari endpoint berdasarkan nama atau path..." 
+                    class="w-full px-4 py-3 bg-white/80 border-2 border-rose-100 rounded-xl focus:outline-none focus:border-rose-400 transition-all text-sm shadow-inner"
                 >
-                <svg class="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                </svg>
             </div>
-            <div id="categoryFilters" class="flex flex-wrap gap-2 mt-4 justify-start overflow-x-auto pb-2 scrollbar-hide"></div>
+            <div id="categoryFilters" class="flex flex-wrap gap-2 mt-4 justify-start overflow-x-auto pb-1 scrollbar-hide"></div>
         </div>
 
         <div id="noResults" class="text-center py-12 hidden">
             <div class="text-4xl mb-2">🔍</div>
-            <h3 id="no-results-title" class="text-sm font-bold mb-1 text-white">Endpoint tidak ditemukan</h3>
+            <h3 id="no-results-title" class="text-sm font-bold mb-1 text-slate-700 dark-mode:text-rose-300">Endpoint tidak ditemukan</h3>
             <p id="no-results-desc" class="text-xs text-slate-400">Coba gunakan kata kunci lain</p>
         </div>
 
-        <div id="apiList" class="space-y-4"></div>
+        <div id="apiList" class="space-y-6"></div>
 
-        <footer id="siteFooter" class="mt-12 pt-6 border-t border-white/10 text-center text-xs text-slate-500 font-['JetBrains_Mono']">
-            ${footer}
+        <footer id="siteFooter" class="mt-16 pt-6 border-t border-rose-100 text-center text-xs text-slate-400 dark-mode:border-[#3d252a]">
+            <p>${footer} - Documentations Panel</p>
         </footer>
-    </main>
+    </div>
 
-    <script src="script.js"></script>
+    <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 px-4 py-3 bg-slate-900 text-white text-xs font-bold rounded-xl shadow-2xl transition-all duration-300 opacity-0 pointer-events-none transform translate-y-4 z-50 flex items-center gap-2">
+        <span id="toastMessage">Selesai!</span>
+    </div>
+
+    <script src="/script.js"></script>
 </body>
 </html>`);
 });
 
 app.listen(PORT, () => {
-  console.log(`Server berjalan di port http://localhost:${PORT}`);
+  console.log(`Server is running at http://localhost:${PORT}`);
 });
