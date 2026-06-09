@@ -11,7 +11,6 @@ let activeCategory = 'all';
 
 const themeToggleBtn = document.getElementById('themeToggle');
 const body = document.body;
-// Mengubah target selector ke div background baru
 const themeBg = document.getElementById('themeBg');
 
 // Pemetaan Ikon Kategori (SVG Kuning/Cyan)
@@ -78,11 +77,9 @@ const i18n = {
     }
 };
 
-
 function updateThemeBackground(theme) {
     if (themeBg) {
         themeBg.className = "fixed inset-0 -z-50 transition-all duration-300";
-        
         if (theme === 'light') {
             document.body.style.backgroundColor = "#ffffff";
             themeBg.style.backgroundColor = "#ffffff";
@@ -164,6 +161,14 @@ function setLanguage(lang) {
     if (batteryMonitor) {
         window.dispatchEvent(new Event('batteryupdate-hook'));
     }
+
+    // Perbarui bahasa teks tanggal secara real-time saat bahasa diubah
+    const dateElement = document.getElementById('liveDate');
+    if (dateElement && typeof moment !== 'undefined') {
+        const now = moment().tz("Asia/Jakarta");
+        const formatLang = lang === 'id' ? 'id' : 'en';
+        dateElement.textContent = now.locale(formatLang).format('dddd, D MMMM YYYY');
+    }
     
     if (apiData) loadApis();
 }
@@ -239,6 +244,31 @@ function initBatteryDetection() {
 
 function cleanupBatteryMonitor() {
     if (batteryMonitor) batteryMonitor = null;
+}
+
+// ==================== FITUR JAM & TANGGAL MOMENT-TIMEZONE ====================
+function initDigitalClock() {
+    const clockElement = document.getElementById('liveClock');
+    const dateElement = document.getElementById('liveDate');
+
+    if (!clockElement || !dateElement) return;
+
+    function updateClock() {
+        if (typeof moment === 'undefined') return;
+        
+        // Ambil waktu wilayah Asia/Jakarta
+        const now = moment().tz("Asia/Jakarta");
+
+        // Format Jam -> Jam:Menit:Detik (HH:mm:ss)
+        clockElement.textContent = now.format('HH:mm:ss');
+
+        // Format Tanggal sesuai Lokalisasi Bahasa (id / en)
+        const formatLang = currentLang === 'id' ? 'id' : 'en';
+        dateElement.textContent = now.locale(formatLang).format('dddd, D MMMM YYYY');
+    }
+
+    updateClock();
+    setInterval(updateClock, 1000);
 }
 
 function updateTotalEndpoints() { document.getElementById('totalEndpoints').textContent = totalEndpoints; }
@@ -478,29 +508,29 @@ async function executeRequest(e, catIdx, epIdx, method, path) {
     }
 }
 
+// ==================== FITUR BERSIHKAN RESPONSE + PARAMS INPUT ====================
 function clearResponse(catIdx, epIdx) {
-    // 1. Menyembunyikan elemen response (fungsi lama)
+    // 1. Sembunyikan container hasil response
     const responseDiv = document.getElementById(`response-${catIdx}-${epIdx}`);
     if (responseDiv) {
         responseDiv.classList.add('hidden');
     }
 
-    // 2. MENGOSONGKAN SEMUA INPUT PARAMETER (Fitur Baru)
+    // 2. Kosongkan semua teks parameter di dalam form input
     const form = document.getElementById(`form-${catIdx}-${epIdx}`);
     if (form) {
-        form.reset(); // Ini akan mengosongkan semua input di dalam form tersebut
+        form.reset(); // Mereset elemen <form> membersihkan semua kolom input sekaligus
         
-        // Opsional: Jika Anda ingin memperbarui tampilan URL preview agar kembali bersih
+        // 3. Kembalikan Tampilan Live URL ke path awal tanpa parameter query
         const urlContainer = document.getElementById(`live-url-${catIdx}-${epIdx}`);
         if (urlContainer) {
-            // Mengembalikan ke path dasar (tanpa query string)
             const basePath = urlContainer.textContent.split('?')[0];
             urlContainer.textContent = basePath;
         }
         
+        // 4. Kembalikan Tampilan Live cURL ke wujud awal
         const curlContainer = document.getElementById(`live-curl-${catIdx}-${epIdx}`);
         if (curlContainer) {
-            // Mengembalikan cURL ke bentuk semula
             const method = curlContainer.textContent.split(' ')[1] || 'GET';
             const baseUrl = curlContainer.textContent.split('"')[1] || '';
             curlContainer.textContent = `curl -X ${method} "${baseUrl.split('?')[0]}"`;
@@ -794,6 +824,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     initTheme();
     initBatteryDetection();
+    initDigitalClock(); // Aktifkan jam digital real-time saat DOM siap
     initMultiMusicPlayer();
     setLanguage(savedLang);
     
