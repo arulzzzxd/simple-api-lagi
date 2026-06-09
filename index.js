@@ -67,38 +67,34 @@ for (const category of endpointDirs) {
 
 function getEndpointsFromRouter(category, file) {
   const endpoints = [];
-  try {
-    const route = require(path.join(apiPath, category, file));
-    const subRouter = route.stack ? route : route.router || route;
-    if (!subRouter || !subRouter.stack) return endpoints;
-    subRouter.stack.forEach(layer => {
-      if (layer.route) {
-        const methods = Object.keys(layer.route.methods).map(m => m.toUpperCase());
-        let params = {};
-        if (layer.route.stack && layer.route.stack.length) {
-          layer.route.stack.forEach(mw => {
-            const fnString = mw.handle.toString();
-            [...fnString.matchAll(/req\.query\.([a-zA-Z0-9_]+)/g)].forEach(match => {
-              params[match[1]] = "";
-            });
-            [...fnString.matchAll(/req\.body\.([a-zA-Z0-9_]+)/g)].forEach(match => {
-              params[match[1]] = "";
-            });
+  const route = require(path.join(apiPath, category, file));
+  const subRouter = route.stack ? route : route.router || route;
+  if (!subRouter || !subRouter.stack) return endpoints;
+  subRouter.stack.forEach(layer => {
+    if (layer.route) {
+      const methods = Object.keys(layer.route.methods).map(m => m.toUpperCase());
+      let params = {};
+      if (layer.route.stack && layer.route.stack.length) {
+        layer.route.stack.forEach(mw => {
+          const fnString = mw.handle.toString();
+          [...fnString.matchAll(/req\.query\.([a-zA-Z0-9_]+)/g)].forEach(match => {
+            params[match[1]] = "";
           });
-        }
-        endpoints.push({
-          name: `/${category}/${file.replace(/\.js$/,"")}`,
-          path: `/api/${category}/${file.replace(/\.js$/,"")}`,
-          desc: `/${category}/${file.replace(/\.js$/,"")}`,
-          status: "ready",
-          params,
-          methods
+          [...fnString.matchAll(/req\.body\.([a-zA-Z0-9_]+)/g)].forEach(match => {
+            params[match[1]] = "";
+          });
         });
       }
-    });
-  } catch (e) {
-    console.error(`Gagal memuat route ${category}/${file}:`, e.message);
-  }
+      endpoints.push({
+        name: `/${category}/${file.replace(/\.js$/,"")}`,
+        path: `/api/${category}/${file.replace(/\.js$/,"")}`,
+        desc: `/${category}/${file.replace(/\.js$/,"")}`,
+        status: "ready",
+        params,
+        methods
+      });
+    }
+  });
   return endpoints;
 }
 
@@ -159,18 +155,28 @@ app.get('/', (req, res) => {
     <link rel="stylesheet" href="styles.css" />
     
     <style>
+    /* Pola Bintik-Bintik Mode Terang (Background Putih, Bintik Abu-abu Lembut) */
     .bg-dots-light {
         background-color: #ffffff;
         background-image: radial-gradient(#e2e8f0 1.5px, transparent 1.5px);
         background-size: 24px 24px;
     }
+
+    /* Pola Bintik-Bintik Mode Gelap (Background Gelap, Bintik Putih Transparan) */
     .bg-dots-dark {
         background-color: #0f172a;
         background-image: radial-gradient(rgba(255, 255, 255, 0.15) 1.5px, transparent 1.5px);
         background-size: 24px 24px;
     }
-    #themeBg { transition: background-color 0.3s ease, background-image 0.3s ease; }
-    body { transition: background 0.25s ease, color 0.25s ease; }
+    
+    /* Memastikan perpindahan theme terasa mulus */
+    #themeBg {
+        transition: background-color 0.3s ease, background-image 0.3s ease;
+    }
+    /* Menggunakan background solid & tipis blur agar super ringan */
+    body {
+        transition: background 0.25s ease, color 0.25s ease;
+    }
 
     .glass-panel {
         background: rgba(15, 23, 42, 0.75);
@@ -186,10 +192,12 @@ app.get('/', (req, res) => {
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03);
     }
 
-    .light-mode { color: #0f172a !important; }
+    /* Perbaikan Kontras Tulisan & Komponen Mode Terang */
+    .light-mode {
+        color: #0f172a !important;
+    }
     .light-mode #mainTitle { color: #0f172a !important; }
     .light-mode #mainDescription { color: #334155 !important; }
-    .light-mode #stat-clock-title,
     .light-mode #stat-battery-title,
     .light-mode #stat-endpoints-title,
     .light-mode #stat-categories-title { color: #475569 !important; }
@@ -214,6 +222,7 @@ app.get('/', (req, res) => {
         color: #0f172a !important;
     }
     
+    /* Brutalist Toggle Language Switcher */
     .lang-btn {
         font-family: 'JetBrains Mono', monospace;
         font-size: 11px;
@@ -230,6 +239,7 @@ app.get('/', (req, res) => {
         box-shadow: 2px 2px 0px #000000;
     }
 
+    /* Filter Buttons Style */
     .filter-btn {
         font-family: 'JetBrains Mono', monospace;
         font-size: 11px;
@@ -242,7 +252,9 @@ app.get('/', (req, res) => {
         white-space: nowrap;
         cursor: pointer;
     }
-    .filter-btn:hover { background: rgba(255,255,255,0.15); }
+    .filter-btn:hover {
+        background: rgba(255,255,255,0.15);
+    }
     .filter-btn.active {
         background-color: #06b6d4 !important;
         color: #000000 !important;
@@ -254,7 +266,9 @@ app.get('/', (req, res) => {
         background: rgba(0,0,0,0.04);
         color: #334155;
     }
-    .light-mode .filter-btn:hover { background: rgba(0,0,0,0.08); }
+    .light-mode .filter-btn:hover {
+        background: rgba(0,0,0,0.08);
+    }
     .scrollbar-hide::-webkit-scrollbar { display: none; }
     .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
@@ -281,8 +295,8 @@ app.get('/', (req, res) => {
     <div id="bioDropdown" class="fixed top-0 right-0 h-full w-72 bg-[#08111e]/95 backdrop-blur-lg border-l border-white/10 transform translate-x-full transition-transform duration-300 ease-in-out z-50 shadow-2xl flex flex-col p-6 font-['Space_Grotesk'] light-mode:bg-white/95 light-mode:border-slate-200">
         <div class="flex items-center justify-between mb-8">
             <div class="flex gap-0 border border-black p-0.5 bg-[#111]">
-                <button id="lang-id" class="lang-btn active" onclick="customSetLanguage('id')">ID</button>
-                <button id="lang-en" class="lang-btn" onclick="customSetLanguage('en')">EN</button>
+                <button id="lang-id" class="lang-btn active" onclick="setLanguage('id')">ID</button>
+                <button id="lang-en" class="lang-btn" onclick="setLanguage('en')">EN</button>
             </div>
             
             <div class="flex items-center gap-2">
@@ -325,21 +339,20 @@ app.get('/', (req, res) => {
             <h1 id="mainTitle" class="text-5xl md:text-6xl font-black mb-4 tracking-tight font-['Space_Grotesk'] text-white">${headertitle}</h1>
             <p id="mainDescription" class="text-md md:text-lg font-medium tracking-wide text-slate-300 max-w-xl mx-auto">${headerdescription}</p>
             
-            <div class="mt-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 max-w-5xl mx-auto">
-                
-                <div class="glass-panel flex flex-col items-center justify-center p-4 rounded-xl shadow-lg min-h-[110px]">
-                    <span id="stat-clock-title" class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Waktu Sekarang</span>
-                    <div id="liveClock" class="text-2xl font-black tracking-wider text-cyan-400 light-mode:text-cyan-600 font-mono">
-                        00:00:00
+            <div class="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto">
+                <div class="glass-panel flex flex-col items-center justify-center p-4 rounded-xl shadow-lg">
+                    <div class="text-center mb-3 font-['Space_Grotesk']">
+                        <div id="liveClock" class="text-2xl font-black tracking-wider text-cyan-400 light-mode:text-cyan-600 font-mono">
+                            00:00:00
+                        </div>
+                        <div id="liveDate" class="text-[10px] font-bold opacity-70 tracking-wide mt-0.5 uppercase">
+                            Memuat tanggal...
+                        </div>
                     </div>
-                    <div id="liveDate" class="text-[10px] font-bold opacity-70 tracking-wide mt-1 uppercase text-slate-300">
-                        Memuat tanggal...
-                    </div>
-                </div>
-
-                <div class="glass-panel flex flex-col items-center justify-center p-4 rounded-xl shadow-lg min-h-[110px]">
-                    <span id="stat-battery-title" class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Baterai Anda</span>
-                    <div class="flex items-center gap-3">
+                    <hr class="w-full border-white/5 light-mode:border-slate-200 mb-3">
+                    
+                    <span id="stat-battery-title" class="text-xs font-bold uppercase tracking-wider text-slate-400">Baterai Anda</span>
+                    <div class="flex items-center gap-3 mt-2">
                         <div id="batteryContainer" class="battery-container border border-white/20 light-mode:border-slate-400">
                             <div id="batteryLevel" class="battery-level bg-green-400" style="width: 0%"></div>
                             <div class="battery-tip"></div>
@@ -351,12 +364,12 @@ app.get('/', (req, res) => {
                     </div>
                 </div>
                 
-                <div class="glass-panel flex flex-col items-center justify-center p-4 rounded-xl shadow-lg min-h-[110px]">
+                <div class="glass-panel flex flex-col items-center justify-center p-4 rounded-xl shadow-lg">
                     <span id="stat-endpoints-title" class="text-xs font-bold uppercase tracking-wider text-slate-400">Total Endpoint</span>
                     <span id="totalEndpoints" class="text-3xl font-black text-cyan-400 mt-1 light-mode:text-cyan-600">0</span>
                 </div>
                 
-                <div class="glass-panel flex flex-col items-center justify-center p-4 rounded-xl shadow-lg min-h-[110px]">
+                <div class="glass-panel flex flex-col items-center justify-center p-4 rounded-xl shadow-lg">
                     <span id="stat-categories-title" class="text-xs font-bold uppercase tracking-wider text-slate-400">Total Kategori</span>
                     <span id="totalCategories" class="text-3xl font-black text-cyan-400 mt-1 light-mode:text-cyan-600">0</span>
                 </div>
@@ -451,56 +464,23 @@ app.get('/', (req, res) => {
             ${footer}
         </footer>
     </div>
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.30.1/moment.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.45/moment-timezone-with-data.min.js"></script>
 
 <script class="notranslate" translate="no">
     window.musicPlaylist = ${JSON.stringify(playlist)};
-    let currentLang = 'id';
-
-    function updateClockAndDate() {
-        const now = new Date();
-        const hours = String(now.getHours()).padStart(2, '0');
-        const minutes = String(now.getMinutes()).padStart(2, '0');
-        const seconds = String(now.getSeconds()).padStart(2, '0');
-        
-        const liveClockEl = document.getElementById('liveClock');
-        if (liveClockEl) {
-            liveClockEl.textContent = \`\${hours}:\${minutes}:\${seconds}\`;
-        }
-        
-        const liveDateEl = document.getElementById('liveDate');
-        if (liveDateEl) {
-            const localeStr = currentLang === 'id' ? 'id-ID' : 'en-US';
-            const formattedDate = now.toLocaleDateString(localeStr, { 
-                weekday: 'long', 
-                day: 'numeric', 
-                month: 'long', 
-                year: 'numeric' 
-            });
-            liveDateEl.textContent = formattedDate;
-        }
-    }
-
-    function customSetLanguage(lang) {
-        currentLang = lang;
-        updateClockAndDate();
-        if (typeof setLanguage === 'function') {
-            setLanguage(lang);
-        }
-    }
-
-    // Blok Interseptor Tambahan untuk Amankan `script.js` yang mencari ID lama
-    window.addEventListener('DOMContentLoaded', () => {
-        updateClockAndDate();
-        // Buat element tiruan tak terlihat agar script.js tidak error (null pointer) saat membaca ID lama
-        if(!document.getElementById('liveClockAndDate')) {
-            const dummy = document.createElement('div');
-            dummy.id = 'liveClockAndDate';
-            dummy.style.display = 'none';
-            document.body.appendChild(dummy);
-        }
-    });
-    setInterval(updateClockAndDate, 1000);
 </script>
 <script src="script.js"></script>
 </body>
 </html>
+    `);
+});
+
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+  });
+}
+
+module.exports = app;
