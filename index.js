@@ -45,7 +45,7 @@ const playlist = [
   },
   {
     title: "NGAPAIN REPOT",
-    artist: "JENG FEBRIA",
+    artist: "AJENG FEBRIA",
     cover: "https://i.ytimg.com/vi/-ix-XswQz10/hq720.jpg",
     url: "https://files.catbox.moe/hs1azs.mp3"
   }
