@@ -161,14 +161,6 @@ function setLanguage(lang) {
     if (batteryMonitor) {
         window.dispatchEvent(new Event('batteryupdate-hook'));
     }
-
-    // Perbarui bahasa teks tanggal secara real-time saat bahasa diubah
-    const dateElement = document.getElementById('liveDate');
-    if (dateElement && typeof moment !== 'undefined') {
-        const now = moment().tz("Asia/Jakarta");
-        const formatLang = lang === 'id' ? 'id' : 'en';
-        dateElement.textContent = now.locale(formatLang).format('dddd, D MMMM YYYY');
-    }
     
     if (apiData) loadApis();
 }
@@ -235,40 +227,17 @@ function initBatteryDetection() {
     }
     
     function fallbackBattery() {
-        batteryStatusElement.textContent = 'Simulated';
-        batteryPercentageElement.textContent = '85%';
-        batteryLevelElement.style.width = '85%';
-        batteryLevelElement.className = 'battery-level bg-green-400';
+        if(batteryStatusElement && batteryPercentageElement && batteryLevelElement) {
+            batteryStatusElement.textContent = 'Simulated';
+            batteryPercentageElement.textContent = '85%';
+            batteryLevelElement.style.width = '85%';
+            batteryLevelElement.className = 'battery-level bg-green-400';
+        }
     }
 }
 
 function cleanupBatteryMonitor() {
     if (batteryMonitor) batteryMonitor = null;
-}
-
-// ==================== FITUR JAM & TANGGAL MOMENT-TIMEZONE ====================
-function initDigitalClock() {
-    const clockElement = document.getElementById('liveClock');
-    const dateElement = document.getElementById('liveDate');
-
-    if (!clockElement || !dateElement) return;
-
-    function updateClock() {
-        if (typeof moment === 'undefined') return;
-        
-        // Ambil waktu wilayah Asia/Jakarta
-        const now = moment().tz("Asia/Jakarta");
-
-        // Format Jam -> Jam:Menit:Detik (HH:mm:ss)
-        clockElement.textContent = now.format('HH:mm:ss');
-
-        // Format Tanggal sesuai Lokalisasi Bahasa (id / en)
-        const formatLang = currentLang === 'id' ? 'id' : 'en';
-        dateElement.textContent = now.locale(formatLang).format('dddd, D MMMM YYYY');
-    }
-
-    updateClock();
-    setInterval(updateClock, 1000);
 }
 
 function updateTotalEndpoints() { document.getElementById('totalEndpoints').textContent = totalEndpoints; }
@@ -508,34 +477,8 @@ async function executeRequest(e, catIdx, epIdx, method, path) {
     }
 }
 
-// ==================== FITUR BERSIHKAN RESPONSE + PARAMS INPUT ====================
 function clearResponse(catIdx, epIdx) {
-    // 1. Sembunyikan container hasil response
-    const responseDiv = document.getElementById(`response-${catIdx}-${epIdx}`);
-    if (responseDiv) {
-        responseDiv.classList.add('hidden');
-    }
-
-    // 2. Kosongkan semua teks parameter di dalam form input
-    const form = document.getElementById(`form-${catIdx}-${epIdx}`);
-    if (form) {
-        form.reset(); // Mereset elemen <form> membersihkan semua kolom input sekaligus
-        
-        // 3. Kembalikan Tampilan Live URL ke path awal tanpa parameter query
-        const urlContainer = document.getElementById(`live-url-${catIdx}-${epIdx}`);
-        if (urlContainer) {
-            const basePath = urlContainer.textContent.split('?')[0];
-            urlContainer.textContent = basePath;
-        }
-        
-        // 4. Kembalikan Tampilan Live cURL ke wujud awal
-        const curlContainer = document.getElementById(`live-curl-${catIdx}-${epIdx}`);
-        if (curlContainer) {
-            const method = curlContainer.textContent.split(' ')[1] || 'GET';
-            const baseUrl = curlContainer.textContent.split('"')[1] || '';
-            curlContainer.textContent = `curl -X ${method} "${baseUrl.split('?')[0]}"`;
-        }
-    }
+    document.getElementById(`response-${catIdx}-${epIdx}`).classList.add('hidden');
 }
 
 function renderCategoryFilters() {
@@ -780,6 +723,7 @@ function initMultiMusicPlayer() {
     }
 
     function renderPlaylistItems() {
+        if (!playlistPanel) return;
         playlistPanel.innerHTML = '';
         playlist.forEach((track, idx) => {
             const isActive = idx === currentTrackIdx;
@@ -824,7 +768,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     initTheme();
     initBatteryDetection();
-    initDigitalClock(); // Aktifkan jam digital real-time saat DOM siap
     initMultiMusicPlayer();
     setLanguage(savedLang);
     
@@ -855,12 +798,17 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 });
 
-themeToggleBtn.addEventListener('click', toggleTheme);
+if (themeToggleBtn) {
+    themeToggleBtn.addEventListener('click', toggleTheme);
+}
 
 let searchTimeout;
-document.getElementById('searchInput').addEventListener('input', function() {
-    clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(performSearch, 150);
-});
+const searchInput = document.getElementById('searchInput');
+if (searchInput) {
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(performSearch, 150);
+    });
+}
 
 window.addEventListener('beforeunload', cleanupBatteryMonitor);
