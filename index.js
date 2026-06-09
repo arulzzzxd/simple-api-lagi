@@ -341,6 +341,16 @@ app.get('/', (req, res) => {
             
             <div class="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto">
                 <div class="glass-panel flex flex-col items-center justify-center p-4 rounded-xl shadow-lg">
+                    <div class="text-center mb-3 font-['Space_Grotesk']">
+                        <div id="liveClock" class="text-2xl font-black tracking-wider text-cyan-400 light-mode:text-cyan-600 font-mono">
+                            00:00:00
+                        </div>
+                        <div id="liveDate" class="text-[10px] font-bold opacity-70 tracking-wide mt-0.5 uppercase">
+                            Memuat tanggal...
+                        </div>
+                    </div>
+                    <hr class="w-full border-white/5 light-mode:border-slate-200 mb-3">
+                    
                     <span id="stat-battery-title" class="text-xs font-bold uppercase tracking-wider text-slate-400">Baterai Anda</span>
                     <div class="flex items-center gap-3 mt-2">
                         <div id="batteryContainer" class="battery-container border border-white/20 light-mode:border-slate-400">
@@ -454,6 +464,10 @@ app.get('/', (req, res) => {
             ${footer}
         </footer>
     </div>
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.30.1/moment.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.45/moment-timezone-with-data.min.js"></script>
+
 <script class="notranslate" translate="no">
     window.musicPlaylist = ${JSON.stringify(playlist)};
 </script>
