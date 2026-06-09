@@ -1,110 +1,119 @@
 const express = require('express');
-const router = express.Router();
 const axios = require('axios');
-const FormData = require('form-data');
+const crypto = require('crypto');
 
-/*
-- HARGAI WOY JANGAN DIHAPUS!
-- Skrep by *JH a.k.a DHIKA - FIONY BOT*
-- Credits to all Fiony's Bot Admin. 
-- Maaf kalo kurang maksimal atau berantakan
-- Hasil gabut saja xixixi. 
-*/
+const router = express.Router();
+const scale = ['2', '4', '8', '16'];
 
-// ======================================================
-// CORE SCRAPER FUNCTION (WAIFU2X IMAGE ENHANCER)
-// ======================================================
-async function JHWaifu2x(imageUrl) {
-    const jantung = {
-        referer: "https://waifu2x.pro/",
-        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-    };
+// --- SCRAPER FUNCTIONS ---
 
-    try {
-        // 1. Download gambar asal dari URL input
-        const { data: file } = await axios.get(imageUrl, {
-            responseType: "arraybuffer",
-            headers: { "user-agent": jantung["user-agent"] }
-        });
+async function upimg(imgUrl) {
+    // 1. Download gambar dari URL yang diberikan menjadi Buffer
+    const imageRes = await axios.get(imgUrl, { responseType: 'arraybuffer' }).catch(() => {
+        throw new Error("Gagal mengunduh gambar dari URL yang diberikan. Pastikan URL valid!");
+    });
+    
+    const buffer = Buffer.from(imageRes.data, 'binary');
+    
+    // Ambil nama file dari URL atau buat nama acak jika tidak ada
+    const filename = imgUrl.split('/').pop().split('?')[0] || `${crypto.randomBytes(6).toString('hex')}.jpg`;
 
-        // 2. Buat payload form-data untuk dikirim ke API waifu2x
-        const form = new FormData();
-        [
-            ["denoise", "3"],
-            ["format", "PNG"],
-            ["type", "PHOTO"],
-            ["scale", "true"] // Mengaktifkan upscale (biasanya 2x)
-        ].forEach(([k, v]) => form.append(k, v));
-
-        form.append("file", file, {
-            filename: "image.jpg",
-            contentType: "image/jpeg"
-        });
-
-        // 3. Daftarkan antrean proses upscale ke server
-        const { data: init } = await axios.post(
-            "https://api.waifu2x.pro/api/v1/upscale",
-            form,
-            { headers: { ...jantung, ...form.getHeaders() } }
-        );
-
-        const hash = init.hash;
-        if (!hash) throw new Error("Gagal mendapatkan hash antrean dari Waifu2x");
-
-        // 4. Polling/Check status berkala sampai proses selesai (dibatasi maks 15x biar anti-stuck)
-        let attempts = 0;
-        while (attempts < 15) {
-            await new Promise(r => setTimeout(r, 2000));
-            const { data } = await axios.get(
-                `https://api.waifu2x.pro/api/v1/check?hash=${hash}`,
-                { headers: jantung }
-            );
-            if (data.isFinished) break;
-            attempts++;
-        }
-
-        // 5. Unduh hasil akhir gambar berekstensi PNG yang sudah HD
-        const { data: result } = await axios.get(
-            `https://api.waifu2x.pro/api/v1/get?hash=${hash}&format=PNG`,
-            {
-                responseType: "arraybuffer",
-                headers: jantung
+    // 2. Request URL Upload ke API UnblurImage
+    const upload = await axios.post('https://api.unblurimage.ai/api/common/upload/upload-image',
+        new URLSearchParams({ file_name: filename }).toString(),
+        {
+            headers: {
+                'content-type': 'application/x-www-form-urlencoded',
+                'user-agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Mobile Safari/537.36',
+                origin: 'https://unblurimage.ai',
+                referer: 'https://unblurimage.ai/',
+                'Product-Serial': crypto.randomUUID()
             }
-        );
+        }
+    );
+  
+    const { url, object_name } = upload.data.result;
 
-        return Buffer.from(result);
-    } catch (error) {
-        throw error;
-    }
+    // 3. Upload Buffer gambar ke Storage menggunakan PUT
+    await axios.put(url, buffer, {
+        headers: {
+            'content-type': 'image/jpeg',
+            'user-agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Mobile Safari/537.36'
+        }
+    });
+
+    return object_name;
 }
 
-// ======================================================
-// ENDPOINT GET UTAMA
-// ======================================================
+async function createjob(objectName, upscale) {
+    const r = await axios.post('https://api.unblurimage.ai/api/imgupscaler/v1/ai-image-upscaler-v2/create-job',
+        new URLSearchParams({
+            original_image_url: `https://cdn.unblurimage.ai/${objectName}`,
+            upscale_type: upscale
+        }).toString(),
+        {
+            headers: {
+                'content-type': 'application/x-www-form-urlencoded',
+                'user-agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Mobile Safari/537.36',
+                origin: 'https://unblurimage.ai',
+                referer: 'https://unblurimage.ai/',
+                authorization: '',
+                'Product-Serial': crypto.randomUUID()
+            }
+        }
+    );
+
+    return r.data.result;
+}
+
+// --- ENDPOINT ROUTE ---
+
 router.get('/', async (req, res) => {
-    const url = req.query.url;
-
-    if (!url) {
-        return res.status(400).json({
-            status: false,
-            message: "Parameter 'url' (link gambar) wajib diisi! Contoh: ?url=https://files.catbox.moe/xxxxxx.jpg"
-        });
-    }
-
     try {
-        // Jalankan fungsi penjernih gambar
-        const imageBuffer = await JHWaifu2x(url);
+        const imgUrl = req.query.url?.trim();
+        // Otomatis set scale ke '16' jika parameter &scale tidak diisi
+        const upscale = req.query.scale?.trim() || '2';
 
-        // Set header agar browser membaca response langsung sebagai gambar fisik PNG
-        res.set('Content-Type', 'image/png');
-        return res.send(imageBuffer);
+        // Validasi input URL
+        if (!imgUrl) {
+            return res.status(400).json({
+                status: false,
+                creator: "Arulzxd",
+                message: "Parameter ?url= wajib diisi!",
+                example: "/api/upscale?url=https://example.com/foto.jpg&scale=16"
+            });
+        }
 
-    } catch (error) {
+        // Validasi tingkatan Scale
+        if (!scale.includes(String(upscale))) {
+            return res.status(400).json({
+                status: false,
+                creator: "Arulzxd",
+                message: `Scale tidak valid! Gunakan salah satu dari: ${scale.join(', ')}`
+            });
+        }
+
+        // Eksekusi proses upscaler
+        const objectName = await upimg(imgUrl);
+        const job = await createjob(objectName, String(upscale));
+
+        return res.status(200).json({
+            status: true,
+            creator: "Arulzxd",
+            result: {
+                job_id: job.job_id,
+                input: job.input_url,
+                output: job.output_url
+            }
+        });
+
+    } catch (err) {
+        console.error(err);
         return res.status(500).json({
             status: false,
-            message: 'Gagal menjernihkan/upscale gambar via Waifu2x',
-            error: error.message || error,
-            timestamp: new Date().toISOString()
+            creator: "Arulzxd",
+            message: "Internal Server Error saat memproses HD foto",
+            error: err.message
         });
     }
 });
