@@ -479,7 +479,33 @@ async function executeRequest(e, catIdx, epIdx, method, path) {
 }
 
 function clearResponse(catIdx, epIdx) {
-    document.getElementById(`response-${catIdx}-${epIdx}`).classList.add('hidden');
+    // 1. Menyembunyikan elemen response (fungsi lama)
+    const responseDiv = document.getElementById(`response-${catIdx}-${epIdx}`);
+    if (responseDiv) {
+        responseDiv.classList.add('hidden');
+    }
+
+    // 2. MENGOSONGKAN SEMUA INPUT PARAMETER (Fitur Baru)
+    const form = document.getElementById(`form-${catIdx}-${epIdx}`);
+    if (form) {
+        form.reset(); // Ini akan mengosongkan semua input di dalam form tersebut
+        
+        // Opsional: Jika Anda ingin memperbarui tampilan URL preview agar kembali bersih
+        const urlContainer = document.getElementById(`live-url-${catIdx}-${epIdx}`);
+        if (urlContainer) {
+            // Mengembalikan ke path dasar (tanpa query string)
+            const basePath = urlContainer.textContent.split('?')[0];
+            urlContainer.textContent = basePath;
+        }
+        
+        const curlContainer = document.getElementById(`live-curl-${catIdx}-${epIdx}`);
+        if (curlContainer) {
+            // Mengembalikan cURL ke bentuk semula
+            const method = curlContainer.textContent.split(' ')[1] || 'GET';
+            const baseUrl = curlContainer.textContent.split('"')[1] || '';
+            curlContainer.textContent = `curl -X ${method} "${baseUrl.split('?')[0]}"`;
+        }
+    }
 }
 
 function renderCategoryFilters() {
