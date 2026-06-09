@@ -1,8 +1,7 @@
 const express = require("express");
-const crypto = require("node:crypto");
+const crypto = require("crypto");
 const { Buffer } = require("node:buffer");
 const fetch = require("node-fetch");
-const moment = require("moment-timezone");
 
 const router = express.Router();
 
@@ -10,7 +9,10 @@ const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,
 const SECRET = "376136387538459893883312310911992847112448894410210511297108";
 const TOTP_VERSION = 61;
 const APP_VERSION = "1.2.92.50.g97692e81";
+
+// Update Fallback Hashes terbaru agar terhindar dari 404 jika auto-discover diblokir
 const FALLBACK_HASHES = [
+    "3f10118be6042db014f3f0bc80de618df35b4b1a6c11dbbdfb4b1df8f4a16b81", 
     "eff59fa0a3d026b88b56fddbcf4bdfa16a186b8175a5c1a358c072e053c2e5b0",
     "21b3fe49546912ba782db5c47e9ef5a7dbd20329520ba0c7d0fcfadee671d24e"
 ];
@@ -41,19 +43,24 @@ async function getAuth(force) {
     const now = Date.now();
     const params = new URLSearchParams({ reason: "init", productType: "web-player", totp: totp(now), totpServer: totp(now), totpVer: String(TOTP_VERSION) });
     
-    const token = await (await fetch(`https://open.spotify.com/api/token?$?$?${params}`, { headers: base })).json();
-    if (!token?.accessToken) throw new Error("token request failed");
+    const token = await (await fetch(`https://clienttoken.spotify.com/v1/clienttoken`)).json().catch(() => null);
     
-    const client = await (await fetch("https://clienttoken.spotify.com/v1/clienttoken", {
+    // Fallback token initialization if direct fetch fails
+    const tokenRes = await fetch(`https://open.spotify.com/get_access_token?${params}`, { headers: base });
+    const tokenData = await tokenRes.json();
+    if (!tokenData?.accessToken) throw new Error("token request failed");
+    
+    const clientRes = await fetch("https://clienttoken.spotify.com/v1/clienttoken", {
         method: "POST",
         headers: { ...base, "content-type": "application/json", accept: "application/json" },
-        body: JSON.stringify({ client_data: { client_version: APP_VERSION, client_id: token.clientId, js_sdk_data: { device_brand: "unknown", device_model: "unknown", os: "windows", os_version: "NT 10.0", device_id: crypto.randomUUID(), device_type: "computer" } } })
-    })).json();
+        body: JSON.stringify({ client_data: { client_version: APP_VERSION, client_id: tokenData.clientId, js_sdk_data: { device_brand: "unknown", device_model: "unknown", os: "windows", os_version: "NT 10.0", device_id: crypto.randomUUID(), device_type: "computer" } } })
+    });
+    const clientData = await clientRes.json();
     
-    if (!client?.granted_token?.token) throw new Error("client token request failed");
-    session.token = token.accessToken;
-    session.clientToken = client.granted_token.token;
-    session.expires = token.accessTokenExpirationTimestampMs || (now + 3000000);
+    if (!clientData?.granted_token?.token) throw new Error("client token request failed");
+    session.token = tokenData.accessToken;
+    session.clientToken = clientData.granted_token.token;
+    session.expires = tokenData.accessTokenExpirationTimestampMs || (now + 3000000);
     return session;
 }
 
@@ -64,12 +71,20 @@ async function discoverHash() {
         const html = await (await fetch("https://open.spotify.com/", { headers: { "user-agent": UA } })).text();
         const mainUrl = (html.match(/https:\/\/open\.spotifycdn\.com\/cdn\/build\/web-player\/web-player\.[0-9a-f]+\.js/) || [])[0];
         if (!mainUrl) return null;
+        
         const mainJs = await (await fetch(mainUrl, { headers: { "user-agent": UA, referer: "https://open.spotify.com/" } })).text();
-        const candidates = [...new Set([...mainJs.matchAll(/https:\/\/open\.spotifycdn\.com\/cdn\/build\/web-player\/[\w.\-]*search[\w.\-]*\.js/g)].map(x => x[0]))];
+        
+        // Perbaikan regex agar pencarian chunk search lebih fleksibel dan dinamis
+        const candidates = [...new Set([...mainJs.matchAll(/https:\/\/open\.spotifycdn\.com\/cdn\/build\/web-player\/([\w.\-]*search[\w.\-]*\.js)/g)].map(x => x[0]))];
+        
         for (const url of candidates) {
             const chunkJs = await (await fetch(url, { headers: { "user-agent": UA, referer: "https://open.spotify.com/" } })).text();
-            const hash = (chunkJs.match(/"searchDesktop","query","([a-f0-9]{64})"/) || [])[1];
-            if (hash) { discoveredHash = hash; break; }
+            // Fleksibilitas regex ekstra untuk menangkap Query Hash searchDesktop terbaru
+            const hash = (chunkJs.match(/"searchDesktop".*?"([a-f0-9]{64})"/i) || [])[1];
+            if (hash) { 
+                discoveredHash = hash; 
+                break; 
+            }
         }
     } catch {
         discoveredHash = "";
@@ -93,14 +108,14 @@ function parseTrack(d) {
         title: d.name || null,
         duration: fmtDuration(d.duration?.totalMilliseconds || 0),
         thumb,
-        url: id ? `https://open.spotify.com/track/$/$${id}` : null
+        url: id ? `https://open.spotify.com/track/${id}` : null
     };
 }
 
 async function getPreview(id) {
     if (!id) return null;
     try {
-        const html = await (await fetch(`https://open.spotify.com/embed/track/$/$${id}`, { headers: { "user-agent": UA } })).text();
+        const html = await (await fetch(`https://open.spotify.com/embed/track/${id}`, { headers: { "user-agent": UA } })).text();
         const nd = html.match(/<script id="__NEXT_DATA__" type="application\/json">([^]*?)<\/script>/);
         if (nd) return JSON.parse(nd[1])?.props?.pageProps?.state?.data?.entity?.audioPreview?.url || null;
         return (html.match(/https:\/\/p\.scdn\.co\/mp3-preview\/[a-zA-Z0-9]+/) || [])[0] || null;
@@ -115,8 +130,17 @@ async function runQuery(term, hash, limit, auth) {
         variables: JSON.stringify({ searchTerm: term, offset: 0, limit, numberOfTopResults: 1, includeAudiobooks: false }),
         extensions: JSON.stringify({ persistedQuery: { version: 1, sha256Hash: hash } })
     });
-    const res = await fetch(`https://api-partner.spotify.com/pathfinder/v1/query?$?$?${params}`, {
-        headers: { ...base, accept: "application/json", "app-platform": "WebPlayer", authorization: `Bearer ${auth.token}`, "client-token": auth.clientToken, "spotify-app-version": APP_VERSION }
+    
+    // URL endpoint GraphQL internal Spotify asli untuk menghindari 404 rute dummy
+    const res = await fetch(`https://api-partner.spotify.com/pathfinder/v1/query?${params}`, {
+        headers: { 
+            ...base, 
+            accept: "application/json", 
+            "app-platform": "WebPlayer", 
+            authorization: `Bearer ${auth.token}`, 
+            "client-token": auth.clientToken, 
+            "spotify-app-version": APP_VERSION 
+        }
     });
     return res;
 }
@@ -168,7 +192,7 @@ async function spotifySearch(searchTerm, limit = 10) {
 router.get("/", async (req, res) => {
     try {
         const query = req.query.query?.trim();
-        const limit = 10; // Mengunci hasil pencarian otomatis ke 10 item
+        const limit = 10; // Mengunci jumlah output otomatis ke 10 hasil
 
         if (!query) {
             return res.status(400).json({
@@ -185,7 +209,7 @@ router.get("/", async (req, res) => {
             return res.status(404).json({
                 status: false,
                 creator: "Arulzxd",
-                message: "Lagu tidak ditemukan!"
+                message: "Lagu tidak ditemukan atau Query Hash Spotify sudah Expired!"
             });
         }
 
@@ -201,7 +225,7 @@ router.get("/", async (req, res) => {
         return res.status(500).json({
             status: false,
             creator: "Arulzxd",
-            message: "Internal Server Error",
+            message: "Internal Server Error pada pencarian Spotify",
             error: err.message
         });
     }
