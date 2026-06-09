@@ -36,6 +36,12 @@ const playlist = [
     artist: "LA TASYA",
     cover: "https://i.ytimg.com/vi/J1TFFzbCIiM/hq720.jpg",
     url: "https://arulz-uploader.vercel.app/files/xlXr2L.mp3"
+  },
+  {
+    title: "TUNGGAL EKA",
+    artist: "DENNY CAKNAN",
+    cover: "https://i.ytimg.com/vi/827HSYJX5uw/hq720.jpg",
+    url: "https://files.catbox.moe/x67fur.mp3"
   }
 ];
 
