@@ -67,34 +67,38 @@ for (const category of endpointDirs) {
 
 function getEndpointsFromRouter(category, file) {
   const endpoints = [];
-  const route = require(path.join(apiPath, category, file));
-  const subRouter = route.stack ? route : route.router || route;
-  if (!subRouter || !subRouter.stack) return endpoints;
-  subRouter.stack.forEach(layer => {
-    if (layer.route) {
-      const methods = Object.keys(layer.route.methods).map(m => m.toUpperCase());
-      let params = {};
-      if (layer.route.stack && layer.route.stack.length) {
-        layer.route.stack.forEach(mw => {
-          const fnString = mw.handle.toString();
-          [...fnString.matchAll(/req\.query\.([a-zA-Z0-9_]+)/g)].forEach(match => {
-            params[match[1]] = "";
+  try {
+    const route = require(path.join(apiPath, category, file));
+    const subRouter = route.stack ? route : route.router || route;
+    if (!subRouter || !subRouter.stack) return endpoints;
+    subRouter.stack.forEach(layer => {
+      if (layer.route) {
+        const methods = Object.keys(layer.route.methods).map(m => m.toUpperCase());
+        let params = {};
+        if (layer.route.stack && layer.route.stack.length) {
+          layer.route.stack.forEach(mw => {
+            const fnString = mw.handle.toString();
+            [...fnString.matchAll(/req\.query\.([a-zA-Z0-9_]+)/g)].forEach(match => {
+              params[match[1]] = "";
+            });
+            [...fnString.matchAll(/req\.body\.([a-zA-Z0-9_]+)/g)].forEach(match => {
+              params[match[1]] = "";
+            });
           });
-          [...fnString.matchAll(/req\.body\.([a-zA-Z0-9_]+)/g)].forEach(match => {
-            params[match[1]] = "";
-          });
+        }
+        endpoints.push({
+          name: `/${category}/${file.replace(/\.js$/,"")}`,
+          path: `/api/${category}/${file.replace(/\.js$/,"")}`,
+          desc: `/${category}/${file.replace(/\.js$/,"")}`,
+          status: "ready",
+          params,
+          methods
         });
       }
-      endpoints.push({
-        name: `/${category}/${file.replace(/\.js$/,"")}`,
-        path: `/api/${category}/${file.replace(/\.js$/,"")}`,
-        desc: `/${category}/${file.replace(/\.js$/,"")}`,
-        status: "ready",
-        params,
-        methods
-      });
-    }
-  });
+    });
+  } catch (e) {
+    console.error(`Gagal memuat route ${category}/${file}:`, e.message);
+  }
   return endpoints;
 }
 
@@ -155,28 +159,18 @@ app.get('/', (req, res) => {
     <link rel="stylesheet" href="styles.css" />
     
     <style>
-    /* Pola Bintik-Bintik Mode Terang (Background Putih, Bintik Abu-abu Lembut) */
     .bg-dots-light {
         background-color: #ffffff;
         background-image: radial-gradient(#e2e8f0 1.5px, transparent 1.5px);
         background-size: 24px 24px;
     }
-
-    /* Pola Bintik-Bintik Mode Gelap (Background Gelap, Bintik Putih Transparan) */
     .bg-dots-dark {
         background-color: #0f172a;
         background-image: radial-gradient(rgba(255, 255, 255, 0.15) 1.5px, transparent 1.5px);
         background-size: 24px 24px;
     }
-    
-    /* Memastikan perpindahan theme terasa mulus */
-    #themeBg {
-        transition: background-color 0.3s ease, background-image 0.3s ease;
-    }
-    /* Menggunakan background solid & tipis blur agar super ringan */
-    body {
-        transition: background 0.25s ease, color 0.25s ease;
-    }
+    #themeBg { transition: background-color 0.3s ease, background-image 0.3s ease; }
+    body { transition: background 0.25s ease, color 0.25s ease; }
 
     .glass-panel {
         background: rgba(15, 23, 42, 0.75);
@@ -192,10 +186,7 @@ app.get('/', (req, res) => {
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03);
     }
 
-    /* Perbaikan Kontras Tulisan & Komponen Mode Terang */
-    .light-mode {
-        color: #0f172a !important;
-    }
+    .light-mode { color: #0f172a !important; }
     .light-mode #mainTitle { color: #0f172a !important; }
     .light-mode #mainDescription { color: #334155 !important; }
     .light-mode #stat-clock-title,
@@ -223,7 +214,6 @@ app.get('/', (req, res) => {
         color: #0f172a !important;
     }
     
-    /* Brutalist Toggle Language Switcher */
     .lang-btn {
         font-family: 'JetBrains Mono', monospace;
         font-size: 11px;
@@ -240,7 +230,6 @@ app.get('/', (req, res) => {
         box-shadow: 2px 2px 0px #000000;
     }
 
-    /* Filter Buttons Style */
     .filter-btn {
         font-family: 'JetBrains Mono', monospace;
         font-size: 11px;
@@ -253,9 +242,7 @@ app.get('/', (req, res) => {
         white-space: nowrap;
         cursor: pointer;
     }
-    .filter-btn:hover {
-        background: rgba(255,255,255,0.15);
-    }
+    .filter-btn:hover { background: rgba(255,255,255,0.15); }
     .filter-btn.active {
         background-color: #06b6d4 !important;
         color: #000000 !important;
@@ -267,9 +254,7 @@ app.get('/', (req, res) => {
         background: rgba(0,0,0,0.04);
         color: #334155;
     }
-    .light-mode .filter-btn:hover {
-        background: rgba(0,0,0,0.08);
-    }
+    .light-mode .filter-btn:hover { background: rgba(0,0,0,0.08); }
     .scrollbar-hide::-webkit-scrollbar { display: none; }
     .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
@@ -469,14 +454,10 @@ app.get('/', (req, res) => {
 
 <script class="notranslate" translate="no">
     window.musicPlaylist = ${JSON.stringify(playlist)};
-    
-    // Sinkronisasi pendeteksi bahasa awal dari variable global template
     let currentLang = 'id';
 
     function updateClockAndDate() {
         const now = new Date();
-        
-        // Pembuatan format jam digital: HH:MM:SS
         const hours = String(now.getHours()).padStart(2, '0');
         const minutes = String(now.getMinutes()).padStart(2, '0');
         const seconds = String(now.getSeconds()).padStart(2, '0');
@@ -486,7 +467,6 @@ app.get('/', (req, res) => {
             liveClockEl.textContent = \`\${hours}:\${minutes}:\${seconds}\`;
         }
         
-        // Logika penanggalan multi bahasa
         const liveDateEl = document.getElementById('liveDate');
         if (liveDateEl) {
             const localeStr = currentLang === 'id' ? 'id-ID' : 'en-US';
@@ -500,20 +480,26 @@ app.get('/', (req, res) => {
         }
     }
 
-    // Fungsi trigger peralihan bahasa yang dipanggil via UI click tombol ID/EN
     function customSetLanguage(lang) {
         currentLang = lang;
         updateClockAndDate();
-        
-        // Teruskan perintah ke sistem translatabilitas internal template utama (script.js)
         if (typeof setLanguage === 'function') {
             setLanguage(lang);
         }
     }
 
-    // Interval jam real-time
+    // Blok Interseptor Tambahan untuk Amankan `script.js` yang mencari ID lama
+    window.addEventListener('DOMContentLoaded', () => {
+        updateClockAndDate();
+        // Buat element tiruan tak terlihat agar script.js tidak error (null pointer) saat membaca ID lama
+        if(!document.getElementById('liveClockAndDate')) {
+            const dummy = document.createElement('div');
+            dummy.id = 'liveClockAndDate';
+            dummy.style.display = 'none';
+            document.body.appendChild(dummy);
+        }
+    });
     setInterval(updateClockAndDate, 1000);
-    window.addEventListener('DOMContentLoaded', updateClockAndDate);
 </script>
 <script src="script.js"></script>
 </body>
