@@ -3,52 +3,21 @@ const cheerio = require('cheerio');
 const express = require('express');
 const router = express.Router();
 
-// ======================================================
-// HELPER: FORMAT DURATION DYNAMICALLY ACCORDING TO VIDEO
-// ======================================================
+// Helper to format duration
 function formatDuration(durationStr) {
     if (!durationStr) return "00.00";
-
-    if (/^[\d:.]+$/.test(durationStr.trim())) {
-        return durationStr.trim().replace(/:/g, '.');
-    }
-
-    let hours = 0;
-    let minutes = 0;
-    let seconds = 0;
-
-    const hMatch = durationStr.match(/(\d+)\s*(h|hour|jam)/i);
-    const mMatch = durationStr.match(/(\d+)\s*(m|min|menit)/i);
-    const sMatch = durationStr.match(/(\d+)\s*(s|sec|detik)/i);
-
-    if (hMatch) hours = parseInt(hMatch[1]);
-    if (mMatch) minutes = parseInt(mMatch[1]);
-    if (sMatch) seconds = parseInt(sMatch[1]);
-
-    const pad = (num) => String(num).padStart(2, '0');
-
-    if (hours > 0) {
-        return `${pad(hours)}.${pad(minutes)}.${pad(seconds)}`;
-    }
-    
-    return `${pad(minutes)}.${pad(seconds)}`;
+    return durationStr.trim().replace(/:/g, '.');
 }
 
 // ======================================================
-// CORE XNXX SEARCH FUNCTION WITH RANDOM PAGE
+// CORE XNXX SEARCH FUNCTION WITH DYNAMIC RANDOM PAGE
 // ======================================================
 async function xnxxSearch(searchQuery) {
     const parts = searchQuery.trim().split(/\s+/);
-
-    // Mengambil angka di akhir teks untuk limit, default adalah 5 jika tidak diisi
     const limit = /^\d+$/.test(parts[parts.length - 1])
-        ? Math.min(20, Math.max(1, parseInt(parts.pop()))) // Batas maksimum diatur ke 20 video
+        ? Math.min(20, Math.max(1, parseInt(parts.pop())))
         : 5;
-
     const query = parts.join(' ').trim();
-
-    // FITUR: Generate halaman acak dari page 1 sampai 20 agar hasil selalu bervariasi
-    const randomPage = Math.floor(Math.random() * 20) + 1;
 
     const headers = {
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
@@ -56,82 +25,69 @@ async function xnxxSearch(searchQuery) {
         'accept-language': 'en-US,en;q=0.9'
     };
 
-    // Struktur URL penomoran halaman pada XNXX menggunakan format /search/query/page
-    const url = `https://www.xnxx.com/search/${encodeURIComponent(query)}/${randomPage}`;
-
-    const { data } = await axios.get(url, { headers });
+    // 1. Fetch the first page to determine how many pages exist
+    const initialUrl = `https://www.xnxx.com/search/${encodeURIComponent(query)}/1`;
+    const { data } = await axios.get(initialUrl, { headers });
     const $ = cheerio.load(data);
+
+    // 2. Determine Max Pages: Extract the last page number from pagination
+    // This assumes standard pagination structure usually found in '.pagination'
+    let maxPages = 1;
+    const paginationLinks = $('.pagination li a');
+    if (paginationLinks.length > 0) {
+        // Look for the "Last" or highest number link
+        const lastPage = parseInt(paginationLinks.last().attr('href')?.split('/').pop()) || 1;
+        maxPages = lastPage;
+    }
+
+    // 3. Generate Random Page within valid range (Max 50 to avoid scraping deep)
+    const safeMax = Math.min(maxPages, 50); 
+    const randomPage = Math.floor(Math.random() * safeMax) + 1;
+
+    // 4. Fetch the randomized page
+    const finalUrl = `https://www.xnxx.com/search/${encodeURIComponent(query)}/${randomPage}`;
+    const { data: pageData } = await axios.get(finalUrl, { headers });
+    const $p = cheerio.load(pageData);
     const results = [];
 
-    // Parsing HTML menggunakan Cheerio
-    $('.mozaique .thumb-block').each((index, element) => {
+    $p('.mozaique .thumb-block').each((index, element) => {
         if (results.length >= limit) return false;
-
-        const title = $(element).find('.thumb-under a').first().text().trim() || $(element).find('a').attr('title');
-        let link = $(element).find('.thumb-under a').attr('href') || $(element).find('a').attr('href');
         
-        if (link && !link.startsWith('http')) {
-            link = `https://www.xnxx.com${link}`;
-        }
+        const title = $p(element).find('.thumb-under a').first().text().trim() || $p(element).find('a').attr('title');
+        let link = $p(element).find('.thumb-under a').attr('href') || $p(element).find('a').attr('href');
+        if (link && !link.startsWith('http')) link = `https://www.xnxx.com${link}`;
+        const thumbnail = $p(element).find('img').attr('data-src') || $p(element).find('img').attr('src');
+        const duration = formatDuration($p(element).find('.duration').first().text().trim());
 
-        const thumbnail = $(element).find('img').attr('data-src') || $(element).find('img').attr('src');
-        
-        // Ambil element durasi pertama dan format ke MM.SS
-        const rawDuration = $(element).find('.duration').first().text().trim();
-        const duration = formatDuration(rawDuration);
-
-        if (title && link) {
-            results.push({
-                title,
-                duration,
-                thumbnail,
-                link
-            });
-        }
+        if (title && link) results.push({ title, duration, thumbnail, link });
     });
 
     return {
         query,
-        page: randomPage, // Menampilkan informasi halaman aktif yang diacak ke dalam respons JSON
+        page: randomPage,
         limit,
         total_found: results.length,
         results
     };
 }
 
-// ======================================================
-// ENDPOINT GET UTAMA (MENGGUNAKAN ?query=)
-// ======================================================
+// Router remains largely the same
 router.get('/', async (req, res) => {
     const queryParam = req.query.query;
-
     if (!queryParam) {
-        return res.status(400).json({
-            status: false,
-            message: "Parameter 'query' wajib diisi! Contoh: ?query=anime 10"
-        });
+        return res.status(400).json({ status: false, message: "Parameter 'query' is required." });
     }
 
     try {
         const result = await xnxxSearch(queryParam);
-
         return res.status(200).json({
             status: true,
             creator: 'Arulzxd',
             result,
-            metadata: {
-                source: 'XNXX',
-                timestamp: new Date().toISOString()
-            }
+            metadata: { source: 'XNXX', timestamp: new Date().toISOString() }
         });
-
     } catch (error) {
-        return res.status(500).json({
-            status: false,
-            message: 'Gagal mengambil data XNXX',
-            error: error.message,
-            timestamp: new Date().toISOString()
-        });
+        return res.status(500).json({ status: false, message: error.message });
     }
 });
 
