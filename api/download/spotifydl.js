@@ -8,6 +8,16 @@ const HEADERS = {
 };
 
 // =========================
+// HELPER: FORMAT DURATION
+// =========================
+function formatDuration(ms) {
+    if (!ms) return "0:00";
+    const minutes = Math.floor(ms / 60000);
+    const seconds = ((ms % 60000) / 1000).toFixed(0);
+    return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+}
+
+// =========================
 // GET SESSION
 // =========================
 async function getSession() {
@@ -63,7 +73,7 @@ async function convert(url, session) {
 }
 
 // =========================
-// CHECK TASK
+// CHECK TASK[cite: 2]
 // =========================
 async function checkTask(taskId, session) {
     const response = await axios.get(`https://spotmate.online/tasks/${taskId}`, {
@@ -79,7 +89,7 @@ async function checkTask(taskId, session) {
 }
 
 // =========================
-// ENDPOINT GET UTAMA
+// ENDPOINT GET UTAMA[cite: 2]
 // =========================
 router.get('/', async (req, res) => {
     const url = req.query.url;
@@ -104,13 +114,15 @@ router.get('/', async (req, res) => {
 
         const convertInfo = await convert(url, session);
         const image = trackInfo.album?.images?.[0]?.url || '';
+        
+        // Extract duration from metadata
+        const durationMs = trackInfo.duration_ms || 0;
         let downloadUrl;
 
         // Direct URL
         if (convertInfo.error === false && convertInfo.url) {
             downloadUrl = convertInfo.url;
         } 
-        // Task processing (Polling)
         else {
             const taskId = convertInfo.task_id || convertInfo.taskid;
 
@@ -133,22 +145,16 @@ router.get('/', async (req, res) => {
             downloadUrl = taskResult?.url;
         }
 
+
         return res.status(200).json({
             status: true,
             creator: 'Arulzxd',
             result: {
                 title: trackInfo.name || '',
                 artist: trackInfo.artists?.[0]?.name || '',
+                duration: formatDuration(durationMs),
                 image,
-                download: {
-                    url: downloadUrl,
-                    headers: {
-                        'user-agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Mobile Safari/537.36',
-                        'referer': 'https://spotmate.online/',
-                        'accept': '*/*'
-                    },
-                    curl: `curl -L "${downloadUrl}" -H "user-agent: Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Mobile Safari/537.36" -H "referer: https://spotmate.online/" -H "accept: */*" --output lagu.mp3`
-                }
+                download: downloadUrl // Langsung memberikan URL tanpa header/curl
             }
         });
 
