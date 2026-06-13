@@ -6,17 +6,17 @@ const router = express.Router();
 
 
 try {
-    const fontPath = path.join(__dirname, '../font/Aptos.ttf');
+    const fontPath = path.join(__dirname, './font/Aptos.ttf');
     if (fs.existsSync(fontPath)) {
         registerFont(fontPath, { family: 'Aptos' });
     }
 
-    const sfPath = path.join(__dirname, '../font/SFUIDisplay-Semibold.otf');
+    const sfPath = path.join(__dirname, './font/SFUIDisplay-Semibold.otf');
     if (fs.existsSync(sfPath)) {
         registerFont(sfPath, { family: 'SFUI' });
     }
 
-    const emojiPath = path.join(__dirname, '../font/NotoColorEmoji.ttf');
+    const emojiPath = path.join(__dirname, './font/NotoColorEmoji.ttf');
     if (fs.existsSync(emojiPath)) {
         registerFont(emojiPath, { family: 'NotoColorEmoji' });
     }
