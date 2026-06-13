@@ -1,11 +1,12 @@
 
 const express = require('express');
 const router = express.Router();
-const { createCanvas, registerFont } = require('canvas');
+// Gunakan @napi-rs/canvas agar tidak perlu kompilasi native
+const { createCanvas, registerFont } = require('@napi-rs/canvas');
 const fs = require('fs-extra');
 const path = require('path');
 
-// Fungsi untuk memuat font secara efisien
+// Fungsi untuk memuat font
 const loadFonts = () => {
     const fonts = [
         { name: 'Aptos', file: 'Aptos.ttf' },
@@ -22,6 +23,8 @@ const loadFonts = () => {
 };
 
 loadFonts();
+
+// ... (Kode CONFIG, getFinalFontSize, drawFrame, dan router Anda tetap sama)
 
 const CONFIG = {
     bgColor: 'white',      
