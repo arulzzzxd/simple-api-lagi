@@ -1,35 +1,33 @@
-const { createCanvas, registerFont, loadImage } = require('canvas');
-const fs = require('fs');
-const path = require('path');
 const express = require('express');
 const router = express.Router();
+const { createCanvas, registerFont } = require('canvas');
+const fs = require('fs-extra');
+const path = require('path');
 
+// Fungsi untuk memuat font secara efisien
+const loadFonts = () => {
+    const fonts = [
+        { name: 'Aptos', file: 'Aptos.ttf' },
+        { name: 'SFUI', file: 'SFUIDisplay-Semibold.otf' },
+        { name: 'NotoColorEmoji', file: 'NotoColorEmoji.ttf' }
+    ];
 
-try {
-    const fontPath = path.join(__dirname, './font/Aptos.ttf');
-    if (fs.existsSync(fontPath)) {
-        registerFont(fontPath, { family: 'Aptos' });
-    }
+    fonts.forEach(font => {
+        const fontPath = path.resolve(__dirname, '../font', font.file);
+        if (fs.existsSync(fontPath)) {
+            registerFont(fontPath, { family: font.name });
+        }
+    });
+};
 
-    const sfPath = path.join(__dirname, './font/SFUIDisplay-Semibold.otf');
-    if (fs.existsSync(sfPath)) {
-        registerFont(sfPath, { family: 'SFUI' });
-    }
-
-    const emojiPath = path.join(__dirname, './font/NotoColorEmoji.ttf');
-    if (fs.existsSync(emojiPath)) {
-        registerFont(emojiPath, { family: 'NotoColorEmoji' });
-    }
-} catch (e) {}
+loadFonts();
 
 const CONFIG = {
     bgColor: 'white',      
     textColor: 'black',    
     padding: 40,           
     startFontSize: 130,
-    minFontSize: 10,       
-    quality: 50,
-    vidFps: '5/3'
+    minFontSize: 10
 };
 
 function getFinalFontSize(text, width = 512, height = 512) {
@@ -39,13 +37,12 @@ function getFinalFontSize(text, width = 512, height = 512) {
     const ctx = canvas.getContext('2d');
     
     let fontSize = CONFIG.startFontSize;
-    let lineHeight = 0;
-
+    
     while (fontSize >= CONFIG.minFontSize) {
         ctx.font = `${fontSize}px "Aptos", "NotoColorEmoji", Arial`;
-        lineHeight = fontSize * 1.1; 
-
+        const lineHeight = fontSize * 1.1; 
         const words = text.replace(/\n/g, ' \n ').split(' ');
+        
         let lines = [];
         let currentLine = words[0];
         let wordTooLong = false;
@@ -110,14 +107,10 @@ function drawFrame(text, fontSize, width = 512, height = 512) {
     ctx.fillStyle = CONFIG.textColor;
     ctx.textBaseline = 'top';
     ctx.textAlign = 'left';
-    ctx.shadowBlur = 0;
-    ctx.shadowColor = 'transparent';
     
     let startY = CONFIG.padding;
-
     for (let i = 0; i < lines.length; i++) {
-        let textY = startY + (i * lineHeight);
-        ctx.fillText(lines[i], CONFIG.padding, textY);
+        ctx.fillText(lines[i], CONFIG.padding, startY + (i * lineHeight));
     }
 
     return canvas.toBuffer('image/png');
@@ -131,7 +124,6 @@ async function makeBrat(text) {
 router.get('/', async (req, res) => {
     const text = req.query.text;
 
-    // 1. Validasi input
     if (!text) {
         return res.status(400).json({
             status: false,
@@ -140,17 +132,12 @@ router.get('/', async (req, res) => {
     }
 
     try {
-        // 2. Proses pembuatan gambar
-        // Fungsi makeBrat mengembalikan Buffer
         const buffer = await makeBrat(text);
-
-        // 3. Kirim hasil sebagai gambar PNG
         res.writeHead(200, {
             'Content-Type': 'image/png',
             'Content-Length': buffer.length
         });
         res.end(buffer);
-
     } catch (error) {
         console.error("Error generating brat:", error);
         res.status(500).json({
@@ -161,4 +148,4 @@ router.get('/', async (req, res) => {
     }
 });
 
-module.exports = router;;
+module.exports = router;
