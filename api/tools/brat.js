@@ -1,5 +1,5 @@
 const { createCanvas, registerFont, loadImage } = require('canvas');
-const fs = require('fs-extra');
+const fs = require('fs');
 const path = require('path');
 const express = require('express');
 const router = express.Router();
