@@ -1,6 +1,5 @@
 const express = require('express');
 const router = express.Router();
-// Gunakan @napi-rs/canvas agar tidak perlu kompilasi native
 const { createCanvas, registerFont } = require('@napi-rs/canvas');
 const fs = require('fs-extra');
 const path = require('path');
@@ -23,8 +22,6 @@ const loadFonts = () => {
 
 loadFonts();
 
-// ... (Kode CONFIG, getFinalFontSize, drawFrame, dan router Anda tetap sama)
-
 const CONFIG = {
     bgColor: 'white',      
     textColor: 'black',    
@@ -33,88 +30,69 @@ const CONFIG = {
     minFontSize: 10
 };
 
-function getFinalFontSize(text, width = 512, height = 512) {
-    const maxTextWidth = width - (CONFIG.padding * 2);
-    const maxTextHeight = height - (CONFIG.padding * 2);
-    const canvas = createCanvas(width, height);
-    const ctx = canvas.getContext('2d');
-    
-    let fontSize = CONFIG.startFontSize;
-    
-    while (fontSize >= CONFIG.minFontSize) {
-        ctx.font = `${fontSize}px "Aptos", "NotoColorEmoji", Arial`;
-        const lineHeight = fontSize * 1.1; 
-        const words = text.replace(/\n/g, ' \n ').split(' ');
-        
-        let lines = [];
-        let currentLine = words[0];
-        let wordTooLong = false;
-
-        for (let word of words) {
-            if (word !== '\n' && ctx.measureText(word).width > maxTextWidth) {
-                wordTooLong = true; break;
-            }
-        }
-
-        if (wordTooLong) { fontSize -= 1; continue; }
-
-        for (let i = 1; i < words.length; i++) {
-            const word = words[i];
-            if (word === '\n') {
-                lines.push(currentLine); currentLine = ''; continue;
-            }
-            const testLine = currentLine === '' ? word : currentLine + " " + word;
-            if (ctx.measureText(testLine).width <= maxTextWidth) {
-                currentLine = testLine;
-            } else {
-                lines.push(currentLine); currentLine = word;
-            }
-        }
-        if (currentLine !== '') lines.push(currentLine);
-
-        if (lines.length * lineHeight <= maxTextHeight) break; 
-        fontSize -= 1; 
-    }
-    return fontSize;
-}
-
-function drawFrame(text, fontSize, width = 512, height = 512) {
-    const maxTextWidth = width - (CONFIG.padding * 2);
-    const canvas = createCanvas(width, height);
-    const ctx = canvas.getContext('2d');
-
-    ctx.fillStyle = CONFIG.bgColor;
-    ctx.fillRect(0, 0, width, height);
-
-    ctx.font = `${fontSize}px "Aptos", "NotoColorEmoji", Arial`;
-    const lineHeight = fontSize * 1.1;
-
-    const words = text.replace(/\n/g, ' \n ').split(' ');
+// Fungsi pembantu untuk memecah teks ke dalam baris
+function wrapText(ctx, text, maxWidth) {
+    const words = text.split(' ');
     let lines = [];
     let currentLine = words[0];
 
     for (let i = 1; i < words.length; i++) {
         const word = words[i];
-        if (word === '\n') {
-            lines.push(currentLine); currentLine = ''; continue;
-        }
-        const testLine = currentLine === '' ? word : currentLine + " " + word;
-        if (ctx.measureText(testLine).width <= maxTextWidth) {
-            currentLine = testLine;
+        const width = ctx.measureText(currentLine + " " + word).width;
+        if (width < maxWidth) {
+            currentLine += " " + word;
         } else {
-            lines.push(currentLine); currentLine = word;
+            lines.push(currentLine);
+            currentLine = word;
         }
     }
-    if (currentLine !== '') lines.push(currentLine);
+    lines.push(currentLine);
+    return lines;
+}
 
+function getFinalFontSize(text, width = 512, height = 512) {
+    const maxTextWidth = width - (CONFIG.padding * 2);
+    const maxTextHeight = height - (CONFIG.padding * 2);
+    const canvas = createCanvas(width, height);
+    const ctx = canvas.getContext('2d');
+
+    let fontSize = CONFIG.startFontSize;
+
+    while (fontSize >= CONFIG.minFontSize) {
+        ctx.font = `${fontSize}px "Aptos", "NotoColorEmoji", Arial`;
+        const lines = wrapText(ctx, text, maxTextWidth);
+        const lineHeight = fontSize * 1.2;
+
+        if (lines.length * lineHeight <= maxTextHeight) break;
+        fontSize -= 5;
+    }
+    return fontSize;
+}
+
+function drawFrame(text, fontSize, width = 512, height = 512) {
+    const canvas = createCanvas(width, height);
+    const ctx = canvas.getContext('2d');
+    const maxTextWidth = width - (CONFIG.padding * 2);
+
+    // Background
+    ctx.fillStyle = CONFIG.bgColor;
+    ctx.fillRect(0, 0, width, height);
+
+    // Konfigurasi Teks
     ctx.fillStyle = CONFIG.textColor;
+    ctx.font = `${fontSize}px "Aptos", "NotoColorEmoji", Arial`;
     ctx.textBaseline = 'top';
     ctx.textAlign = 'left';
-    
+
+    const lineHeight = fontSize * 1.2;
+    const lines = wrapText(ctx, text, maxTextWidth);
+
+    // Render Teks
     let startY = CONFIG.padding;
-    for (let i = 0; i < lines.length; i++) {
-        ctx.fillText(lines[i], CONFIG.padding, startY + (i * lineHeight));
-    }
+    lines.forEach((line) => {
+        ctx.fillText(line, CONFIG.padding, startY);
+        startY += lineHeight;
+    });
 
     return canvas.toBuffer('image/png');
 }
