@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "@google/genai": "^0.13.0",
-    "@napi-rs/canvas": "^0.1.66",
+    "canvas": "^3.2.3",
     "@vreden/youtube_scraper": "^1.2.9",
     "axios": "^1.10.0",
     "cheerio": "github:iyayn-ajah/cheerio",
