@@ -1,13 +1,12 @@
 const express = require('express');
 const router = express.Router();
+// Gunakan @napi-rs/canvas agar tidak perlu kompilasi native
 const { createCanvas, registerFont } = require('@napi-rs/canvas');
 const fs = require('fs-extra');
 const path = require('path');
 
-// Fungsi untuk memuat font dengan memastikan path root project
+// Fungsi untuk memuat font
 const loadFonts = () => {
-    // Menggunakan process.cwd() untuk memastikan path selalu merujuk ke root project
-    const fontDir = path.join(process.cwd(), 'font'); 
     const fonts = [
         { name: 'Aptos', file: 'Aptos.ttf' },
         { name: 'SFUI', file: 'SFUIDisplay-Semibold.otf' },
@@ -15,17 +14,16 @@ const loadFonts = () => {
     ];
 
     fonts.forEach(font => {
-        const fontPath = path.join(fontDir, font.file);
+        const fontPath = path.resolve(__dirname, '../font', font.file);
         if (fs.existsSync(fontPath)) {
             registerFont(fontPath, { family: font.name });
-            console.log(`Berhasil memuat font: ${font.name}`);
-        } else {
-            console.error(`Font tidak ditemukan di: ${fontPath}`);
         }
     });
 };
 
 loadFonts();
+
+// ... (Kode CONFIG, getFinalFontSize, drawFrame, dan router Anda tetap sama)
 
 const CONFIG = {
     bgColor: 'white',      
@@ -44,8 +42,7 @@ function getFinalFontSize(text, width = 512, height = 512) {
     let fontSize = CONFIG.startFontSize;
     
     while (fontSize >= CONFIG.minFontSize) {
-        // Menambahkan fallback ke sans-serif agar teks tetap muncul jika custom font gagal
-        ctx.font = `${fontSize}px "Aptos", "SFUI", "NotoColorEmoji", sans-serif`;
+        ctx.font = `${fontSize}px "Aptos", "NotoColorEmoji", Arial`;
         const lineHeight = fontSize * 1.1; 
         const words = text.replace(/\n/g, ' \n ').split(' ');
         
@@ -89,7 +86,7 @@ function drawFrame(text, fontSize, width = 512, height = 512) {
     ctx.fillStyle = CONFIG.bgColor;
     ctx.fillRect(0, 0, width, height);
 
-    ctx.font = `${fontSize}px "Aptos", "SFUI", "NotoColorEmoji", sans-serif`;
+    ctx.font = `${fontSize}px "Aptos", "NotoColorEmoji", Arial`;
     const lineHeight = fontSize * 1.1;
 
     const words = text.replace(/\n/g, ' \n ').split(' ');
