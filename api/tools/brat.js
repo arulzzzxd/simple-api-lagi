@@ -1,8 +1,9 @@
-const express = require('express');
-const router = express.Router();
 const { createCanvas, registerFont, loadImage } = require('canvas');
 const fs = require('fs-extra');
 const path = require('path');
+const express = require('express');
+const router = express.Router();
+
 
 try {
     const fontPath = path.join(__dirname, '../font/Aptos.ttf');
